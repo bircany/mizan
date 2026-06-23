@@ -1,0 +1,82 @@
+{
+  "common": {
+    "donate": "Bağış Yap",
+    "learnMore": "Daha Fazla",
+    "readMore": "Devamını Oku",
+    "search": "Ara",
+    "cart": "Sepet",
+    "checkout": "Ödemeye Geç",
+    "home": "Anasayfa",
+    "contact": "İletişim",
+    "about": "Hakkımızda",
+    "news": "Haberler",
+    "campaigns": "Kampanyalar",
+    "qurbani": "Kurban",
+    "projects": "Projeler",
+    "volunteer": "Gönüllülük"
+  },
+  "home": {
+    "badge": "İyilikte Mizan",
+    "heroTitle": "Elbistan'ın Kalbinden Dünyaya Uzanan Hayır",
+    "heroTitle2": "Bir Nefeste Umut, Bir Damlada Hayat",
+    "heroTitle3": "Mazlumlara Uzanan İyilik Eli",
+    "quickDonate": "Hızlı Bağış",
+    "campaigns": "Devam Eden Kampanyalar",
+    "allCampaigns": "Tüm Kampanyalar",
+    "news": "Haberler ve Duyurular",
+    "stories": "Sahadan Hikayeler",
+    "mobileApp": "İyilik Cebinizde",
+    "shipments": "Gönderi",
+    "supporters": "Destekçi",
+    "countries": "Ülke Dahil",
+    "activeSince": "Yılından Beri Aktif"
+  },
+  "donate": {
+    "title": "Hayır Yolculuğunuza Başlayın",
+    "oneTime": "Tek Seferlik",
+    "recurring": "Düzenli Bağış",
+    "addToCart": "Sepete Ekle",
+    "yourCart": "Sepetiniz",
+    "total": "Toplam",
+    "subtotal": "Ara Toplam"
+  },
+  "checkout": {
+    "title": "Güvenli Ödeme Sayfası",
+    "donorInfo": "Bağışçı Bilgileri",
+    "paymentMethod": "Ödeme Yöntemi",
+    "orderSummary": "Bağış Özeti",
+    "complete": "Bağışımı Tamamla",
+    "creditCard": "Kredi / Banka Kartı",
+    "bankTransfer": "Banka Havalesi / EFT",
+    "digitalWallet": "Dijital Cüzdan"
+  },
+  "news": {
+    "title": "Haberler & Etkinlikler",
+    "all": "Tümü",
+    "latest": "Son Haberler",
+    "categories": "Kategoriler",
+    "newsletter": "Bültene Abone Olun",
+    "instagram": "Instagram"
+  },
+  "about": {
+    "title": "Mizan: Adalet ve Denge",
+    "mission": "Misyonumuz",
+    "story": "Hikayemiz"
+  },
+  "qurbani": {
+    "title": "İyilik Sınır Tanımaz",
+    "countdown": "Kurban Bayramı'na Son",
+    "packages": "Kurban Bağış Paketleri",
+    "howItWorks": "Süreç Nasıl İşliyor?"
+  },
+  "contact": {
+    "title": "İletişim",
+    "form": "Mesaj Gönder",
+    "name": "Ad Soyad",
+    "email": "E-Posta",
+    "phone": "Telefon",
+    "subject": "Konu",
+    "message": "Mesajınız",
+    "send": "Gönder"
+  }
+}

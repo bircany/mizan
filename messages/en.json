@@ -1,0 +1,82 @@
+{
+  "common": {
+    "donate": "Donate Now",
+    "learnMore": "Learn More",
+    "readMore": "Read More",
+    "search": "Search",
+    "cart": "Cart",
+    "checkout": "Checkout",
+    "home": "Home",
+    "contact": "Contact",
+    "about": "About Us",
+    "news": "News",
+    "campaigns": "Campaigns",
+    "qurbani": "Qurbani",
+    "projects": "Projects",
+    "volunteer": "Volunteer"
+  },
+  "home": {
+    "badge": "Goodness in Balance",
+    "heroTitle": "Charity Reaching the World from the Heart of Elbistan",
+    "heroTitle2": "A Breath of Hope, A Drop of Life",
+    "heroTitle3": "A Hand of Charity to the Oppressed",
+    "quickDonate": "Quick Donate",
+    "campaigns": "Ongoing Campaigns",
+    "allCampaigns": "All Campaigns",
+    "news": "News & Announcements",
+    "stories": "Stories from the Field",
+    "mobileApp": "Goodness in Your Pocket",
+    "shipments": "Shipments",
+    "supporters": "Supporters",
+    "countries": "Countries Reached",
+    "activeSince": "Active Since"
+  },
+  "donate": {
+    "title": "Start Your Charity Journey",
+    "oneTime": "One Time",
+    "recurring": "Recurring",
+    "addToCart": "Add to Cart",
+    "yourCart": "Your Cart",
+    "total": "Total",
+    "subtotal": "Subtotal"
+  },
+  "checkout": {
+    "title": "Secure Payment Page",
+    "donorInfo": "Donor Information",
+    "paymentMethod": "Payment Method",
+    "orderSummary": "Donation Summary",
+    "complete": "Complete Donation",
+    "creditCard": "Credit / Debit Card",
+    "bankTransfer": "Bank Transfer / EFT",
+    "digitalWallet": "Digital Wallet"
+  },
+  "news": {
+    "title": "News & Events",
+    "all": "All",
+    "latest": "Latest News",
+    "categories": "Categories",
+    "newsletter": "Subscribe to Newsletter",
+    "instagram": "Instagram"
+  },
+  "about": {
+    "title": "Mizan: Justice and Balance",
+    "mission": "Our Mission",
+    "story": "Our Story"
+  },
+  "qurbani": {
+    "title": "Goodness Knows No Borders",
+    "countdown": "Until Eid al-Adha",
+    "packages": "Qurbani Donation Packages",
+    "howItWorks": "How It Works?"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "form": "Send a Message",
+    "name": "Full Name",
+    "email": "Email",
+    "phone": "Phone",
+    "subject": "Subject",
+    "message": "Your Message",
+    "send": "Send"
+  }
+}

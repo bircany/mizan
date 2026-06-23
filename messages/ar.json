@@ -1,0 +1,82 @@
+{
+  "common": {
+    "donate": "تبرع الآن",
+    "learnMore": "المزيد",
+    "readMore": "اقرأ المزيد",
+    "search": "بحث",
+    "cart": "السلة",
+    "checkout": "الدفع",
+    "home": "الرئيسية",
+    "contact": "اتصل بنا",
+    "about": "من نحن",
+    "news": "الأخبار",
+    "campaigns": "الحملات",
+    "qurbani": "أضحية",
+    "projects": "المشاريع",
+    "volunteer": "تطوع"
+  },
+  "home": {
+    "badge": "الخير في الميزان",
+    "heroTitle": "عمل الخير ينطلق من قلب البستان إلى العالم",
+    "heroTitle2": "نفس من أمل، قطرة من حياة",
+    "heroTitle3": "يد الخير تمتد للمظلومين",
+    "quickDonate": "تبرع سريع",
+    "campaigns": "الحملات المستمرة",
+    "allCampaigns": "جميع الحملات",
+    "news": "الأخبار والإعلانات",
+    "stories": "قصص من الميدان",
+    "mobileApp": "الخير في جيبك",
+    "shipments": "شحنة",
+    "supporters": "داعم",
+    "countries": "دولة",
+    "activeSince": "نشط منذ"
+  },
+  "donate": {
+    "title": "ابدأ رحلة الخير",
+    "oneTime": "مرة واحدة",
+    "recurring": "تبرع شهري",
+    "addToCart": "أضف إلى السلة",
+    "yourCart": "سلتك",
+    "total": "المجموع",
+    "subtotal": "المجموع الفرعي"
+  },
+  "checkout": {
+    "title": "صفحة دفع آمنة",
+    "donorInfo": "معلومات المتبرع",
+    "paymentMethod": "طريقة الدفع",
+    "orderSummary": "ملخص التبرع",
+    "complete": "إتمام التبرع",
+    "creditCard": "بطاقة ائتمان / بطاقة مصرفية",
+    "bankTransfer": "تحويل بنكي",
+    "digitalWallet": "محفظة رقمية"
+  },
+  "news": {
+    "title": "الأخبار والفعاليات",
+    "all": "الكل",
+    "latest": "آخر الأخبار",
+    "categories": "التصنيفات",
+    "newsletter": "اشترك في النشرة البريدية",
+    "instagram": "إنستغرام"
+  },
+  "about": {
+    "title": "ميزان: العدل والتوازن",
+    "mission": "مهمتنا",
+    "story": "قصتنا"
+  },
+  "qurbani": {
+    "title": "الخير لا يعرف حدوداً",
+    "countdown": "متبقي على عيد الأضحى",
+    "packages": "باقات التبرع بالأضحية",
+    "howItWorks": "كيف يعمل؟"
+  },
+  "contact": {
+    "title": "اتصل بنا",
+    "form": "أرسل رسالة",
+    "name": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "subject": "الموضوع",
+    "message": "رسالتك",
+    "send": "إرسال"
+  }
+}
