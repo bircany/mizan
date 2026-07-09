@@ -18,8 +18,9 @@ const navLinks = [
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<"lang" | "currency" | null>(null);
-  const { locale, setLocale, t } = useLanguage();
+  const { locale, setLocale } = useLanguage();
   const { items } = useCart();
   const { currency, setCurrency } = useCurrency();
   const pathname = usePathname();
@@ -28,12 +29,11 @@ export default function Header() {
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 50);
+    const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -44,38 +44,62 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
+
   const isActive = (href: string) => pathname === href;
 
   return (
     <>
-      {/* HEADER TOP BAR - Matches Reference Screenshot */}
-      <div className="relative z-[60] bg-[#f5f6f7] text-[#4f5e5a] border-b border-outline-variant/20 py-2.5 text-[13px] font-medium" ref={dropdownRef}>
+      {/* TOP BAR */}
+      <div
+        className={cn(
+          "relative z-[60] py-2.5 text-[13px] font-medium transition-all duration-500",
+          scrolled
+            ? "bg-white/90 backdrop-blur-md border-b border-outline-variant/10 text-on-surface-variant/70"
+            : "bg-[#f5f6f7] border-b border-outline-variant/15 text-[#4f5e5a]"
+        )}
+        ref={dropdownRef}
+      >
         <div className="max-w-container-max mx-auto px-margin-desktop flex justify-between items-center">
-          {/* Left Side */}
-          <div className="flex items-center gap-md shrink-0">
-            <a className="flex items-center gap-xs hover:text-primary transition-colors" href="tel:+902126312121">
-              <span className="material-symbols-outlined text-[16px] text-primary/80">phone_iphone</span>
-              <span>+90 212 631 21 21</span>
+          {/* Left: Phone + Social */}
+          <div className="flex items-center gap-5 shrink-0">
+            <a
+              className="flex items-center gap-1.5 hover:text-primary transition-colors"
+              href="tel:+902126312121"
+            >
+              <span className="material-symbols-outlined text-[15px] text-primary/70">phone</span>
+              <span className="tracking-wide">+90 212 631 21 21</span>
             </a>
-            <span className="text-outline-variant/40">|</span>
-            <button className="flex items-center gap-xs hover:text-primary transition-colors">
-              <span className="material-symbols-outlined text-[16px] text-primary/80">check_circle</span>
-              <span>Follow</span>
+            <span className="text-outline-variant/30">|</span>
+            <button className="flex items-center gap-1.5 hover:text-primary transition-colors">
+              <span className="material-symbols-outlined text-[15px] text-primary/70">share</span>
+              <span className="tracking-wide">Takip Et</span>
             </button>
           </div>
 
-          {/* Right Side - Custom Interactive Dropdowns */}
-          <div className="flex items-center gap-lg shrink-0">
-            {/* Language Selection */}
+          {/* Right: Lang + Currency */}
+          <div className="flex items-center gap-4 shrink-0">
+            {/* Language */}
             <div className="relative">
               <button
                 onClick={() => setOpenDropdown(openDropdown === "lang" ? null : "lang")}
-                className="flex items-center gap-xs hover:text-primary transition-all font-semibold uppercase tracking-wider py-1 px-2.5 rounded-lg hover:bg-white/70"
+                className="flex items-center gap-1 hover:text-primary transition-all py-1 px-2 rounded-md hover:bg-black/5"
               >
-                <span className="material-symbols-outlined text-[18px] text-primary/80">language</span>
-                <span>{locale === "tr" ? "TR" : locale === "en" ? "EN" : "AR"}</span>
-                <span 
-                  className="material-symbols-outlined text-[14px] transition-transform duration-200" 
+                <span className="material-symbols-outlined text-[16px] text-primary/70">language</span>
+                <span className="font-semibold uppercase tracking-wider text-[12px]">
+                  {locale === "tr" ? "TR" : locale === "en" ? "EN" : "AR"}
+                </span>
+                <span
+                  className="material-symbols-outlined text-[13px] transition-transform duration-200"
                   style={{ transform: openDropdown === "lang" ? "rotate(180deg)" : "none" }}
                 >
                   keyboard_arrow_down
@@ -103,18 +127,18 @@ export default function Header() {
               )}
             </div>
 
-            <span className="text-outline-variant/40">|</span>
+            <span className="text-outline-variant/30">|</span>
 
-            {/* Currency Selection */}
+            {/* Currency */}
             <div className="relative">
               <button
                 onClick={() => setOpenDropdown(openDropdown === "currency" ? null : "currency")}
-                className="flex items-center gap-xs hover:text-primary transition-all font-semibold uppercase tracking-wider py-1 px-2.5 rounded-lg hover:bg-white/70"
+                className="flex items-center gap-1 hover:text-primary transition-all py-1 px-2 rounded-md hover:bg-black/5"
               >
-                <span className="material-symbols-outlined text-[18px] text-primary/80">payments</span>
-                <span>{currency}</span>
-                <span 
-                  className="material-symbols-outlined text-[14px] transition-transform duration-200" 
+                <span className="material-symbols-outlined text-[16px] text-primary/70">payments</span>
+                <span className="font-semibold uppercase tracking-wider text-[12px]">{currency}</span>
+                <span
+                  className="material-symbols-outlined text-[13px] transition-transform duration-200"
                   style={{ transform: openDropdown === "currency" ? "rotate(180deg)" : "none" }}
                 >
                   keyboard_arrow_down
@@ -145,57 +169,236 @@ export default function Header() {
         </div>
       </div>
 
+      {/* MAIN NAV */}
       <header
         className={cn(
-          "sticky top-0 z-50 bg-surface shadow-sm transition-all duration-300",
-          scrolled && "py-2"
+          "sticky top-0 z-50 transition-all duration-500",
+          scrolled
+            ? "bg-white/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.06)]"
+            : "bg-transparent"
         )}
       >
-        <nav className="max-w-container-max mx-auto px-margin-desktop py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-[#009000] flex items-center justify-center text-white text-lg font-bold shadow-sm">
+        <nav className="max-w-container-max mx-auto px-margin-desktop flex justify-between items-center h-16 lg:h-[72px]">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3 group shrink-0">
+            <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-primary flex items-center justify-center text-white text-base lg:text-lg font-bold shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-300">
               M
             </div>
-            <span className="text-headline-xl font-bold text-[#009000]">Mizan Derneği</span>
+            <span
+              className={cn(
+                "text-lg lg:text-xl font-bold tracking-tight transition-colors duration-500",
+                scrolled ? "text-primary" : "text-white drop-shadow-lg"
+              )}
+            >
+              Mizan Derneği
+            </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-lg text-label-md text-on-surface-variant">
+          {/* Desktop Nav Links */}
+          <div className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "hover:text-primary transition-colors",
-                  isActive(link.href) && "text-primary font-bold border-b-2 border-primary pb-1"
+                  "relative px-4 py-2 text-[14px] font-medium tracking-wide rounded-lg transition-all duration-300",
+                  scrolled
+                    ? "text-on-surface-variant/80 hover:text-primary hover:bg-primary/5"
+                    : "text-white/85 hover:text-white hover:bg-white/10",
+                  isActive(link.href) && cn(
+                    scrolled
+                      ? "text-primary bg-primary/5"
+                      : "text-white bg-white/15"
+                  )
                 )}
               >
                 {link.label}
+                {isActive(link.href) && (
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-primary rounded-full" />
+                )}
               </Link>
             ))}
           </div>
 
-          <div className="flex items-center gap-md">
-            <button className="p-2 text-on-surface-variant hover:text-primary transition-colors">
-              <span className="material-symbols-outlined">search</span>
+          {/* Right Actions */}
+          <div className="flex items-center gap-2">
+            {/* Search */}
+            <button
+              className={cn(
+                "p-2.5 rounded-full transition-all duration-200",
+                scrolled
+                  ? "text-on-surface-variant/70 hover:text-primary hover:bg-primary/5"
+                  : "text-white/70 hover:text-white hover:bg-white/10"
+              )}
+              aria-label="Search"
+            >
+              <span className="material-symbols-outlined text-[20px]">search</span>
             </button>
-            <Link href="/bagis" className="p-2 text-on-surface-variant hover:text-primary transition-colors relative">
-              <span className="material-symbols-outlined">shopping_basket</span>
+
+            {/* Cart */}
+            <Link
+              href="/bagis"
+              className={cn(
+                "p-2.5 rounded-full transition-all duration-200 relative",
+                scrolled
+                  ? "text-on-surface-variant/70 hover:text-primary hover:bg-primary/5"
+                  : "text-white/70 hover:text-white hover:bg-white/10"
+              )}
+              aria-label="Cart"
+            >
+              <span className="material-symbols-outlined text-[20px]">shopping_basket</span>
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-secondary text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
+                <span className="absolute -top-0.5 -right-0.5 bg-primary text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full shadow-sm px-1">
                   {cartCount}
                 </span>
               )}
             </Link>
+
+            {/* CTA Button */}
             <Link
               href="/bagis"
-              className="bg-secondary text-white px-md py-2.5 rounded-lg text-label-md hover:bg-opacity-90 transition-all flex items-center gap-2"
+              className="hidden sm:inline-flex items-center gap-2 bg-secondary text-white px-5 py-2.5 rounded-xl text-[14px] font-semibold shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
             >
-              <span className="material-symbols-outlined text-[20px]">volunteer_activism</span>
+              <span className="material-symbols-outlined text-[18px]">volunteer_activism</span>
               Bağış Yap
             </Link>
+
+            {/* Mobile Toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={cn(
+                "lg:hidden p-2.5 rounded-full transition-all duration-200",
+                scrolled
+                  ? "text-on-surface-variant hover:bg-primary/5"
+                  : "text-white hover:bg-white/10"
+              )}
+              aria-label="Toggle menu"
+            >
+              <span className="material-symbols-outlined text-[24px]">
+                {mobileMenuOpen ? "close" : "menu"}
+              </span>
+            </button>
           </div>
         </nav>
       </header>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[90] lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Menu Panel */}
+          <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl animate-fade-left">
+            {/* Mobile Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/15">
+              <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white text-lg font-bold">
+                  M
+                </div>
+                <span className="text-lg font-bold text-primary tracking-tight">Mizan Derneği</span>
+              </Link>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 rounded-full hover:bg-surface-container transition-colors"
+                aria-label="Close menu"
+              >
+                <span className="material-symbols-outlined text-[24px] text-on-surface-variant">close</span>
+              </button>
+            </div>
+
+            {/* Nav Links */}
+            <nav className="flex-1 px-4 py-4 overflow-y-auto">
+              <div className="flex flex-col gap-1">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-medium transition-all",
+                      isActive(link.href)
+                        ? "bg-primary/10 text-primary"
+                        : "text-on-surface-variant hover:bg-surface-container hover:text-primary"
+                    )}
+                  >
+                    <span className="material-symbols-outlined text-[20px] opacity-60">
+                      {link.href === "/hakkimizda" ? "info" :
+                       link.href === "/bagis" ? "volunteer_activism" :
+                       link.href === "/haberler" ? "article" :
+                       link.href === "/kurban" ? "pets" :
+                       "mail"}
+                    </span>
+                    {link.label}
+                    {isActive(link.href) && (
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </nav>
+
+            {/* Mobile Footer */}
+            <div className="px-6 pb-6 pt-4 border-t border-outline-variant/10">
+              {/* Lang + Currency */}
+              <div className="flex items-center justify-center gap-6 mb-5">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-primary/70">language</span>
+                  <div className="flex gap-1">
+                    {(["tr", "en", "ar"] as const).map((lang) => (
+                      <button
+                        key={lang}
+                        onClick={() => setLocale(lang)}
+                        className={cn(
+                          "px-2.5 py-1 rounded-md text-[12px] font-semibold uppercase tracking-wider transition-all",
+                          locale === lang
+                            ? "bg-primary text-white"
+                            : "text-on-surface-variant/70 hover:bg-surface-container"
+                        )}
+                      >
+                        {lang}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <span className="text-outline-variant/30">|</span>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-primary/70">payments</span>
+                  <div className="flex gap-1">
+                    {(["TRY", "USD", "EUR"] as const).map((curr) => (
+                      <button
+                        key={curr}
+                        onClick={() => setCurrency(curr)}
+                        className={cn(
+                          "px-2.5 py-1 rounded-md text-[12px] font-semibold transition-all",
+                          currency === curr
+                            ? "bg-primary text-white"
+                            : "text-on-surface-variant/70 hover:bg-surface-container"
+                        )}
+                      >
+                        {curr}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA */}
+              <Link
+                href="/bagis"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center gap-2 w-full bg-secondary text-white px-5 py-3.5 rounded-xl text-[15px] font-semibold shadow-sm hover:shadow-md transition-all"
+              >
+                <span className="material-symbols-outlined text-[20px]">volunteer_activism</span>
+                Bağış Yap
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

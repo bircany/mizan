@@ -59,10 +59,12 @@ const config: Config = {
         gold: "#C9A84C",
       },
       borderRadius: {
-        DEFAULT: "0.25rem",
-        lg: "0.5rem",
-        xl: "0.75rem",
-        "2xl": "1rem",
+        DEFAULT: "0.375rem",
+        md: "0.5rem",
+        lg: "0.75rem",
+        xl: "1rem",
+        "2xl": "1.25rem",
+        "3xl": "1.5rem",
         full: "9999px",
       },
       spacing: {
@@ -82,62 +84,89 @@ const config: Config = {
       },
       fontSize: {
         "display-lg": [
-          "48px",
-          { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "700" },
+          "56px",
+          { lineHeight: "1.05", letterSpacing: "-0.025em", fontWeight: "700" },
         ],
         "display-lg-mobile": [
           "36px",
-          { lineHeight: "1.2", fontWeight: "700" },
+          { lineHeight: "1.15", letterSpacing: "-0.015em", fontWeight: "700" },
         ],
         "headline-xl": [
-          "32px",
-          { lineHeight: "1.25", fontWeight: "600" },
+          "36px",
+          { lineHeight: "1.2", letterSpacing: "-0.01em", fontWeight: "600" },
         ],
         "headline-xl-mobile": [
           "28px",
-          { lineHeight: "1.3", fontWeight: "600" },
+          { lineHeight: "1.25", fontWeight: "600" },
         ],
         "headline-md": [
           "24px",
-          { lineHeight: "1.3", fontWeight: "600" },
+          { lineHeight: "1.3", letterSpacing: "-0.005em", fontWeight: "600" },
         ],
         "body-lg": [
           "18px",
-          { lineHeight: "1.6", fontWeight: "400" },
+          { lineHeight: "1.7", letterSpacing: "0.005em", fontWeight: "400" },
         ],
         "body-md": [
           "16px",
-          { lineHeight: "1.6", fontWeight: "400" },
+          { lineHeight: "1.7", letterSpacing: "0.005em", fontWeight: "400" },
         ],
         "label-md": [
           "14px",
           {
-            lineHeight: "1.4",
+            lineHeight: "1.5",
             letterSpacing: "0.01em",
             fontWeight: "500",
           },
         ],
         "label-sm": [
           "12px",
-          { lineHeight: "1.4", fontWeight: "600" },
+          { lineHeight: "1.5", letterSpacing: "0.02em", fontWeight: "600" },
         ],
       },
       maxWidth: {
         "container-max": "1200px",
       },
       boxShadow: {
-        soft: "0px 4px 20px rgba(0,0,0,0.04)",
+        soft: "0px 2px 12px rgba(0,0,0,0.04)",
         ambient: "0px 8px 30px rgba(0, 144, 0, 0.08)",
         "red-ambient": "0px 8px 30px rgba(0, 144, 0, 0.08)",
+        elevated: "0px 4px 16px rgba(0,0,0,0.06)",
+        "elevated-hover": "0px 8px 24px rgba(0,0,0,0.1)",
       },
       keyframes: {
         "fade-in-up": {
           "0%": { opacity: "0", transform: "translateY(20px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(30px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "fade-left": {
+          "0%": { opacity: "0", transform: "translateX(-30px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        "fade-right": {
+          "0%": { opacity: "0", transform: "translateX(30px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        "scale-in": {
+          "0%": { opacity: "0", transform: "scale(0.95)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "image-reveal": {
+          "0%": { opacity: "0", transform: "scale(1.05)", filter: "blur(10px)" },
+          "100%": { opacity: "1", transform: "scale(1)", filter: "blur(0)" },
+        },
       },
       animation: {
         "fade-in-up": "fade-in-up 0.6s ease-out",
+        "fade-up": "fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "fade-left": "fade-left 0.7s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "fade-right": "fade-right 0.7s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "scale-in": "scale-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "image-reveal": "image-reveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) both",
       },
     },
   },
