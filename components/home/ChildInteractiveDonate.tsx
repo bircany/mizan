@@ -2,6 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+
+const confettiPieces = Array.from({ length: 40 }, (_, index) => ({
+  color: ["#CC0000", "#991B1B", "#C9A84C", "#4CAF50", "#2196F3"][index % 5],
+  delay: `${(index % 10) * 0.15}s`,
+  duration: `${1.5 + (index % 6) * 0.3}s`,
+  left: `${(index * 37) % 100}%`,
+}));
 import { useCurrency } from "@/lib/currency-context";
 import { useCart } from "@/lib/cart-context";
 
@@ -90,38 +97,12 @@ export default function ChildInteractiveDonate() {
     setIsAdding(true);
     setShowConfetti(true);
 
-    if (food > 0) {
-      addItem({
-        campaignId: "ahmed-gida",
-        title: "Yetim Sevindir - Gıda Paketi (Ahmed)",
-        amount: FOOD_PRICE,
-        quantity: food,
-      });
-    }
-    if (stationery > 0) {
-      addItem({
-        campaignId: "ahmed-kirtasiye",
-        title: "Yetim Sevindir - Kırtasiye Paketi (Ahmed)",
-        amount: STATIONERY_PRICE,
-        quantity: stationery,
-      });
-    }
-    if (toy > 0) {
-      addItem({
-        campaignId: "ahmed-oyuncak",
-        title: "Yetim Sevindir - Oyuncak Paketi (Ahmed)",
-        amount: TOY_PRICE,
-        quantity: toy,
-      });
-    }
-    if (clothing > 0) {
-      addItem({
-        campaignId: "ahmed-giyim",
-        title: "Yetim Sevindir - Giyim Paketi (Ahmed)",
-        amount: CLOTHING_PRICE,
-        quantity: clothing,
-      });
-    }
+    addItem({
+      campaignId: "yetim",
+      title: "Ahmed için destek paketi",
+      amount: totalTry,
+      quantity: 1,
+    });
 
     setTimeout(() => {
       setIsAdding(false);
@@ -179,18 +160,16 @@ export default function ChildInteractiveDonate() {
 
       {showConfetti && (
         <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden flex justify-center">
-          {Array.from({ length: 40 }).map((_, idx) => (
+          {confettiPieces.map((piece, idx) => (
             <div
               key={idx}
               className="absolute w-3 h-3 rounded-full animate-fall"
               style={{
-                left: `${Math.random() * 100}%`,
+                left: piece.left,
                 top: `-20px`,
-                backgroundColor: ["#CC0000", "#991B1B", "#C9A84C", "#4CAF50", "#2196F3"][
-                  Math.floor(Math.random() * 5)
-                ],
-                animationDelay: `${Math.random() * 1.5}s`,
-                animationDuration: `${1.5 + Math.random() * 2}s`,
+                backgroundColor: piece.color,
+                animationDelay: piece.delay,
+                animationDuration: piece.duration,
               }}
             />
           ))}
@@ -456,7 +435,7 @@ export default function ChildInteractiveDonate() {
             {/* Status Card */}
             <div className="mt-6 bg-white px-6 py-3 rounded-xl border border-outline-variant/15 text-center shadow-sm relative z-10 w-full max-w-[220px]">
               <span className="text-label-sm font-semibold text-on-surface-variant/70 block uppercase tracking-wide">
-                Ahmed'in Durumu
+                Ahmed’in Durumu
               </span>
               <span className={cn(
                 "text-lg font-bold block mt-1 transition-all duration-500",

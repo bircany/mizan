@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 type InstagramPost = {
   id: string;
@@ -99,11 +100,12 @@ export default function InstagramWidget() {
               rel="noopener noreferrer"
               className="relative aspect-square rounded-xl overflow-hidden group block bg-surface-container-high"
             >
-              <img
+              <Image
                 src={post.mediaUrl}
                 alt={post.caption?.slice(0, 100) ?? "Instagram post"}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                loading="lazy"
+                fill
+                sizes="(max-width: 1024px) 33vw, 16vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
               {post.mediaType === "VIDEO" && (

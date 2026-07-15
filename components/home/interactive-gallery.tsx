@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Image from "next/image";
 
 interface GalleryTab {
   id: string;
@@ -24,11 +25,13 @@ export default function InteractiveGallery({ tabs }: InteractiveGalleryProps) {
   return (
     <section className="relative w-full h-[650px] md:h-[700px] bg-surface-container-high">
       {tabs.map((tab) => (
-        <img
+        <Image
           key={tab.id}
           src={tab.image}
           alt=""
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[400ms] ease-in-out"
+          fill
+          sizes="100vw"
+          className="object-cover transition-opacity duration-[400ms] ease-in-out"
           style={{ opacity: tab.id === activeId ? 1 : 0 }}
         />
       ))}

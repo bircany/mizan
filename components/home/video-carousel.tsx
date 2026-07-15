@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface VideoSlide {
@@ -41,10 +42,12 @@ export default function VideoCarousel({ slides }: VideoCarouselProps) {
               transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
               className="relative aspect-video bg-surface-container-high"
             >
-              <img
+              <Image
                 src={slides[active].thumbnail}
                 alt={slides[active].title}
-                className="w-full h-full object-cover"
+                fill
+                sizes="100vw"
+                className="object-cover"
               />
               <a
                 href={slides[active].url}

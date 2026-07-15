@@ -19,12 +19,14 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [rates, setRates] = useState({ usdTry: 32.5, eurTry: 35.0 }); // reasonable fallbacks
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
     try {
       const stored = localStorage.getItem("mizan-currency") as Currency | null;
       if (stored && ["TRY", "USD", "EUR"].includes(stored)) {
         setCurrencyState(stored);
       }
     } catch {}
+    }, 0);
 
     const fetchRates = async () => {
       try {
@@ -37,6 +39,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       }
     };
     fetchRates();
+    return () => window.clearTimeout(timer);
   }, []);
 
   const setCurrency = useCallback((newCurrency: Currency) => {

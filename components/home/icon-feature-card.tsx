@@ -1,6 +1,8 @@
 "use client";
 
 import { type ReactNode } from "react";
+import Link from "next/link";
+import Image from "next/image";
 
 interface IconFeatureCardProps {
   icon: ReactNode;
@@ -25,10 +27,12 @@ export default function IconFeatureCard({
     <div className="group bg-white rounded-3xl overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-1">
       {image && (
         <div className="relative aspect-[4/3] overflow-hidden">
-          <img
+          <Image
             src={image}
             alt={imageAlt}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1200ms] ease-out"
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-[1200ms] ease-out"
           />
         </div>
       )}
@@ -47,13 +51,13 @@ export default function IconFeatureCard({
           </div>
         </div>
         {linkLabel && (
-          <a
+          <Link
             href={linkHref}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:gap-3 transition-all duration-300 pt-1"
           >
             {linkLabel}
             <span className="text-base">→</span>
-          </a>
+          </Link>
         )}
       </div>
     </div>

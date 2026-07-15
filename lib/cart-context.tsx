@@ -38,7 +38,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
 
   useEffect(() => {
-    setItems(loadCartFromStorage())
+    const timer = window.setTimeout(() => setItems(loadCartFromStorage()), 0)
+    return () => window.clearTimeout(timer)
   }, [])
 
   useEffect(() => {

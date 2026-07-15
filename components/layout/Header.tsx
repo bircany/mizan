@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/language-context";
@@ -10,7 +11,7 @@ import { useCurrency } from "@/lib/currency-context";
 
 const navLinks = [
   { href: "/hakkimizda", label: "Hakkımızda" },
-  { href: "/bagis", label: "Kampanyalar" },
+  { href: "/bagis", label: "Bağış Alanları" },
   { href: "/haberler", label: "Haberler" },
   { href: "/kurban", label: "Kurban" },
   { href: "/iletisim", label: "İletişim" },
@@ -65,29 +66,29 @@ export default function Header() {
           "relative z-[60] py-2.5 text-[13px] font-medium transition-all duration-500",
           scrolled
             ? "bg-white/90 backdrop-blur-md border-b border-outline-variant/10 text-on-surface-variant/70"
-            : "bg-[#f5f6f7] border-b border-outline-variant/15 text-[#4f5e5a]"
+            : "bg-[#F8F3EA] border-b border-outline-variant/40 text-on-surface-variant"
         )}
         ref={dropdownRef}
       >
-        <div className="max-w-container-max mx-auto px-margin-desktop flex justify-between items-center">
+        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop flex justify-between items-center gap-2">
           {/* Left: Phone + Social */}
-          <div className="flex items-center gap-5 shrink-0">
+          <div className="flex items-center gap-3 sm:gap-5 shrink-0">
             <a
               className="flex items-center gap-1.5 hover:text-primary transition-colors"
               href="tel:+902126312121"
             >
               <span className="material-symbols-outlined text-[15px] text-primary/70">phone</span>
-              <span className="tracking-wide">+90 212 631 21 21</span>
+              <span className="hidden sm:inline tracking-wide">+90 212 631 21 21</span>
             </a>
-            <span className="text-outline-variant/30">|</span>
-            <button className="flex items-center gap-1.5 hover:text-primary transition-colors">
+            <span className="hidden sm:inline text-outline-variant/30">|</span>
+            <button className="hidden sm:flex items-center gap-1.5 hover:text-primary transition-colors">
               <span className="material-symbols-outlined text-[15px] text-primary/70">share</span>
               <span className="tracking-wide">Takip Et</span>
             </button>
           </div>
 
           {/* Right: Lang + Currency */}
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-4 shrink-0">
             {/* Language */}
             <div className="relative">
               <button
@@ -127,7 +128,7 @@ export default function Header() {
               )}
             </div>
 
-            <span className="text-outline-variant/30">|</span>
+            <span className="hidden sm:inline text-outline-variant/30">|</span>
 
             {/* Currency */}
             <div className="relative">
@@ -171,27 +172,19 @@ export default function Header() {
 
       {/* MAIN NAV */}
       <header
-        className={cn(
-          "sticky top-0 z-50 transition-all duration-500",
-          scrolled
-            ? "bg-white/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.06)]"
-            : "bg-transparent"
-        )}
+        className="sticky top-0 z-50 border-b border-outline-variant/20 bg-surface/95 shadow-[0_1px_8px_rgba(0,0,0,0.06)] backdrop-blur-md transition-all duration-500"
       >
-        <nav className="max-w-container-max mx-auto px-margin-desktop flex justify-between items-center h-16 lg:h-[72px]">
+        <nav className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop flex justify-between items-center h-16 lg:h-[72px]">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group shrink-0">
-            <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-primary flex items-center justify-center text-white text-base lg:text-lg font-bold shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-300">
-              M
-            </div>
-            <span
-              className={cn(
-                "text-lg lg:text-xl font-bold tracking-tight transition-colors duration-500",
-                scrolled ? "text-primary" : "text-white drop-shadow-lg"
-              )}
-            >
-              Mizan Derneği
-            </span>
+            <Image
+              src="/mizan-logo.png"
+              alt="Mizan Derneği"
+              width={44}
+              height={44}
+              priority
+              className="h-11 w-11 rounded-full object-contain transition-transform duration-300 group-hover:scale-105"
+            />
           </Link>
 
           {/* Desktop Nav Links */}
@@ -202,13 +195,9 @@ export default function Header() {
                 href={link.href}
                 className={cn(
                   "relative px-4 py-2 text-[14px] font-medium tracking-wide rounded-lg transition-all duration-300",
-                  scrolled
-                    ? "text-on-surface-variant/80 hover:text-primary hover:bg-primary/5"
-                    : "text-white/85 hover:text-white hover:bg-white/10",
+                  "text-on-surface-variant/80 hover:text-primary hover:bg-primary/5",
                   isActive(link.href) && cn(
-                    scrolled
-                      ? "text-primary bg-primary/5"
-                      : "text-white bg-white/15"
+                    "text-primary bg-primary/5"
                   )
                 )}
               >
@@ -221,14 +210,12 @@ export default function Header() {
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {/* Search */}
             <button
               className={cn(
                 "p-2.5 rounded-full transition-all duration-200",
-                scrolled
-                  ? "text-on-surface-variant/70 hover:text-primary hover:bg-primary/5"
-                  : "text-white/70 hover:text-white hover:bg-white/10"
+                "text-on-surface-variant/70 hover:text-primary hover:bg-primary/5"
               )}
               aria-label="Search"
             >
@@ -240,9 +227,7 @@ export default function Header() {
               href="/bagis"
               className={cn(
                 "p-2.5 rounded-full transition-all duration-200 relative",
-                scrolled
-                  ? "text-on-surface-variant/70 hover:text-primary hover:bg-primary/5"
-                  : "text-white/70 hover:text-white hover:bg-white/10"
+                "text-on-surface-variant/70 hover:text-primary hover:bg-primary/5"
               )}
               aria-label="Cart"
             >
@@ -268,9 +253,7 @@ export default function Header() {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className={cn(
                 "lg:hidden p-2.5 rounded-full transition-all duration-200",
-                scrolled
-                  ? "text-on-surface-variant hover:bg-primary/5"
-                  : "text-white hover:bg-white/10"
+                "text-on-surface-variant hover:bg-primary/5"
               )}
               aria-label="Toggle menu"
             >
@@ -292,14 +275,17 @@ export default function Header() {
           />
 
           {/* Menu Panel */}
-          <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl animate-fade-left">
+          <div className="absolute right-0 top-0 h-full w-80 max-w-[90vw] bg-white shadow-2xl animate-fade-left flex flex-col">
             {/* Mobile Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/15">
               <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white text-lg font-bold">
-                  M
-                </div>
-                <span className="text-lg font-bold text-primary tracking-tight">Mizan Derneği</span>
+                <Image
+                  src="/mizan-logo.png"
+                  alt="Mizan Derneği"
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-full object-contain"
+                />
               </Link>
               <button
                 onClick={() => setMobileMenuOpen(false)}
@@ -344,7 +330,7 @@ export default function Header() {
             {/* Mobile Footer */}
             <div className="px-6 pb-6 pt-4 border-t border-outline-variant/10">
               {/* Lang + Currency */}
-              <div className="flex items-center justify-center gap-6 mb-5">
+              <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-6 mb-5">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[16px] text-primary/70">language</span>
                   <div className="flex gap-1">

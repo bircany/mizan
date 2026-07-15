@@ -1,95 +1,82 @@
-import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
-import { createPayment } from '@/lib/iyzico'
-import { sendDonationReceipt } from '@/lib/resend'
-import { generateReceipt } from '@/lib/pdf'
+import { NextResponse } from "next/server";
+
+import { getPayloadClient } from "@/lib/payload";
+import { getPaymentPublicUrl } from "@/lib/payments/urls";
+import {
+  createPaymentInitialization,
+  PaymentInitializationError,
+} from "@/lib/payments/service";
+import { parsePaymentInitialization } from "@/lib/payments/validation";
+import { enforceRateLimit, RateLimitError } from "@/lib/rate-limit";
+
+function getRequestIp(request: Request) {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "127.0.0.1"
+  );
+}
+
+function getCallbackUrl(request: Request) {
+  return getPaymentPublicUrl(request.url, "/api/payments/callback");
+}
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { donor_name, email, phone, campaign_id, amount, currency } = body
+    const requestBody = (await request.json()) as Record<string, unknown>;
+    const body = parsePaymentInitialization({
+      ...requestBody,
+      donorName: requestBody.donor_name || requestBody.donorName,
+      campaignId: requestBody.campaign_id || requestBody.campaignId,
+      note: requestBody.donation_note || requestBody.donationNote,
+    });
+    const ip = getRequestIp(request);
+    await enforceRateLimit({
+      scope: "payment-initialize",
+      identity: `${ip}:${body.email}`,
+      maxRequests: 5,
+      windowSeconds: 15 * 60,
+    });
+    const payload = await getPayloadClient();
 
-    if (!donor_name || !email || !amount || !campaign_id) {
-      return NextResponse.json(
-        { error: 'Missing required fields: donor_name, email, amount, campaign_id' },
-        { status: 400 }
-      )
-    }
-
-    const receiptNumber = `MIZAN-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
-    const donationAmount = Number(amount)
-    const donationCurrency = currency || 'TRY'
-
-    const { data: donation, error: dbError } = await supabase
-      .from('donations')
-      .insert({
-        donor_name,
-        email,
-        phone: phone || null,
-        campaign_id,
-        amount: donationAmount,
-        currency: donationCurrency,
-        status: 'pending',
-        receipt_number: receiptNumber,
-      })
-      .select()
-      .single()
-
-    if (dbError) {
-      return NextResponse.json({ error: 'Failed to save donation' }, { status: 500 })
-    }
-
-    const paymentResult = await createPayment(
-      donationAmount,
-      donationCurrency,
-      body.cardDetails,
-      body.buyerInfo
-    )
-
-    const paymentResponse = paymentResult as { status: string; paymentId?: string; errorMessage?: string }
-
-    if (paymentResponse.status === 'success') {
-      await supabase
-        .from('donations')
-        .update({ status: 'completed' })
-        .eq('id', donation.id)
-
-      await sendDonationReceipt(email, donor_name, donationAmount, receiptNumber)
-
-      const pdfBlob = generateReceipt(
-        donor_name,
-        donationAmount,
-        donationCurrency,
-        new Date().toLocaleDateString('tr-TR'),
-        receiptNumber
-      )
-
-      const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
-
-      await supabase.storage
-        .from('receipts')
-        .upload(`receipts/${receiptNumber}.pdf`, pdfBuffer, {
-          contentType: 'application/pdf',
-        })
-
-      return NextResponse.json({
-        success: true,
-        redirectUrl: `/odeme/sonuc?receipt=${receiptNumber}`,
-        paymentId: paymentResponse.paymentId,
-      })
-    }
-
-    await supabase
-      .from('donations')
-      .update({ status: 'failed' })
-      .eq('id', donation.id)
+    const result = await createPaymentInitialization(payload, {
+      donorName: body.donorName,
+      email: body.email,
+      phone: body.phone,
+      identityNumber: body.identityNumber,
+      address: body.address,
+      city: body.city,
+      amount: body.amount,
+      currency: body.currency,
+      campaignId: body.campaignId,
+      note: body.note,
+      taxReceiptRequested: body.taxReceiptRequested,
+      kvkkAcceptedAt: body.kvkkAccepted ? new Date().toISOString() : "",
+      termsAcceptedAt: body.termsAccepted ? new Date().toISOString() : "",
+      ip,
+      callbackUrl: getCallbackUrl(request),
+    });
 
     return NextResponse.json({
-      success: false,
-      error: paymentResponse.errorMessage || 'Payment failed',
-    })
+      success: true,
+      paymentPageUrl: result.paymentPageUrl,
+      checkoutFormContent: result.checkoutFormContent,
+      conversationId: result.conversationId,
+    });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'An unexpected error occurred'
-    return NextResponse.json({ error: message }, { status: 500 })
+    const status =
+      error instanceof PaymentInitializationError
+        ? error.status
+        : error instanceof RateLimitError
+          ? error.status
+          : 400;
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Ödeme başlatılamadı.",
+      },
+      { status },
+    );
   }
 }

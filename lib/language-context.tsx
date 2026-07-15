@@ -28,7 +28,7 @@ const messagesCache: Record<string, Record<string, string>> = {};
 async function loadMessages(locale: Locale): Promise<Record<string, string>> {
   if (messagesCache[locale]) return messagesCache[locale];
   try {
-    const module = await import(`@/messages/${locale}.json`);
+    const messagesModule = await import(`@/messages/${locale}.json`);
     const flat: Record<string, string> = {};
     const flatten = (obj: Record<string, unknown>, prefix = "") => {
       for (const [key, val] of Object.entries(obj)) {
@@ -39,7 +39,7 @@ async function loadMessages(locale: Locale): Promise<Record<string, string>> {
         }
       }
     };
-    flatten(module.default || module);
+    flatten(messagesModule.default || messagesModule);
     messagesCache[locale] = flat;
     return flat;
   } catch {
@@ -59,13 +59,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY) as Locale | null;
-      if (stored && ["tr", "en", "ar"].includes(stored)) {
-        setLocaleState(stored);
-      }
-    } catch {}
-    setReady(true);
+    const timer = window.setTimeout(() => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY) as Locale | null;
+        if (stored && ["tr", "en", "ar"].includes(stored)) setLocaleState(stored);
+      } catch {}
+      setReady(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {

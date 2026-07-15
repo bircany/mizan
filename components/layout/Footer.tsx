@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const footerLinks = {
   hizli: [
@@ -59,7 +60,7 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="relative bg-[#1a2416] text-white pt-24 pb-5 overflow-hidden">
+    <footer className="relative bg-[#273426] text-white pt-16 md:pt-24 pb-5 overflow-hidden">
       <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
@@ -69,10 +70,22 @@ export default function Footer() {
         }}
       />
 
-      <div className="relative z-10 max-w-container-max mx-auto px-margin-desktop">
+      <div className="relative z-10 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-14 mb-16">
           <div className="lg:pr-12">
-            <span className="text-headline-md font-bold text-gold">Mizan Derneği</span>
+            <div className="flex items-center gap-3">
+              <Image
+                src="/mizan-logo.png"
+                alt="Mizan Derneği"
+                width={64}
+                height={64}
+                className="h-16 w-16 rounded-full object-contain bg-white/95 p-1.5 shadow-sm"
+              />
+              <div>
+                <p className="text-headline-md font-bold text-gold">Mizan Derneği</p>
+                <p className="text-[13px] text-white/45 tracking-wide">İyilikte Mizan</p>
+              </div>
+            </div>
             <p className="text-base text-white/55 leading-relaxed mt-5 mb-8">
               Elbistan merkezli Mizan Derneği, dünyanın dört bir yanındaki mazlumlara
               denge ve umut olmak için yola çıkmıştır.

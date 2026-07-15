@@ -39,7 +39,12 @@ export default function QuickDonationCarousel({
     if (!emblaApi) return;
     emblaApi.on("select", onEmblaSelect);
     emblaApi.on("reInit", onEmblaSelect);
-    onEmblaSelect();
+    const frame = requestAnimationFrame(onEmblaSelect);
+    return () => {
+      cancelAnimationFrame(frame);
+      emblaApi.off("select", onEmblaSelect);
+      emblaApi.off("reInit", onEmblaSelect);
+    };
   }, [emblaApi, onEmblaSelect]);
 
   const handleCardClick = useCallback(

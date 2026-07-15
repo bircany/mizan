@@ -1,42 +1,50 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig } from "payload";
+
+import { anyone, superAdminsOnly } from "@/payload/access";
 
 export const Pages: CollectionConfig = {
-  slug: 'pages',
+  slug: "pages",
   admin: {
-    useAsTitle: 'title',
-    group: 'İçerik',
-    defaultColumns: ['title', 'slug', 'published', 'updatedAt'],
+    useAsTitle: "title",
+    group: "Icerik",
+    defaultColumns: ["title", "slug", "published", "updatedAt"],
+  },
+  access: {
+    read: anyone,
+    create: superAdminsOnly,
+    update: superAdminsOnly,
+    delete: superAdminsOnly,
   },
   timestamps: true,
   fields: [
     {
-      name: 'title',
-      type: 'text',
+      name: "title",
+      type: "text",
       required: true,
       localized: true,
     },
     {
-      name: 'content',
-      type: 'richText',
+      name: "content",
+      type: "richText",
       localized: true,
     },
     {
-      name: 'slug',
-      type: 'text',
+      name: "slug",
+      type: "text",
       required: true,
       unique: true,
       index: true,
       admin: {
-        position: 'sidebar',
+        position: "sidebar",
       },
     },
     {
-      name: 'published',
-      type: 'checkbox',
+      name: "published",
+      type: "checkbox",
       defaultValue: true,
       admin: {
-        position: 'sidebar',
+        position: "sidebar",
       },
     },
   ],
-}
+};

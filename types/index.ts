@@ -1,52 +1,47 @@
 export interface Campaign {
   id: string;
-  title_tr: string;
-  title_en?: string;
-  title_ar?: string;
-  description_tr: string;
-  description_en?: string;
-  description_ar?: string;
-  target_amount: number;
-  collected_amount: number;
-  image_url: string;
-  category: string;
-  is_active: boolean;
+  title: string;
+  targetAmount: number;
+  collectedAmount: number;
+  currency: string;
+  isDonationOpen: boolean;
   slug: string;
-  created_at: string;
+  createdAt: string;
 }
 
 export interface Donation {
   id: string;
-  donor_name: string;
+  donorName: string;
   email: string;
   phone?: string;
-  campaign_id: string;
-  amount: number;
+  campaign: string;
+  grossAmount: number;
+  netConfirmedAmount: number;
   currency: string;
-  status: "pending" | "completed" | "failed";
-  receipt_number?: string;
-  created_at: string;
+  status:
+    | "paid"
+    | "pending_review"
+    | "failed"
+    | "cancelled"
+    | "partially_refunded"
+    | "refunded";
+  paymentId: string;
+  receiptNumber?: string;
+  createdAt: string;
 }
 
 export interface NewsItem {
   id: string;
-  title_tr: string;
-  title_en?: string;
-  title_ar?: string;
-  content_tr: string;
-  content_en?: string;
-  content_ar?: string;
+  title: string;
   image: string;
   category: string;
-  published_at: string;
+  publishedAt: string;
   slug: string;
 }
 
 export interface Category {
   id: string;
-  name_tr: string;
-  name_en?: string;
-  name_ar?: string;
+  name: string;
   icon: string;
   color: string;
   slug: string;

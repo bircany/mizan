@@ -1,97 +1,49 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig } from "payload";
+
+import { financeOnly } from "@/payload/access";
 
 export const Donations: CollectionConfig = {
-  slug: 'donations',
+  slug: "donations",
   admin: {
-    useAsTitle: 'donor_name',
-    group: 'Bağışlar',
-    defaultColumns: ['donor_name', 'amount', 'currency', 'status', 'campaign', 'createdAt'],
-    listSearchableFields: ['donor_name', 'email', 'receipt_number'],
+    useAsTitle: "receiptNumber",
+    group: "Operasyon",
+    defaultColumns: ["receiptNumber", "donorName", "grossAmount", "status", "campaign", "createdAt"],
+    listSearchableFields: ["donorName", "email", "receiptNumber", "paymentId"],
+  },
+  access: {
+    read: financeOnly,
+    // Donations are created and transitioned only by the verified payment service.
+    create: () => false,
+    update: () => false,
+    delete: () => false,
   },
   timestamps: true,
   fields: [
+    { name: "donorName", type: "text", required: true },
+    { name: "email", type: "email", required: true },
+    { name: "phone", type: "text" },
+    { name: "campaign", type: "relationship", relationTo: "campaigns", required: true },
+    { name: "grossAmount", type: "number", required: true, min: 1 },
+    { name: "netConfirmedAmount", type: "number", required: true, min: 0 },
     {
-      name: 'donor_name',
-      type: 'text',
+      name: "currency",
+      type: "select",
+      options: ["TRY", "USD", "EUR", "GBP"],
+      defaultValue: "TRY",
       required: true,
     },
     {
-      name: 'email',
-      type: 'email',
+      name: "status",
+      type: "select",
+      options: ["paid", "pending_review", "failed", "cancelled", "partially_refunded", "refunded"],
+      defaultValue: "pending_review",
       required: true,
     },
-    {
-      name: 'phone',
-      type: 'text',
-    },
-    {
-      name: 'campaign',
-      type: 'relationship',
-      relationTo: 'campaigns',
-    },
-    {
-      name: 'amount',
-      type: 'number',
-      required: true,
-      min: 1,
-    },
-    {
-      name: 'currency',
-      type: 'select',
-      options: [
-        { label: '₺ TRY', value: 'TRY' },
-        { label: '$ USD', value: 'USD' },
-        { label: '€ EUR', value: 'EUR' },
-      ],
-      defaultValue: 'TRY',
-    },
-    {
-      name: 'status',
-      type: 'select',
-      options: [
-        { label: 'Beklemede', value: 'pending' },
-        { label: 'Tamamlandı', value: 'completed' },
-        { label: 'Başarısız', value: 'failed' },
-        { label: 'İade Edildi', value: 'refunded' },
-      ],
-      defaultValue: 'pending',
-      admin: {
-        position: 'sidebar',
-      },
-    },
-    {
-      name: 'receipt_number',
-      type: 'text',
-      unique: true,
-      admin: {
-        readOnly: true,
-        position: 'sidebar',
-      },
-      hooks: {
-        beforeValidate: [
-          ({ data, operation }: any) => {
-            if (operation === 'create' && !data?.receipt_number) {
-              const timestamp = Date.now().toString(36).toUpperCase()
-              const random = Math.random().toString(36).substring(2, 6).toUpperCase()
-              return `MIZ-${timestamp}-${random}`
-            }
-            return data?.receipt_number
-          },
-        ],
-      },
-    },
-    {
-      name: 'donation_note',
-      type: 'textarea',
-      maxLength: 500,
-    },
-    {
-      name: 'is_recurring',
-      type: 'checkbox',
-      defaultValue: false,
-      admin: {
-        position: 'sidebar',
-      },
-    },
+    { name: "paymentId", type: "text", required: true, unique: true, index: true },
+    { name: "receiptNumber", type: "text", required: true, unique: true },
+    { name: "paymentSession", type: "relationship", relationTo: "payment-sessions", required: true },
+    { name: "taxReceiptRequested", type: "checkbox", defaultValue: false },
+    { name: "donationNote", type: "textarea" },
+    { name: "receiptPath", type: "text" },
   ],
-}
+};
