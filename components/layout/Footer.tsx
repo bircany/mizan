@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_E164 } from "@/lib/contact";
 
 const footerLinks = {
   hizli: [
@@ -176,10 +177,10 @@ export default function Footer() {
                   phone_in_talk
                 </span>
                 <a
-                  href="tel:+90344XXX"
+                  href={`tel:${SUPPORT_PHONE_E164}`}
                   className="hover:text-gold transition-colors duration-200"
                 >
-                  +90 344 XXX XX XX
+                  {SUPPORT_PHONE_DISPLAY}
                 </a>
               </div>
             </div>

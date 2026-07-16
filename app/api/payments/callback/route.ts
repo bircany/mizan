@@ -7,7 +7,10 @@ import { getPaymentPublicUrl } from "@/lib/payments/urls";
 async function readToken(request: Request) {
   const contentType = request.headers.get("content-type") || "";
 
-  if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
+  if (
+    contentType.includes("application/x-www-form-urlencoded") ||
+    contentType.includes("multipart/form-data")
+  ) {
     const formData = await request.formData();
     return String(formData.get("token") || "");
   }
@@ -20,11 +23,16 @@ function getResultUrl(request: Request) {
   return new URL(getPaymentPublicUrl(request.url, "/odeme/sonuc"));
 }
 
-export async function POST(request: Request) {
+async function handleCallback(request: Request, token: string) {
   try {
-    const token = await readToken(request);
     if (!token) {
-      return NextResponse.json({ success: false, error: "Token bulunamadı." }, { status: 400 });
+      const redirectUrl = getResultUrl(request);
+      redirectUrl.searchParams.set("status", "failed");
+      redirectUrl.searchParams.set(
+        "message",
+        "Ödeme sonucu alınamadı. Lütfen tekrar deneyin.",
+      );
+      return NextResponse.redirect(redirectUrl, 303);
     }
 
     const payload = await getPayloadClient();
@@ -45,7 +53,20 @@ export async function POST(request: Request) {
 
     const redirectUrl = getResultUrl(request);
     redirectUrl.searchParams.set("status", "failed");
-    redirectUrl.searchParams.set("message", "Ödeme doğrulanamadı. Lütfen tekrar deneyin.");
+    redirectUrl.searchParams.set(
+      "message",
+      "Ödeme doğrulanamadı. Lütfen tekrar deneyin.",
+    );
     return NextResponse.redirect(redirectUrl, 303);
   }
+}
+
+export async function POST(request: Request) {
+  const token = await readToken(request);
+  return handleCallback(request, token);
+}
+
+export async function GET(request: Request) {
+  const token = new URL(request.url).searchParams.get("token") || "";
+  return handleCallback(request, token);
 }

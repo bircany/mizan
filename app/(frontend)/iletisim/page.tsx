@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_E164, SUPPORT_WHATSAPP_URL } from "@/lib/contact";
 
 export default function IletisimPage() {
   const [formData, setFormData] = useState({
@@ -61,12 +62,12 @@ export default function IletisimPage() {
                 </span>
                 <div>
                   <h3 className="font-label-md text-label-md font-bold text-on-surface mb-xs">Telefon</h3>
-                  <p className="text-body-md text-on-surface-variant leading-relaxed">
-                    +90 (544) 123 45 67
-                  </p>
-                  <p className="text-body-md text-on-surface-variant leading-relaxed">
-                    +90 (544) 123 45 68
-                  </p>
+                  <a className="block text-body-md text-on-surface-variant leading-relaxed hover:text-primary transition-colors" href={`tel:${SUPPORT_PHONE_E164}`}>
+                    {SUPPORT_PHONE_DISPLAY}
+                  </a>
+                  <a className="mt-1 block text-body-md text-on-surface-variant leading-relaxed hover:text-primary transition-colors" href={SUPPORT_WHATSAPP_URL} target="_blank" rel="noreferrer">
+                    WhatsApp: {SUPPORT_PHONE_DISPLAY}
+                  </a>
                 </div>
               </div>
             </div>

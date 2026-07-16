@@ -15,6 +15,7 @@ import ScrollReveal from "@/components/ui/scroll-reveal";
 import CountUp from "@/components/ui/count-up";
 import FloatingActionBar from "@/components/layout/floating-action-bar";
 import QuickDonationCarousel from "@/components/home/quick-donation-carousel";
+import { SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_E164 } from "@/lib/contact";
 
 const slides = [
   {
@@ -304,8 +305,8 @@ export default function HomePage() {
               </div>
               <div className="flex items-center gap-3 text-on-surface-variant mt-4">
                 <span className="material-symbols-outlined text-primary">phone_in_talk</span>
-                <a href="tel:+90344XXX" className="text-lg font-semibold hover:text-gold transition-colors">
-                  +90 344 XXX XX XX
+                <a href={`tel:${SUPPORT_PHONE_E164}`} className="text-lg font-semibold hover:text-gold transition-colors">
+                  {SUPPORT_PHONE_DISPLAY}
                   </a>
                 </div>
             </motion.div>
@@ -400,8 +401,8 @@ export default function HomePage() {
               </div>
 
               <div className="relative">
-                <div className="rounded-3xl overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.08)] aspect-[3/4]">
-                                    <Image
+                <div className="relative rounded-3xl overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.08)] aspect-[3/4]">
+                  <Image
                     src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80"
                     alt="Mizan Derneği"
                     fill
@@ -693,30 +694,30 @@ export default function HomePage() {
           {
             id: "v1",
             thumbnail:
-              "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1200&q=80",
-            title: "Medrese Eğitimi",
-            url: "https://www.youtube.com/watch?v=EjIFDftIhQg",
+              "https://img.youtube.com/vi/qgUldGZABdQ/hqdefault.jpg",
+            title: "Beraat kandili özel | Hamza Algül Hocaefendi",
+            url: "https://www.youtube.com/watch?v=qgUldGZABdQ",
           },
           {
             id: "v2",
             thumbnail:
-              "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&w=1200&q=80",
-            title: "Talebeye Destek",
-            url: "https://www.youtube.com/watch?v=I8mZ_TimZh4",
+              "https://img.youtube.com/vi/lm_CFUwQX5Q/hqdefault.jpg",
+            title: "Fıkıh sohbeti -1 (Nur'ul İzah)",
+            url: "https://www.youtube.com/watch?v=lm_CFUwQX5Q",
           },
           {
             id: "v3",
             thumbnail:
-              "https://images.unsplash.com/photo-1594708767771-a7502209ff51?auto=format&fit=crop&w=1200&q=80",
-            title: "Sürekli Aşevi",
-            url: "https://www.youtube.com/watch?v=SgpfQDXw020",
+              "https://img.youtube.com/vi/Zg81RYBZk8o/hqdefault.jpg",
+            title: "HAMZA HOCA GÜMÜŞPINAR CAMİİ TAZİYE SOHBETİ",
+            url: "https://www.youtube.com/watch?v=Zg81RYBZk8o",
           },
           {
             id: "v4",
             thumbnail:
-              "https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=1200&q=80",
-            title: "Sosyal Yardım",
-            url: "https://www.youtube.com/watch?v=Ncxhfa2irSA",
+              "https://img.youtube.com/vi/2GFFYDXU7ck/hqdefault.jpg",
+            title: "Kalblerin Keşfi -95 Haram Mal Toplamak",
+            url: "https://m.youtube.com/watch?v=2GFFYDXU7ck",
           },
         ]}
       />

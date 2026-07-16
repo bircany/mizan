@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/language-context";
 import { useCart } from "@/lib/cart-context";
 import { useCurrency } from "@/lib/currency-context";
+import { SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_E164 } from "@/lib/contact";
 
 const navLinks = [
   { href: "/hakkimizda", label: "Hakkımızda" },
@@ -75,10 +76,10 @@ export default function Header() {
           <div className="flex items-center gap-3 sm:gap-5 shrink-0">
             <a
               className="flex items-center gap-1.5 hover:text-primary transition-colors"
-              href="tel:+902126312121"
+              href={`tel:${SUPPORT_PHONE_E164}`}
             >
               <span className="material-symbols-outlined text-[15px] text-primary/70">phone</span>
-              <span className="hidden sm:inline tracking-wide">+90 212 631 21 21</span>
+              <span className="hidden sm:inline tracking-wide">{SUPPORT_PHONE_DISPLAY}</span>
             </a>
             <span className="hidden sm:inline text-outline-variant/30">|</span>
             <button className="hidden sm:flex items-center gap-1.5 hover:text-primary transition-colors">
