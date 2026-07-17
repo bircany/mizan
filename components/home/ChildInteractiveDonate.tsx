@@ -149,6 +149,19 @@ export default function ChildInteractiveDonate() {
 
           <div className="mx-auto w-full max-w-[420px] text-center">
             <div className="relative mx-auto aspect-[370/490] w-[290px] sm:w-[320px]">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute left-1/2 top-[48%] z-0 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2"
+              >
+                <div
+                  className="ahmet-spotlight h-full w-full rounded-full blur-[2px]"
+                  style={{
+                    background:
+                      "radial-gradient(circle, rgba(22, 163, 74, 0.34) 0%, rgba(22, 163, 74, 0.16) 42%, rgba(22, 163, 74, 0) 72%)",
+                  }}
+                />
+              </div>
+
               {stationery > 0 && (
                 <img
                   src={orphanAssets.stationary}
@@ -187,6 +200,33 @@ export default function ChildInteractiveDonate() {
                 />
               )}
             </div>
+
+            <style jsx>{`
+              .ahmet-spotlight {
+                animation: ahmet-spotlight-pulse 5.2s ease-in-out infinite;
+                transform-origin: center;
+              }
+
+              @keyframes ahmet-spotlight-pulse {
+                0%,
+                100% {
+                  opacity: 0.58;
+                  transform: scale(0.92);
+                }
+                50% {
+                  opacity: 0.9;
+                  transform: scale(1.08);
+                }
+              }
+
+              @media (prefers-reduced-motion: reduce) {
+                .ahmet-spotlight {
+                  animation: none;
+                  opacity: 0.72;
+                  transform: none;
+                }
+              }
+            `}</style>
 
             <div className="mt-5 text-[17px] text-black">
               Toplam <strong>{formatPrice(totalTry)}</strong>
