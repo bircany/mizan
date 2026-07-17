@@ -1,0 +1,3 @@
+export const SUPPORT_PHONE_DISPLAY = "0552 402 67 38";
+export const SUPPORT_PHONE_E164 = "+905524026738";
+export const SUPPORT_WHATSAPP_URL = "https://wa.me/905524026738";

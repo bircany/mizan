@@ -3,12 +3,11 @@ import Image from "next/image";
 export default function HakkimizdaPage() {
   return (
     <>
-      {/* Hero Section */}
       <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
-            src="https://images.unsplash.com/photo-1564769625902-0f0f6a21a6b3?w=1920&q=80"
-            alt="Cami silüeti"
+            src="https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=1920&q=80"
+            alt="Cami silueti"
             fill
             className="object-cover"
             priority
@@ -20,8 +19,7 @@ export default function HakkimizdaPage() {
             Mizan: Adalet ve Denge
           </h1>
           <p className="font-body-lg text-surface-container-high mb-lg max-w-2xl mx-auto">
-            Toplumsal dayanışma ve yardımlaşma ruhunu, adalet ve denge
-            terazisinde insanlığa ulaştırıyoruz.
+            Toplumsal dayanışma ve yardımlaşma ruhunu, adalet ve denge terazisinde insanlığa ulaştırıyoruz.
           </p>
           <div className="font-serif text-5xl md:text-7xl text-secondary-fixed opacity-90 mt-md">
             الميزان
@@ -29,28 +27,23 @@ export default function HakkimizdaPage() {
         </div>
       </section>
 
-      {/* Mission Statement */}
       <section className="bg-primary-container text-on-primary-container py-xl px-margin-mobile md:px-margin-desktop text-center">
         <div className="max-w-3xl mx-auto">
           <span className="material-symbols-outlined text-secondary-fixed mb-sm text-4xl block">
             balance
           </span>
           <blockquote className="font-headline-md text-headline-md font-medium italic mb-md">
-            &ldquo;Göğü O yükseltti, dengeyi (mizanı) O koydu. Sakın dengeyi
-            bozmayın.&rdquo;
+            &ldquo;Göğü O yükseltti, dengeyi (mizanı) O koydu. Sakın dengeyi bozmayın.&rdquo;
           </blockquote>
           <cite className="font-label-md text-label-md text-primary-fixed-dim block uppercase tracking-widest">
             (Rahmân Suresi, 7-8)
           </cite>
           <p className="font-body-lg mt-lg text-on-primary-container/80">
-            Misyonumuz, yeryüzündeki iyilik mizanını korumak; kriz
-            bölgelerinden eğitime, acil yardımdan sürdürülebilir kalkınmaya
-            kadar her alanda adaleti ve dengeyi tesis etmektir.
+            Misyonumuz, yeryüzündeki iyilik mizanını korumak; kriz bölgelerinden eğitime, acil yardımdan sürdürülebilir kalkınmaya kadar her alanda adaleti ve dengeyi tesis etmektir.
           </p>
         </div>
       </section>
 
-      {/* Our Story Timeline */}
       <section className="py-xl px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
         <div className="text-center mb-xl">
           <h2 className="font-headline-xl text-headline-xl text-primary mb-sm">
@@ -62,7 +55,7 @@ export default function HakkimizdaPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-xl items-center mb-xl">
           <div className="order-2 md:order-1">
             <Image
-              src="https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=800&q=80"
+              src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=800&q=80"
               alt="Deprem yardım çalışmaları"
               width={800}
               height={500}
@@ -80,10 +73,7 @@ export default function HakkimizdaPage() {
               Kuruluş ve İlk Adımlar
             </h3>
             <p className="font-body-md text-on-surface-variant mb-md">
-              Mizan Derneği, büyük yıkımların yaşandığı bir dönemde, yaraları
-              sarmak ve toplumsal dayanışmayı yeniden inşa etmek amacıyla
-              kuruldu. İlk büyük sınavımızı deprem bölgelerinde acil yardım ve
-              kurtarma çalışmalarıyla verdik.
+              Mizan Derneği, büyük yıkımların yaşandığı bir dönemde, yaraları sarmak ve toplumsal dayanışmayı yeniden inşa etmek amacıyla kuruldu. İlk büyük sınavımızı deprem bölgelerinde acil yardım ve kurtarma çalışmalarıyla verdik.
             </p>
           </div>
         </div>
@@ -100,15 +90,12 @@ export default function HakkimizdaPage() {
               Küresel İyilik Ağı
             </h3>
             <p className="font-body-md text-on-surface-variant mb-md">
-              Bugün, sadece kriz anlarında değil, Afrika&rsquo;da su kuyuları
-              açarak, kurban organizasyonları düzenleyerek ve medrese
-              projeleriyle eğitime destek vererek iyilik ağımızı küresel çapta
-              genişletiyoruz.
+              Bugün, sadece kriz anlarında değil, Afrika&apos;da su kuyuları açarak, kurban organizasyonları düzenleyerek ve medrese projeleriyle eğitime destek vererek iyilik ağımızı küresel çapta genişletiyoruz.
             </p>
           </div>
           <div>
             <Image
-              src="https://images.unsplash.com/photo-1534278931827-8a259344abe6?w=800&q=80"
+              src="https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=800&q=80"
               alt="Su kuyusu projesi"
               width={800}
               height={500}
