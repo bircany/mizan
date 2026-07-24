@@ -12,7 +12,7 @@ export const Media: CollectionConfig = {
   },
   upload: {
     staticDir: "media",
-    mimeTypes: ["image/*"],
+    mimeTypes: ["image/jpeg", "image/png", "image/webp"],
     adminThumbnail: "thumbnail",
     imageSizes: [
       {
@@ -21,6 +21,13 @@ export const Media: CollectionConfig = {
         height: 300,
       },
     ],
+  },
+  hooks: {
+    beforeOperation: [({ operation, req }) => {
+      if ((operation === "create" || operation === "update") && req.file && req.file.size > 10 * 1024 * 1024) {
+        throw new Error("Görsel en fazla 10 MB olabilir.");
+      }
+    }],
   },
   fields: [
     {

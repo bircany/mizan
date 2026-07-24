@@ -1,6 +1,7 @@
 import type { Payload } from "payload";
 
 import { logAuditEvent } from "@/lib/audit";
+import { getCountryName } from "@/lib/countries";
 import {
   cancelPayment,
   initializeCheckoutForm,
@@ -14,6 +15,7 @@ import {
 import { recordPaymentLedgerEntry } from "@/lib/payments/ledger";
 import { fulfillPaidDonation } from "@/lib/payments/fulfillment";
 import { sendDonationReceipt, sendDonationRefundNotice } from "@/lib/resend";
+import { confirmQurbaniOrderPayment, failQurbaniCheckout, finalizeQurbaniCheckoutPayment } from "@/lib/qurbani/orders";
 
 function generateConversationId() {
   return `mzn_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -90,6 +92,16 @@ async function findDonationCampaign(
   return null;
 }
 
+async function findFundingPool(payload: Payload, reference: string | number) {
+  try {
+    const pool = await payload.findByID({ collection: "campaign-funding-pools", id: reference, depth: 1 });
+    const campaign = typeof pool.campaign === "object" ? pool.campaign : await payload.findByID({ collection: "campaigns", id: pool.campaign, depth: 0 });
+    return { campaign, pool };
+  } catch {
+    return null;
+  }
+}
+
 export async function createPaymentInitialization(
   payload: Payload,
   input: {
@@ -97,6 +109,7 @@ export async function createPaymentInitialization(
     email: string;
     phone?: string;
     identityNumber?: string;
+    countryCode: string;
     address: string;
     city: string;
     amount: number;
@@ -108,9 +121,13 @@ export async function createPaymentInitialization(
     termsAcceptedAt: string;
     ip: string;
     callbackUrl: string;
+    qurbaniOrderId?: string | number;
+    qurbaniCheckoutId?: string | number;
   },
 ) {
-  const campaign = await findDonationCampaign(payload, input.campaignId);
+  const funding = await findFundingPool(payload, input.campaignId);
+  const campaign = funding?.campaign;
+  const pool = funding?.pool;
 
   if (!campaign) {
     throw new PaymentInitializationError(
@@ -119,14 +136,14 @@ export async function createPaymentInitialization(
     );
   }
 
-  if (!campaign.isDonationOpen) {
+  if (!pool?.isDonationOpen || !campaign.isDonationOpen) {
     throw new PaymentInitializationError(
       "Bu bağış alanı şu anda bağış kabul etmiyor.",
       409,
     );
   }
 
-  if (campaign.currency && campaign.currency !== input.currency) {
+  if (pool.currency !== input.currency) {
     throw new PaymentInitializationError(
       "Bağış para birimi, bağış alanının para birimiyle eşleşmiyor.",
       422,
@@ -161,6 +178,7 @@ export async function createPaymentInitialization(
       email: input.email,
       phone: input.phone,
       campaign: campaign.id,
+      fundingPool: pool.id,
       amount: input.amount,
       currency: input.currency,
       note: input.note,
@@ -169,14 +187,16 @@ export async function createPaymentInitialization(
       termsAcceptedAt: input.termsAcceptedAt,
       source: "website",
       status: "draft",
-    },
+      qurbaniOrder: input.qurbaniOrderId,
+      qurbaniCheckout: input.qurbaniCheckoutId,
+    } as never,
   });
 
   let checkout;
   try {
     checkout = await initializeCheckoutForm({
       conversationId,
-      basketId: `bagis-${campaign.id}`,
+      basketId: `bagis-havuz-${pool.id}`,
       amount: input.amount,
       currency: input.currency,
       callbackUrl: input.callbackUrl,
@@ -187,7 +207,7 @@ export async function createPaymentInitialization(
       identityNumber,
       address: input.address,
       city: input.city,
-      country: "Turkey",
+      country: getCountryName(input.countryCode),
       ip: input.ip,
     });
   } catch (error) {
@@ -201,6 +221,7 @@ export async function createPaymentInitialization(
 
     console.error("iyzico ödeme başlatma isteği başarısız oldu.", {
       campaignId: campaign.id,
+      fundingPoolId: pool.id,
       error: error instanceof Error ? error.message : "Bilinmeyen hata",
     });
 
@@ -285,11 +306,62 @@ export async function createPaymentInitialization(
   });
 
   return {
+    intentId: intent.id,
     conversationId,
     token: checkout.token,
     checkoutFormContent: checkout.checkoutFormContent,
     paymentPageUrl: checkout.paymentPageUrl,
   };
+}
+
+async function finalizePaidQurbaniCheckout(
+  payload: Payload,
+  input: { checkoutId: string | number; donationId: string | number; paymentId: string; source: "callback" | "webhook" },
+) {
+  try {
+    const finalized = await finalizeQurbaniCheckoutPayment({ checkoutId: input.checkoutId, donationId: input.donationId, paymentId: input.paymentId, actor: `iyzico:${input.source}` });
+    if (finalized.state === "processing") return "processing" as const;
+    const orderIds = Array.isArray(finalized.orderIds)
+      ? finalized.orderIds
+      : Array.isArray((finalized as { order_ids?: unknown }).order_ids)
+        ? (finalized as { order_ids: number[] }).order_ids
+        : [];
+    for (const orderId of orderIds) {
+      const order = await payload.findByID({ collection: "qurbani-orders", id: orderId, depth: 2, overrideAccess: true });
+      const product = typeof order.product === "object" && order.product ? order.product : null;
+      const campaignId = product?.campaign && typeof product.campaign === "object" ? product.campaign.id : product?.campaign;
+      const fundingPoolId = product?.fundingPool && typeof product.fundingPool === "object" ? product.fundingPool.id : product?.fundingPool;
+      if (!campaignId || !fundingPoolId) throw new Error(`Kurban siparişi ${orderId} finans havuzuna bağlanamadı.`);
+      await recordPaymentLedgerEntry({
+        donationId: Number(input.donationId),
+        campaignId: Number(campaignId),
+        fundingPoolId: Number(fundingPoolId),
+        entryType: "capture",
+        amount: Number(order.totalAmount),
+        currency: order.currency,
+        providerReference: input.paymentId,
+        idempotencyKey: `capture:${input.paymentId}:qurbani-order:${order.id}`,
+        metadata: { qurbaniCheckoutId: input.checkoutId, qurbaniOrderId: order.id },
+      });
+    }
+    await fulfillPaidDonation(payload, input.donationId);
+    return "paid" as const;
+  } catch (error) {
+    console.error("Ödeme alındı ancak kurban checkout finalizer tamamlanamadı.", {
+      checkoutId: input.checkoutId,
+      donationId: input.donationId,
+      paymentId: input.paymentId,
+      error: error instanceof Error ? error.message : "Bilinmeyen finalizer hatası",
+    });
+    await logAuditEvent(payload, {
+      action: "qurbani.checkout_finalization_pending",
+      actorEmail: "iyzico",
+      targetCollection: "qurbani-checkouts",
+      targetId: input.checkoutId,
+      details: { donationId: input.donationId, paymentId: input.paymentId, source: input.source, error: error instanceof Error ? error.message : "Bilinmeyen hata" },
+    }).catch(() => undefined);
+    return "processing" as const;
+  }
 }
 
 export async function confirmCheckoutToken(
@@ -351,9 +423,14 @@ export async function confirmCheckoutToken(
     id: intentId,
     depth: 1,
   });
+  const qurbaniCheckoutValue = (intent as typeof intent & { qurbaniCheckout?: unknown }).qurbaniCheckout;
+  const qurbaniCheckoutId = qurbaniCheckoutValue
+    ? (typeof qurbaniCheckoutValue === "object" && qurbaniCheckoutValue && "id" in qurbaniCheckoutValue ? String((qurbaniCheckoutValue as { id: string | number }).id) : String(qurbaniCheckoutValue))
+    : null;
 
   const campaignId = typeof intent.campaign === "object" ? intent.campaign.id : intent.campaign;
-  if (paymentResult.basketId !== `bagis-${campaignId}`) {
+  const fundingPoolId = typeof intent.fundingPool === "object" ? intent.fundingPool.id : intent.fundingPool;
+  if (!fundingPoolId || paymentResult.basketId !== `bagis-havuz-${fundingPoolId}`) {
     throw new Error("Ödeme sonucu bağış alanı bilgisiyle eşleşmiyor.");
   }
 
@@ -370,8 +447,13 @@ export async function confirmCheckoutToken(
       },
     });
 
+    if (qurbaniCheckoutId) {
+      await failQurbaniCheckout(qurbaniCheckoutId, "PROVIDER_PAYMENT_FAILED").catch(() => undefined);
+    }
+
     return {
       state: "failed" as const,
+      qurbaniCheckoutId,
       reason: paymentResult.errorMessage || "Ödeme başarısız.",
     };
   }
@@ -396,10 +478,13 @@ export async function confirmCheckoutToken(
 
   if (currentDonation.docs[0]) {
     const existingDonation = currentDonation.docs[0];
+    let existingState: "paid" | "processing" | "pending_review" = existingDonation.status === "paid" ? "paid" : "pending_review";
     if (existingDonation.status === "paid" || existingDonation.status === "partially_refunded") {
+      if (!qurbaniCheckoutId) {
       await recordPaymentLedgerEntry({
         donationId: Number(existingDonation.id),
         campaignId: Number(campaignId),
+        fundingPoolId: Number(fundingPoolId),
         entryType: "capture",
         amount: Number(existingDonation.netConfirmedAmount),
         currency: existingDonation.currency,
@@ -407,11 +492,22 @@ export async function confirmCheckoutToken(
         idempotencyKey: `capture:${existingDonation.paymentId}`,
       });
       await fulfillPaidDonation(payload, existingDonation.id);
+      }
+      const existingQurbaniOrderId = intent.qurbaniOrder
+        ? (typeof intent.qurbaniOrder === "object" ? intent.qurbaniOrder.id : intent.qurbaniOrder)
+        : null;
+      if (existingQurbaniOrderId) {
+        await confirmQurbaniOrderPayment({ orderId: existingQurbaniOrderId, donationId: existingDonation.id, providerPaymentId: existingDonation.paymentId, actor: `iyzico:${source}` });
+      }
+      if (qurbaniCheckoutId) {
+        existingState = await finalizePaidQurbaniCheckout(payload, { checkoutId: qurbaniCheckoutId, donationId: existingDonation.id, paymentId: existingDonation.paymentId, source });
+      }
     }
 
     return {
-      state: existingDonation.status === "paid" ? "paid" : "pending_review",
+      state: existingState,
       donation: existingDonation,
+      qurbaniCheckoutId,
     };
   }
 
@@ -427,6 +523,7 @@ export async function confirmCheckoutToken(
       phone: intent.phone,
       campaign:
         campaignId,
+      fundingPool: fundingPoolId,
       grossAmount: Number(paymentResult.price || intent.amount),
       netConfirmedAmount: Number(paymentResult.paidPrice || intent.amount),
       currency: paymentResult.currency || intent.currency,
@@ -436,7 +533,11 @@ export async function confirmCheckoutToken(
       receiptNumber,
       taxReceiptRequested: Boolean(intent.taxReceiptRequested),
       donationNote: intent.note,
-    },
+      qurbaniOrder: intent.qurbaniOrder
+        ? (typeof intent.qurbaniOrder === "object" ? intent.qurbaniOrder.id : intent.qurbaniOrder)
+        : undefined,
+      qurbaniCheckout: qurbaniCheckoutId || undefined,
+    } as never,
   });
 
   await payload.update({
@@ -454,6 +555,7 @@ export async function confirmCheckoutToken(
     targetId: donation.id,
     details: {
       campaignId,
+      fundingPoolId,
       paymentId: donation.paymentId,
       status: donation.status,
       fraudStatus,
@@ -461,10 +563,13 @@ export async function confirmCheckoutToken(
     },
   });
 
+  let finalState: "paid" | "processing" | "pending_review" = donationStatus;
   if (donationStatus === "paid") {
-    await recordPaymentLedgerEntry({
+    if (!qurbaniCheckoutId) {
+      await recordPaymentLedgerEntry({
       donationId: Number(donation.id),
       campaignId: Number(campaignId),
+      fundingPoolId: Number(fundingPoolId),
       entryType: "capture",
       amount: Number(donation.netConfirmedAmount),
       currency: donation.currency,
@@ -472,12 +577,29 @@ export async function confirmCheckoutToken(
       idempotencyKey: `capture:${donation.paymentId}`,
     });
 
-    await fulfillPaidDonation(payload, donation.id);
+      await fulfillPaidDonation(payload, donation.id);
+    }
+
+    const qurbaniOrderId = intent.qurbaniOrder
+      ? (typeof intent.qurbaniOrder === "object" ? intent.qurbaniOrder.id : intent.qurbaniOrder)
+      : null;
+    if (qurbaniOrderId) {
+      await confirmQurbaniOrderPayment({
+        orderId: qurbaniOrderId,
+        donationId: donation.id,
+        providerPaymentId: paymentResult.paymentId,
+        actor: `iyzico:${source}`,
+      });
+    }
+    if (qurbaniCheckoutId) {
+      finalState = await finalizePaidQurbaniCheckout(payload, { checkoutId: qurbaniCheckoutId, donationId: donation.id, paymentId: paymentResult.paymentId, source });
+    }
   }
 
   return {
-    state: donationStatus,
+    state: finalState,
     donation,
+    qurbaniCheckoutId,
   };
 }
 
@@ -639,12 +761,15 @@ export async function executeFinanceAction(
     },
   });
 
-  if (donation.campaign) {
+  if (donation.campaign && donation.fundingPool) {
     const campaignId =
       typeof donation.campaign === "object" ? donation.campaign.id : donation.campaign;
+    const fundingPoolId =
+      typeof donation.fundingPool === "object" ? donation.fundingPool.id : donation.fundingPool;
     await recordPaymentLedgerEntry({
       donationId: Number(donation.id),
       campaignId: Number(campaignId),
+      fundingPoolId: Number(fundingPoolId),
       refundRequestId: Number(refundRequest.id),
       entryType: input.action === "cancel" ? "cancel" : "refund",
       amount: Number(processedAmount),

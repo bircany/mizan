@@ -29,7 +29,7 @@ export const DonationFulfillments: CollectionConfig = {
     {
       name: "receiptStatus",
       type: "select",
-      options: ["pending", "stored", "failed"],
+      options: ["pending", "stored", "failed", "not_requested"],
       defaultValue: "pending",
       required: true,
     },

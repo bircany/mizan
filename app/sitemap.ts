@@ -1,5 +1,10 @@
 import type { MetadataRoute } from "next";
 
+import { getOpenDonationAreas } from "@/lib/public/donation-areas";
+import { getPublishedNews } from "@/lib/public/news";
+import { getPublishedPages } from "@/lib/public/pages";
+import { isManagedSitePageSlug } from "@/lib/site-pages";
+
 const baseUrl = "https://www.mizandernegi.org";
 
 const staticRoutes = [
@@ -9,28 +14,19 @@ const staticRoutes = [
   { url: "/hakkimizda", changefreq: "monthly" as const, priority: 0.7 },
   { url: "/kurban", changefreq: "yearly" as const, priority: 0.9 },
   { url: "/iletisim", changefreq: "monthly" as const, priority: 0.6 },
+  { url: "/kvkk-aydinlatma-metni", changefreq: "yearly" as const, priority: 0.3 },
+  { url: "/cerez-politikasi", changefreq: "yearly" as const, priority: 0.3 },
+  { url: "/gizlilik-politikasi", changefreq: "yearly" as const, priority: 0.3 },
+  { url: "/kullanim-kosullari", changefreq: "yearly" as const, priority: 0.3 },
+  { url: "/bagis-ve-destek-sartlari", changefreq: "yearly" as const, priority: 0.3 },
   { url: "/odeme", changefreq: "monthly" as const, priority: 0.3 },
 ];
 
-const campaignSlugs = [
-  "afrika-kurban-organizasyonu",
-  "mizan-mescidi-insaati",
-  "islami-ilimler-medresesi",
-  "suriye-acil-yardim",
-  "somali-su-kuyusu",
-  "yetim-sponsorlugu",
-];
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  return createSitemap();
+}
 
-const newsSlugs = [
-  "ramazan-kumanya-dagitimlari-basladi",
-  "cadda-yeni-su-kuyumuz-acildi",
-  "medrese-egitim-donemi-kayitlari",
-  "tanzanya-50-yeni-su-kuyusu",
-  "deprem-bolgesine-acil-yardim-sevkiyati",
-  "gelecege-miras-genclik-bulusmasi",
-];
-
-export default function sitemap(): MetadataRoute.Sitemap {
+async function createSitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries = staticRoutes.map((route) => ({
     url: `${baseUrl}${route.url}`,
     changeFrequency: route.changefreq,
@@ -38,19 +34,42 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
   }));
 
-  const campaignEntries = campaignSlugs.map((slug) => ({
-    url: `${baseUrl}/bagis/${slug}`,
-    changeFrequency: "weekly" as const,
-    priority: 0.7,
-    lastModified: new Date(),
-  }));
+  let campaignEntries: MetadataRoute.Sitemap = [];
+  try {
+    const areas = await getOpenDonationAreas();
+    campaignEntries = areas.map((area) => ({
+      url: `${baseUrl}/bagis/${area.slug}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+      lastModified: new Date(),
+    }));
+  } catch {
+    campaignEntries = [];
+  }
 
-  const newsEntries = newsSlugs.map((slug) => ({
-    url: `${baseUrl}/haberler/${slug}`,
-    changeFrequency: "monthly" as const,
-    priority: 0.6,
-    lastModified: new Date(),
-  }));
+  let newsEntries: MetadataRoute.Sitemap = [];
+  try {
+    newsEntries = (await getPublishedNews("tr")).map((post) => ({
+      url: `${baseUrl}/haberler/${post.slug}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+      lastModified: post.updatedAt ? new Date(post.updatedAt) : new Date(),
+    }));
+  } catch {
+    newsEntries = [];
+  }
 
-  return [...staticEntries, ...campaignEntries, ...newsEntries];
+  let pageEntries: MetadataRoute.Sitemap = [];
+  try {
+    pageEntries = (await getPublishedPages("tr")).filter((page) => !isManagedSitePageSlug(page.slug)).map((page) => ({
+      url: `${baseUrl}/sayfa/${page.slug}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+      lastModified: page.updatedAt ? new Date(page.updatedAt) : new Date(),
+    }));
+  } catch {
+    pageEntries = [];
+  }
+
+  return [...staticEntries, ...campaignEntries, ...newsEntries, ...pageEntries];
 }

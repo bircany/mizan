@@ -1,3 +1,6 @@
+import { isValidTurkishIdentityNumber, normalizeTurkishIdentityNumber } from "@/lib/turkish-identity";
+import { isSupportedCountryCode } from "@/lib/countries";
+
 const ALLOWED_CURRENCIES = new Set(["TRY", "USD", "EUR", "GBP"]);
 
 export type PaymentInitializationInput = {
@@ -5,6 +8,7 @@ export type PaymentInitializationInput = {
   email: string;
   phone: string;
   identityNumber?: string;
+  countryCode: string;
   address: string;
   city: string;
   amount: number;
@@ -44,9 +48,8 @@ export function parsePaymentInitialization(body: unknown): PaymentInitialization
   const input = body as Record<string, unknown>;
   const amount = Number(input.amount);
   const currency = typeof input.currency === "string" ? input.currency.toUpperCase() : "TRY";
-  const identityNumber = typeof input.identityNumber === "string"
-    ? input.identityNumber.replace(/\s/g, "")
-    : undefined;
+  const countryCode = typeof input.countryCode === "string" ? input.countryCode.trim().toUpperCase() : "";
+  const identityNumber = typeof input.identityNumber === "string" ? input.identityNumber.trim() : "";
 
   if (!Number.isFinite(amount) || amount <= 0 || amount > 1_000_000) {
     throw new Error("Bağış tutarı geçersiz.");
@@ -59,8 +62,14 @@ export function parsePaymentInitialization(body: unknown): PaymentInitialization
 
   const email = requireText(input.email, "E-posta", 254).toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("E-posta geçersiz.");
-  if (identityNumber && !/^\d{11}$/.test(identityNumber)) {
-    throw new Error("T.C. Kimlik No 11 haneli olmalıdır.");
+  if (!isSupportedCountryCode(countryCode)) {
+    throw new Error("Geçerli bir ülke seçin.");
+  }
+  if (countryCode === "TR" && !isValidTurkishIdentityNumber(identityNumber)) {
+    throw new Error("Geçerli bir T.C. Kimlik No girin.");
+  }
+  if (countryCode !== "TR" && !/^[A-Za-z0-9][A-Za-z0-9 -]{4,29}$/.test(identityNumber)) {
+    throw new Error("Geçerli bir pasaport veya ulusal kimlik numarası girin.");
   }
   if (input.kvkkAccepted !== true || input.termsAccepted !== true) {
     throw new Error("KVKK ve bağışçı sözleşmesi onayları zorunludur.");
@@ -70,7 +79,8 @@ export function parsePaymentInitialization(body: unknown): PaymentInitialization
     donorName: requireText(input.donorName, "Ad soyad", 120),
     email,
     phone: normalizePhone(input.phone),
-    identityNumber,
+    identityNumber: countryCode === "TR" ? normalizeTurkishIdentityNumber(identityNumber) : identityNumber.toUpperCase(),
+    countryCode,
     address: requireText(input.address, "Adres", 500),
     city: requireText(input.city, "Şehir", 100),
     amount,

@@ -38,6 +38,7 @@ export async function POST(request: Request) {
       email: body.email,
       phone: body.phone,
       identityNumber: body.identityNumber,
+      countryCode: body.countryCode,
       address: body.address,
       city: body.city,
       amount: body.amount,

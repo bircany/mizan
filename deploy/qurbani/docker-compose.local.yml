@@ -1,0 +1,15 @@
+services:
+  tusd:
+    image: tusproject/tusd:v2.8.0
+    ports:
+      - "1080:1080"
+    command:
+      - -host=0.0.0.0
+      - -port=1080
+      - -base-path=/files/
+      - -hooks-http=http://host.docker.internal:3000/api/qurbani/uploads/hooks
+      - -hooks-enabled-events=pre-create,post-finish
+      - -upload-dir=/data/qurbani/uploads
+      - -max-size=1073741824
+    volumes:
+      - ../../var/qurbani:/data/qurbani

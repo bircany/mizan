@@ -2,6 +2,15 @@ import type { CollectionConfig } from "payload";
 
 import { anyone, superAdminsOnly } from "@/payload/access";
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\u00C0-\u024F\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
 export const Campaigns: CollectionConfig = {
   slug: "campaigns",
   admin: {
@@ -48,12 +57,42 @@ export const Campaigns: CollectionConfig = {
       },
     },
     {
+      name: "coverImagePath",
+      type: "text",
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+    },
+    {
+      name: "coverImageAlt",
+      type: "text",
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+    },
+    {
       name: "code",
       type: "text",
       required: true,
       unique: true,
       admin: {
         position: "sidebar",
+        readOnly: true,
+      },
+      hooks: {
+        beforeValidate: [
+          ({ data, value }) => {
+            if (typeof value === "string" && value.trim()) return value;
+            if (data?.title) {
+              const title = typeof data.title === "string" ? data.title : data.title?.tr;
+              return slugify(String(title || "bagis-alani")) || "bagis-alani";
+            }
+
+            return value;
+          },
+        ],
       },
     },
     {
@@ -103,18 +142,14 @@ export const Campaigns: CollectionConfig = {
       },
       hooks: {
         beforeValidate: [
-          ({ data }) => {
-            if (!data?.slug && data?.title) {
+          ({ data, value }) => {
+            if (typeof value === "string" && value.trim()) return value;
+            if (data?.title) {
               const title = typeof data.title === "string" ? data.title : data.title?.tr;
-              return title
-                ?.toLowerCase()
-                .replace(/[^a-z0-9\u00C0-\u024F\s-]/g, "")
-                .trim()
-                .replace(/\s+/g, "-")
-                .replace(/-+/g, "-");
+              return slugify(String(title || "bagis-alani")) || "bagis-alani";
             }
 
-            return data?.slug;
+            return value;
           },
         ],
       },

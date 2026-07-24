@@ -1,467 +1,100 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 
-const TARGET_DATE = new Date("2027-06-01T00:00:00").getTime();
+import { QurbaniCatalog } from "@/components/qurbani/qurbani-catalog";
+import { QurbaniCountdown } from "@/components/qurbani/countdown";
+import { getPublicLocale } from "@/lib/i18n";
+import { getActiveQurbaniCatalog } from "@/lib/public/qurbani";
 
-interface PackageItem {
-  id: string;
-  title: string;
-  region: string;
-  regionLabel: string;
-  regionEmoji: string;
-  price: number;
-  description: string;
-  image: string;
-  badge: string;
-  maxQty: number;
-  popular: boolean;
+export const dynamic = "force-dynamic";
+
+const copy = {
+  tr: {
+    metaTitle: "Kurban Bağışı | Mizan Derneği", metaDescription: "Kurban hissenizi güvenle bağışlayın; emanetinizin operasyonunu ve kesim videosunu kişisel bağlantınızdan takip edin.", noSeason: "Aktif kurban sezonu bulunmuyor", noSeasonDescription: "Kurban satışı açıldığında kurbanlık seçenekleri ve tarihler burada yayınlanacaktır.", returnHome: "Anasayfaya dön", badge: "Şeffaf kurban organizasyonu", cta: "Kurbanımı seç", processCta: "Süreç nasıl işliyor?", productsEyebrow: "Aktif sezon", productsTitle: "Kurban seçenekleri", productsDescription: "Bölge ve kurban türünü seçin. Aynı siparişteki büyükbaş hisseleri mümkün olduğunca aynı kurbanda tutulur; miktar veya uygun stok gerektirirse en az sayıda kurbana bölünür.", processEyebrow: "Emanetinizin yolculuğu", processTitle: "Seçimden videoya izlenebilir süreç", days: "Gün", hours: "Saat", minutes: "Dakika", seconds: "Saniye", defaultSteps: ["Kurban türünü, bölgeyi ve hisse sayısını seçin.", "Her hisse sahibini kaydedip vekâletinizi verin.", "Kartla güvenli ödeme yapın.", "Kesim tamamlanınca kişisel video bağlantınızı alın."], trackingTitle: "Kişisel ve güvenli takip", trackingDescription: "Bağlantınız yalnız size ait hisse adlarını, kurban kodunu ve onaylanan videoyu gösterir. Diğer hissedarların bilgileri paylaşılmaz.", trackingButton: "Takip bağlantısı nasıl gelir?", reservation: "Ödeme başlatıldığında hisseleriniz 30 dakika süreyle rezerve edilir.",
+  },
+  en: {
+    metaTitle: "Qurbani Donation | Mizan Association", metaDescription: "Donate your qurbani securely and follow the operation and approved video through your personal link.", noSeason: "There is no active qurbani season", noSeasonDescription: "Options and dates will be published here when qurbani sales open.", returnHome: "Return home", badge: "Transparent qurbani operation", cta: "Choose my qurbani", processCta: "How does it work?", productsEyebrow: "Active season", productsTitle: "Qurbani options", productsDescription: "Choose a region and animal type. Cattle shares in one order stay in the same animal whenever possible; quantity or available stock may require allocation across the minimum number of animals.", processEyebrow: "Your trust's journey", processTitle: "A traceable process from selection to video", days: "Days", hours: "Hours", minutes: "Minutes", seconds: "Seconds", defaultSteps: ["Choose the animal type, region and number of shares.", "Record each share owner and grant your proxy.", "Pay securely by card.", "Receive your personal video link after the sacrifice."], trackingTitle: "Personal and secure tracking", trackingDescription: "Your link only shows your share names, animal code and approved video. Other shareholders' details are never disclosed.", trackingButton: "How is the tracking link delivered?", reservation: "Your shares are reserved for 30 minutes when payment starts.",
+  },
+  ar: {
+    metaTitle: "تبرع الأضحية | جمعية ميزان", metaDescription: "تبرع بأضحيتك بأمان وتابع العملية والفيديو المعتمد عبر رابطك الشخصي.", noSeason: "لا يوجد موسم أضاحي نشط", noSeasonDescription: "ستُنشر الخيارات والمواعيد هنا عند فتح مبيعات الأضاحي.", returnHome: "العودة للرئيسية", badge: "تنظيم أضاحي شفاف", cta: "اختر أضحيتي", processCta: "كيف تسير العملية؟", productsEyebrow: "الموسم النشط", productsTitle: "خيارات الأضاحي", productsDescription: "اختر المنطقة ونوع الأضحية. تُحفظ حصص البقر في أضحية واحدة قدر الإمكان، وإذا تطلب العدد أو المخزون فتوزع على أقل عدد ممكن من الأضاحي.", processEyebrow: "رحلة أمانتكم", processTitle: "عملية قابلة للتتبع من الاختيار إلى الفيديو", days: "يوم", hours: "ساعة", minutes: "دقيقة", seconds: "ثانية", defaultSteps: ["اختر نوع الأضحية والمنطقة وعدد الحصص.", "سجّل اسم كل صاحب حصة وامنح الوكالة.", "ادفع بالبطاقة بأمان.", "استلم رابط الفيديو الشخصي بعد الذبح."], trackingTitle: "متابعة شخصية وآمنة", trackingDescription: "يعرض رابطك أسماء حصصك ورمز الأضحية والفيديو المعتمد فقط، ولا يكشف بيانات المساهمين الآخرين.", trackingButton: "كيف يصل رابط المتابعة؟", reservation: "تُحجز حصصك لمدة 30 دقيقة عند بدء الدفع.",
+  },
+} as const;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getPublicLocale();
+  return { title: copy[locale].metaTitle, description: copy[locale].metaDescription };
 }
 
-const packages: PackageItem[] = [
-  {
-    id: "buyukbas-afrika",
-    title: "Büyükbaş Hisse",
-    region: "afrika",
-    regionLabel: "Afrika",
-    regionEmoji: "\u{1F30D}",
-    price: 2850,
-    description:
-      "Somali, Çad, Mali gibi ihtiyaç sahibi Afrika ülkelerinde kesilip dağıtılacaktır.",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCw1W0pOyWZo5YUAL1TCjQBXVVutojQBP3KV0x_Upza2X6K4fzFJwFSWPVR8gCL0MREjLwtCVoxlW0UHYOF_EU6wJYNC5c74GGLgK5z8gBZkbU3R84j0spgR8QsLaLFV7aTEgUOhVRr3iTK6VhFgaNOEqwQc1x6iPFyVVB3swvFPzv06Ba1iDM3tV2iDCmO6_Batsi71rOomnBnTg2EQeo3rqQLNTfYbzMYNUvZjv0nTEGNmw2L9CsDtGroESmJHm3qdwvDiCCISvoa",
-    badge: "Afrika B.",
-    maxQty: 7,
-    popular: false,
-  },
-  {
-    id: "kucukbas-afrika",
-    title: "Küçükbaş",
-    region: "afrika",
-    regionLabel: "Afrika",
-    regionEmoji: "\u{1F30D}",
-    price: 3200,
-    description:
-      "Nijer, Kenya, Sudan gibi ülkelerde bir ailenin et ihtiyacını karşılayacaktır.",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCTNZuHvESfzWAOd31vWpUqPvUTRvlhTbAswRuu3-r3otmJMW_b8rYhB87GlmzWNYyqB8HnY_zb9PCxKteOID505MG38sTiSnR9TN92zL9n2eGuWZ9d-ocrdT3DsZkJllxTeuLNpZndwmzsVdN0Z1A0xC5zWMoJDBBhAPft1l_wd5tJaqDRkvgr-XAQROhigBplrWz6VSS4Pw-yPS7mXEDXQsdKhrD8jAyhobOELECzpYyQqt5dXFtgO9rNq_6lxcXCs_5yGE_maLTs",
-    badge: "Afrika K.",
-    maxQty: 10,
-    popular: true,
-  },
-  {
-    id: "buyukbas-turkiye",
-    title: "Büyükbaş Hisse",
-    region: "yurt-ici",
-    regionLabel: "Yurt İçi",
-    regionEmoji: "\u{1F1F7}\u{1F1F9}",
-    price: 11500,
-    description:
-      "Türkiye genelindeki ihtiyaç sahibi ailelere, yetimhanelere ve medreselere ulaştırılacaktır.",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBpT8i68f94S0DQZ3XaW1_kriZUqUh4JBvnOx4jc8UCJxGJKvAktZJweVjxti42BNdmmMn0gi-YiFxfm0d8d2zdciv54lBS_cYmumZ3r8BbJIdj4Is8AfZ5vb6dtA6rSd1S4ab0j7msBu_5wQAwHelpHy0w2gC3bpBS7JJ8zg1NZgn0_k_u8UgTKsvH9D2hdnC2WQMqK6gp4SaZTMBScSU2K6Hp3QLWn8tCineXfdYxReAYLL8ORSG5GGNWkhQiCxAigNqZrDqfJM2q",
-    badge: "Türkiye",
-    maxQty: 7,
-    popular: false,
-  },
-];
+export default async function QurbaniPage() {
+  const locale = await getPublicLocale();
+  const text = copy[locale];
+  const catalog = await getActiveQurbaniCatalog(locale);
 
-const regions = [
-  { key: "tumu", label: "Tümü" },
-  { key: "yurt-ici", label: "Yurt İçi" },
-  { key: "afrika", label: "Afrika" },
-  { key: "suriye", label: "Suriye" },
-  { key: "yemen", label: "Yemen" },
-];
+  if (!catalog) {
+    return (
+      <main className="grid min-h-[70vh] place-items-center bg-surface px-margin-mobile py-xl" dir={locale === "ar" ? "rtl" : "ltr"}>
+        <div className="max-w-xl rounded-[32px] border border-outline-variant/60 bg-white p-10 text-center shadow-ambient">
+          <span className="material-symbols-outlined text-6xl text-primary/55">event_busy</span>
+          <h1 className="mt-5 text-3xl font-semibold text-on-surface">{text.noSeason}</h1>
+          <p className="mt-4 leading-7 text-on-surface-variant">{text.noSeasonDescription}</p>
+          <Link className="btn-primary mt-7" href="/">{text.returnHome}</Link>
+        </div>
+      </main>
+    );
+  }
 
-export default function KurbanPage() {
-  const [countdown, setCountdown] = useState({
-    days: "00",
-    hours: "00",
-    minutes: "00",
-  });
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [activeRegion, setActiveRegion] = useState("tumu");
-  const [cartCount, setCartCount] = useState(0);
-
-  useEffect(() => {
-    const update = () => {
-      const now = Date.now();
-      const distance = TARGET_DATE - now;
-      if (distance > 0) {
-        setCountdown({
-          days: String(
-            Math.floor(distance / (1000 * 60 * 60 * 24))
-          ).padStart(2, "0"),
-          hours: String(
-            Math.floor(
-              (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-            )
-          ).padStart(2, "0"),
-          minutes: String(
-            Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
-          ).padStart(2, "0"),
-        });
-      }
-    };
-    update();
-    const interval = setInterval(update, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const getQty = (id: string) => quantities[id] ?? 1;
-
-  const setQty = (id: string, qty: number) =>
-    setQuantities((prev) => ({
-      ...prev,
-      [id]: Math.max(1, Math.min(qty, packages.find((p) => p.id === id)?.maxQty ?? 99)),
-    }));
-
-  const filteredPackages =
-    activeRegion === "tumu"
-      ? packages
-      : packages.filter((p) => p.region === activeRegion);
-
-  const handleAddToCart = (id: string) => {
-    const qty = getQty(id);
-    setCartCount((prev) => prev + qty);
-    setQty(id, 1);
-  };
-
+  const { season, countries } = catalog;
+  const processSteps = season.processSteps.length ? season.processSteps : text.defaultSteps;
   return (
-    <>
-      <div className="bg-secondary-container text-on-secondary-container py-sm px-margin-mobile md:px-margin-desktop shadow-sm z-50 relative">
-        <div className="max-w-container-max mx-auto flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
-          <span className="font-headline-md text-headline-xl-mobile md:text-headline-md font-semibold">
-            Kurban Bayramı&apos;na Son
-          </span>
-          <div className="flex gap-2 font-headline-xl text-headline-xl-mobile md:text-headline-xl font-bold">
-            <div className="flex flex-col items-center">
-              <span className="bg-surface/50 rounded px-2 py-1">
-                {countdown.days}
-              </span>
-              <span className="text-xs font-label-sm mt-1 uppercase">Gün</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="bg-surface/50 rounded px-2 py-1">
-                {countdown.hours}
-              </span>
-              <span className="text-xs font-label-sm mt-1 uppercase">Saat</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="bg-surface/50 rounded px-2 py-1">
-                {countdown.minutes}
-              </span>
-              <span className="text-xs font-label-sm mt-1 uppercase">
-                Dakika
-              </span>
+    <main className="bg-surface" dir={locale === "ar" ? "rtl" : "ltr"}>
+      <section className="relative isolate min-h-[620px] overflow-hidden bg-primary">
+        {season.heroImageUrl ? <Image alt={season.title} className="-z-20 object-cover" fill priority sizes="100vw" src={season.heroImageUrl} /> : null}
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(7,53,33,.96),rgba(14,90,58,.72),rgba(14,90,58,.28))]" />
+        <div className="mx-auto grid min-h-[620px] max-w-container-max items-center gap-10 px-margin-mobile py-xl md:px-margin-desktop lg:grid-cols-[1fr_auto]">
+          <div className="max-w-3xl text-white">
+            <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] backdrop-blur">{season.year} · {text.badge}</span>
+            <h1 className="mt-6 text-display-lg-mobile font-bold leading-tight md:text-display-lg">{season.title}</h1>
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-white/82">{season.description || text.metaDescription}</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a className="btn-primary" href="#kurban-secenekleri">{text.cta}<span aria-hidden className="material-symbols-outlined">arrow_downward</span></a>
+              <a className="btn-secondary" href="#kurban-sureci">{text.processCta}</a>
             </div>
           </div>
-        </div>
-      </div>
-
-      <section className="relative w-full h-[819px] min-h-[600px] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <Image
-            alt="Hero Background"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0JoVqg0L9aWeOAn4wWfnUGdAageJj50GpxWf6Kg718CMJMN0V_c7Clds2Hu7Z5VE2c54rVDV_yUbCCRO-TVjWj5WidELEuSE5bnpVGVZdA7jHYVFdNlLIPyQ2naxFSoJ3tLg9b9WOJV6SBzdHM_8PY4dTilcHkMs71cyVaBal6Fp6KdqsgBDkspMCzPEcWw2fu8CUXtyqS24HtEBLbSQ8bjWxni0-kINVW9R9ZsP7WKOuMFMAExsaxrAuRgYiw-YnqROlta9oH0LG"
-            fill
-            sizes="100vw"
-            className="object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/60 to-transparent mix-blend-multiply" />
-          <div className="absolute inset-0 bg-on-background/20" />
-        </div>
-        <div className="relative z-10 w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop text-white">
-          <div className="max-w-2xl space-y-6">
-            <div className="inline-flex items-center gap-2 bg-secondary-container/90 text-on-secondary-container px-4 py-1.5 rounded-full font-label-sm text-label-sm font-bold tracking-wide uppercase backdrop-blur-sm">
-              <span className="material-symbols-outlined text-sm filled">
-                volunteer_activism
-              </span>
-              2024 Kurban Organizasyonu
-            </div>
-            <h1 className="font-display-lg text-display-lg-mobile md:text-display-lg font-bold leading-tight drop-shadow-md">
-              İyilik Sınır Tanımaz
-            </h1>
-            <p className="font-body-lg text-body-lg text-surface-container-low max-w-xl drop-shadow">
-              Bu Kurban Bayramı&apos;nda emanetlerinizi ihtiyaç sahiplerine
-              güvenle ulaştırıyoruz. Mizan Derneği güvencesiyle vekaletlerinizi
-              verin, sevinciniz sınırları aşsın.
-            </p>
-            <div className="pt-4 flex flex-wrap gap-4">
-              <a
-                className="bg-secondary text-on-secondary px-8 py-3 rounded-lg font-label-md text-label-md font-bold hover:bg-secondary-fixed hover:text-on-secondary-fixed transition-all shadow-md flex items-center gap-2"
-                href="#donate"
-              >
-                Hemen Kurban Al
-                <span className="material-symbols-outlined text-sm">
-                  arrow_forward
-                </span>
-              </a>
-              <a
-                className="bg-white/10 backdrop-blur-md border border-white/30 text-white px-8 py-3 rounded-lg font-label-md text-label-md font-medium hover:bg-white/20 transition-all"
-                href="#how-it-works"
-              >
-                Süreç Nasıl İşliyor?
-              </a>
-            </div>
-          </div>
+          {season.eidAt ? <QurbaniCountdown labels={[text.days, text.hours, text.minutes, text.seconds]} target={season.eidAt} /> : null}
         </div>
       </section>
 
-      <div className="h-xl" />
-
-      <section
-        className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop scroll-mt-24"
-        id="donate"
-      >
-        <div className="text-center mb-12">
-          <h2 className="font-headline-xl text-headline-xl-mobile md:text-headline-xl font-bold text-on-surface mb-4">
-            Kurban Bağış Paketleri
-          </h2>
-          <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto">
-            Dünyanın farklı bölgelerindeki kardeşlerimiz için kurban bağışınızı
-            seçin. Her hisse, bir tebessüm demek.
-          </p>
+      <section className="mx-auto max-w-container-max scroll-mt-24 px-margin-mobile py-xl md:px-margin-desktop" id="kurban-secenekleri">
+        <div className="mb-10 max-w-3xl">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{text.productsEyebrow} · {season.year}</p>
+          <h2 className="mt-3 text-headline-xl-mobile text-on-surface md:text-headline-xl">{text.productsTitle}</h2>
+          <p className="mt-4 text-body-md text-on-surface-variant">{text.productsDescription}</p>
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-xs font-semibold text-on-primary-container"><span aria-hidden className="material-symbols-outlined text-base">schedule</span>{text.reservation}</p>
         </div>
+        <QurbaniCatalog countries={countries} locale={locale} />
+      </section>
 
-        <div className="flex flex-wrap justify-center gap-3 mb-10">
-          {regions.map((region) => (
-            <button
-              key={region.key}
-              onClick={() => setActiveRegion(region.key)}
-              className={`px-6 py-2 rounded-full font-label-md text-label-md font-semibold shadow-sm transition-all ${
-                activeRegion === region.key
-                  ? "bg-primary text-on-primary"
-                  : "bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-variant"
-              }`}
-            >
-              {region.label}
-            </button>
-          ))}
-        </div>
-
-        {filteredPackages.length === 0 ? (
-          <div className="text-center py-16">
-            <span className="material-symbols-outlined text-5xl text-outline mb-4">
-              search
-            </span>
-            <p className="font-body-md text-body-md text-on-surface-variant">
-              Bu bölge için henüz paket bulunmamaktadır.
-            </p>
+      <section className="border-y border-outline-variant/45 bg-surface-container-low py-xl" id="kurban-sureci">
+        <div className="mx-auto max-w-container-max px-margin-mobile md:px-margin-desktop">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">{text.processEyebrow}</p>
+            <h2 className="mt-3 text-headline-xl-mobile text-on-surface md:text-headline-xl">{text.processTitle}</h2>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
-            {filteredPackages.map((pkg) => (
-              <div
-                key={pkg.id}
-                className={`bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(27,107,90,0.08)] transition-all duration-300 overflow-hidden flex flex-col border ${
-                  pkg.popular
-                    ? "border-secondary relative"
-                    : "border-surface-container-highest"
-                }`}
-              >
-                {pkg.popular && (
-                  <div className="absolute top-0 right-0 bg-secondary text-on-secondary px-3 py-1 rounded-bl-lg font-label-sm text-label-sm font-bold z-10 shadow-sm">
-                    En Çok Tercih Edilen
-                  </div>
-                )}
-                <div className="h-48 bg-surface-variant relative">
-                  <Image
-                    alt={pkg.title}
-                    src={pkg.image}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover"
-                  />
-                  <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-on-surface flex items-center gap-1 shadow-sm">
-                    <span className="text-base">{pkg.regionEmoji}</span>{" "}
-                    {pkg.regionLabel}
-                  </div>
-                </div>
-                <div className="p-6 flex flex-col flex-grow">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-headline-md text-headline-md font-bold text-on-surface">
-                      {pkg.title}
-                    </h3>
-                    <span className="font-label-sm text-label-sm bg-primary/10 text-primary px-2 py-1 rounded">
-                      {pkg.badge}
-                    </span>
-                  </div>
-                  <p className="text-sm text-on-surface-variant mb-6 flex-grow">
-                    {pkg.description}
-                  </p>
-                  <div className="mb-6 pb-6 border-b border-surface-container-highest">
-                    <div className="text-3xl font-bold text-primary mb-1">
-                      {pkg.price.toLocaleString("tr-TR")} ₺
-                    </div>
-                    <div className="text-xs text-outline font-medium">
-                      {pkg.id === "kucukbas-afrika"
-                        ? "1 Adet Bedeli"
-                        : "1 Hisse Bedeli"}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="flex items-center border border-outline-variant rounded-lg overflow-hidden h-10 w-32">
-                      <button
-                        aria-label="Decrease"
-                        onClick={() => setQty(pkg.id, getQty(pkg.id) - 1)}
-                        className="w-10 h-full flex items-center justify-center bg-surface hover:bg-surface-variant text-on-surface transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-sm">
-                          remove
-                        </span>
-                      </button>
-                      <input
-                        aria-label="Quantity"
-                        className="w-full h-full border-0 text-center font-bold text-on-surface focus:ring-0 p-0"
-                        type="number"
-                        min={1}
-                        max={pkg.maxQty}
-                        value={getQty(pkg.id)}
-                        onChange={(e) =>
-                          setQty(pkg.id, Number(e.target.value))
-                        }
-                      />
-                      <button
-                        aria-label="Increase"
-                        onClick={() => setQty(pkg.id, getQty(pkg.id) + 1)}
-                        className="w-10 h-full flex items-center justify-center bg-surface hover:bg-surface-variant text-on-surface transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-sm">
-                          add
-                        </span>
-                      </button>
-                    </div>
-                    <span className="text-sm font-medium text-on-surface-variant">
-                      Adet
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => handleAddToCart(pkg.id)}
-                    className={`w-full py-3 rounded-lg font-label-md text-label-md font-semibold transition-colors flex items-center justify-center gap-2 ${
-                      pkg.popular
-                        ? "bg-secondary text-on-secondary hover:bg-secondary-fixed hover:text-on-secondary-fixed"
-                        : "bg-primary text-on-primary hover:bg-on-primary-fixed-variant"
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      shopping_cart
-                    </span>
-                    Sepete Ekle
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="text-center mt-8">
-          <a
-            className="inline-flex items-center gap-2 text-primary font-label-md font-semibold hover:underline"
-            href="#"
-          >
-            Tüm Paketleri Gör
-            <span className="material-symbols-outlined text-sm">
-              arrow_forward
-            </span>
-          </a>
+          <ol className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {processSteps.slice(0, 6).map((step, index) => <li className="rounded-[26px] border border-outline-variant/55 bg-white p-6 shadow-soft" key={`${index}-${step}`}><span className="grid size-11 place-items-center rounded-full bg-primary text-lg font-bold text-white">{index + 1}</span><p className="mt-5 text-sm leading-7 text-on-surface-variant">{step}</p></li>)}
+          </ol>
         </div>
       </section>
 
-      <div className="h-lg" />
-
-      <section
-        className="bg-surface-container-low py-xl border-y border-surface-container-highest"
-        id="how-it-works"
-      >
-        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
-          <div className="text-center mb-16">
-            <h2 className="font-headline-xl text-headline-xl-mobile md:text-headline-xl font-bold text-on-surface mb-4">
-              Süreç Nasıl İşliyor?
-            </h2>
-            <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto">
-              Bağışınızın ilk anından, emanetinizin ihtiyaç sahibine ulaştığı
-              ana kadar her aşamada şeffaflık ilkemizdir.
-            </p>
-          </div>
-          <div className="relative">
-            <div className="hidden md:block absolute top-10 left-12 right-12 h-0.5 bg-outline-variant/30 z-0" />
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-8 relative z-10">
-              <div className="flex flex-col items-center text-center group">
-                <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center shadow-sm border-2 border-primary text-primary mb-6 transition-transform group-hover:scale-110">
-                  <span className="material-symbols-outlined text-3xl">
-                    touch_app
-                  </span>
-                </div>
-                <h4 className="text-lg font-bold text-on-surface mb-2">
-                  1. Seçim Yapın
-                </h4>
-                <p className="text-sm text-on-surface-variant">
-                  Bağış yapmak istediğiniz bölgeyi ve kurban türünü seçerek
-                  sepetinize ekleyin.
-                </p>
-              </div>
-              <div className="flex flex-col items-center text-center group">
-                <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center shadow-sm border-2 border-outline-variant text-on-surface-variant mb-6 transition-transform group-hover:scale-110 group-hover:border-primary group-hover:text-primary">
-                  <span className="material-symbols-outlined text-3xl">
-                    payments
-                  </span>
-                </div>
-                <h4 className="text-lg font-bold text-on-surface mb-2">
-                  2. Güvenli Ödeme
-                </h4>
-                <p className="text-sm text-on-surface-variant">
-                  3D Secure güvencesiyle ödemenizi tamamlayın.
-                </p>
-              </div>
-              <div className="flex flex-col items-center text-center group">
-                <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center shadow-sm border-2 border-outline-variant text-on-surface-variant mb-6 transition-transform group-hover:scale-110 group-hover:border-primary group-hover:text-primary">
-                  <span className="material-symbols-outlined text-3xl">
-                    cut
-                  </span>
-                </div>
-                <h4 className="text-lg font-bold text-on-surface mb-2">
-                  3. İslami Kesim
-                </h4>
-                <p className="text-sm text-on-surface-variant">
-                  Kurbanlarınız bayramın 1. ve 2. günü İslami usullere uygun
-                  olarak kesilir.
-                </p>
-              </div>
-              <div className="flex flex-col items-center text-center group">
-                <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center shadow-sm border-2 border-outline-variant text-on-surface-variant mb-6 transition-transform group-hover:scale-110 group-hover:border-primary group-hover:text-primary">
-                  <span className="material-symbols-outlined text-3xl">
-                    volunteer_activism
-                  </span>
-                </div>
-                <h4 className="text-lg font-bold text-on-surface mb-2">
-                  4. Dağıtım
-                </h4>
-                <p className="text-sm text-on-surface-variant">
-                  Kesilen etler, önceden tespit edilen gerçek ihtiyaç
-                  sahiplerine dağıtılır.
-                </p>
-              </div>
-              <div className="flex flex-col items-center text-center group">
-                <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center shadow-sm border-2 border-secondary text-secondary mb-6 transition-transform group-hover:scale-110 group-hover:bg-secondary group-hover:text-on-secondary">
-                  <span className="material-symbols-outlined text-3xl">
-                    video_camera_front
-                  </span>
-                </div>
-                <h4 className="text-lg font-bold text-on-surface mb-2">
-                  5. Video &amp; Bilgi
-                </h4>
-                <p className="text-sm text-on-surface-variant">
-                  Kesim videolarınız ve bilgilendirme mesajınız telefonunuza
-                  gönderilir.
-                </p>
-              </div>
-            </div>
+      <section className="mx-auto max-w-container-max px-margin-mobile py-xl md:px-margin-desktop">
+        <div className="overflow-hidden rounded-[34px] bg-primary px-6 py-10 text-white shadow-ambient md:px-12">
+          <div className="grid items-center gap-8 md:grid-cols-[1fr_auto]">
+            <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary-fixed">MD-{season.year}-0001</p><h2 className="mt-3 text-3xl font-semibold">{text.trackingTitle}</h2><p className="mt-4 max-w-2xl leading-7 text-white/75">{text.trackingDescription}</p></div>
+            <Link className="btn-secondary" href="/iletisim">{text.trackingButton}</Link>
           </div>
         </div>
       </section>
-    </>
+    </main>
   );
 }

@@ -48,3 +48,13 @@ Desktop.ini
 
 # turbo
 .turbo
+
+# Local qurbani videos and resumable-upload state (never commit personal data)
+/var/qurbani/
+/tmp/
+
+# Local Payload uploads and local development tooling state
+/media/
+/.agents/
+/skills-lock.json
+/supabase/.temp/

@@ -5,6 +5,7 @@ import { ArrowRight, Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/lib/currency-context";
 import { useCart } from "@/lib/cart-context";
+import { useLanguage } from "@/lib/language-context";
 
 type PackageKey = "food" | "stationery" | "toy" | "clothing";
 
@@ -18,12 +19,13 @@ type PackageItem = {
 };
 
 const orphanAssets = {
-  stationary: "https://ihh.org.tr/images/orphan/kid/stationary.svg",
-  cloth: "https://ihh.org.tr/images/orphan/kid/cloth.svg",
-  food: "https://ihh.org.tr/images/orphan/kid/food.svg",
-  headNormal: "https://ihh.org.tr/images/orphan/kid/head_normal.svg",
-  headHappy: "https://ihh.org.tr/images/orphan/kid/head_happy.svg",
-  toy: "https://ihh.org.tr/images/orphan/kid/toy.svg",
+  stationeryCard: "/images/orphan/tools/stationary.svg",
+  stationeryOverlay: "/images/orphan/kid/stationary.svg",
+  cloth: "/images/orphan/kid/cloth.svg",
+  food: "/images/orphan/kid/food.svg",
+  headNormal: "/images/orphan/kid/head_normal.svg",
+  headHappy: "/images/orphan/kid/head_happy.svg",
+  toy: "/images/orphan/kid/toy.svg",
 } as const;
 
 const packageMeta = {
@@ -36,7 +38,7 @@ const packageMeta = {
   stationery: {
     title: "Kırtasiye",
     price: 150,
-    image: orphanAssets.stationary,
+    image: orphanAssets.stationeryCard,
     accent: "bg-[#D9ECFF]",
   },
   toy: {
@@ -64,6 +66,7 @@ const packageMeta = {
 export default function ChildInteractiveDonate() {
   const { formatPrice } = useCurrency();
   const { addItem } = useCart();
+  const { t } = useLanguage();
 
   const [food, setFood] = useState(0);
   const [stationery, setStationery] = useState(0);
@@ -79,10 +82,10 @@ export default function ChildInteractiveDonate() {
 
   const totalItems = food + stationery + toy + clothing;
   const packageItems: PackageItem[] = [
-    { key: "food", count: food, ...packageMeta.food },
-    { key: "stationery", count: stationery, ...packageMeta.stationery },
-    { key: "toy", count: toy, ...packageMeta.toy },
-    { key: "clothing", count: clothing, ...packageMeta.clothing },
+    { key: "food", count: food, ...packageMeta.food, title: t("childDonation.packages.food") },
+    { key: "stationery", count: stationery, ...packageMeta.stationery, title: t("childDonation.packages.stationery") },
+    { key: "toy", count: toy, ...packageMeta.toy, title: t("childDonation.packages.toy") },
+    { key: "clothing", count: clothing, ...packageMeta.clothing, title: t("childDonation.packages.clothing") },
   ];
 
   const happy = totalItems > 0;
@@ -107,7 +110,8 @@ export default function ChildInteractiveDonate() {
     setIsAdding(true);
     addItem({
       campaignId: "yetim",
-      title: "Ahmet için destek paketi",
+      currency: "TRY",
+      title: t("childDonation.supportPackage"),
       amount: totalTry,
       quantity: 1,
     });
@@ -126,11 +130,10 @@ export default function ChildInteractiveDonate() {
       <div className="mx-auto max-w-[1100px] px-5 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-[34px] leading-tight text-black lg:text-[44px]">
-            Merhaba, <strong>benim adım Ahmet!</strong>
+            {t("childDonation.headingBefore")}<strong>{t("childDonation.headingStrong")}</strong>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-[17px] leading-7 text-black/90 lg:text-[20px]">
-            İhtiyaç sahibi bir çocuğu mutlu etmeye ne dersiniz? Bize katılın, bir çocuğun daha
-            eğitimine katkı yapalım.
+            {t("childDonation.description")}
           </p>
         </div>
 
@@ -143,6 +146,7 @@ export default function ChildInteractiveDonate() {
                 onDecrement={handleDecrement}
                 onIncrement={handleIncrement}
                 formatPrice={formatPrice}
+                t={t}
               />
             ))}
           </div>
@@ -164,21 +168,21 @@ export default function ChildInteractiveDonate() {
 
               {stationery > 0 && (
                 <img
-                  src={orphanAssets.stationary}
-                  alt="Ahmet'in kırtasiye desteği"
+                  src={orphanAssets.stationeryOverlay}
+                  alt={t("childDonation.packages.stationery")}
                   className="pointer-events-none absolute inset-0 z-0 h-full w-full select-none object-contain"
                 />
               )}
 
               <img
                 src={happy ? orphanAssets.headHappy : orphanAssets.headNormal}
-                alt={happy ? "Gülümseyen Ahmet" : "Ahmet"}
+                alt="Ahmet"
                 className="pointer-events-none absolute inset-0 z-10 h-full w-full select-none object-contain"
               />
 
               <img
                 src={orphanAssets.cloth}
-                alt={clothing > 0 ? "Yeşil kıyafet" : "Mavi kıyafet"}
+                alt={t("childDonation.packages.clothing")}
                 className="pointer-events-none absolute inset-0 z-20 h-full w-full select-none object-contain transition-[filter] duration-300"
                 style={{
                   filter: clothing > 0 ? "hue-rotate(-85deg) saturate(1.25)" : "none",
@@ -188,14 +192,14 @@ export default function ChildInteractiveDonate() {
               {food > 0 && (
                 <img
                   src={orphanAssets.food}
-                  alt="Ahmet'in yemek desteği"
+                  alt={t("childDonation.packages.food")}
                   className="pointer-events-none absolute inset-0 z-30 h-full w-full select-none object-contain"
                 />
               )}
               {toy > 0 && (
                 <img
                   src={orphanAssets.toy}
-                  alt="Ahmet'in oyuncak desteği"
+                  alt={t("childDonation.packages.toy")}
                   className="pointer-events-none absolute inset-0 z-30 h-full w-full select-none object-contain"
                 />
               )}
@@ -229,7 +233,7 @@ export default function ChildInteractiveDonate() {
             `}</style>
 
             <div className="mt-5 text-[17px] text-black">
-              Toplam <strong>{formatPrice(totalTry)}</strong>
+              {t("childDonation.total")} <strong>{formatPrice(totalTry)}</strong>
             </div>
 
             <button
@@ -241,7 +245,7 @@ export default function ChildInteractiveDonate() {
                 totalItems > 0 ? "bg-[#1688e0] hover:bg-[#1278c7]" : "bg-[#9e9e9e] cursor-not-allowed"
               )}
             >
-              {isAdding ? "Sepete ekleniyor..." : "Sepete Ekle"}
+              {isAdding ? t("childDonation.adding") : t("donate.addToCart")}
               {!isAdding && <ArrowRight className="h-4 w-4" />}
             </button>
           </div>
@@ -254,6 +258,7 @@ export default function ChildInteractiveDonate() {
                 onDecrement={handleDecrement}
                 onIncrement={handleIncrement}
                 formatPrice={formatPrice}
+                t={t}
               />
             ))}
           </div>
@@ -268,11 +273,13 @@ function PackageCard({
   onDecrement,
   onIncrement,
   formatPrice,
+  t,
 }: {
   item: PackageItem;
   onDecrement: (key: PackageKey) => void;
   onIncrement: (key: PackageKey) => void;
   formatPrice: (amount: number) => string;
+  t: (key: string) => string;
 }) {
   return (
     <div className="text-center">
@@ -299,7 +306,7 @@ function PackageCard({
           type="button"
           onClick={() => onDecrement(item.key)}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f4f4] text-[18px] text-black transition-colors hover:bg-[#ededed]"
-          aria-label={`${item.title} azalt`}
+          aria-label={t("childDonation.decrease").replace("{item}", item.title)}
         >
           <Minus className="h-4 w-4" />
         </button>
@@ -308,7 +315,7 @@ function PackageCard({
           type="button"
           onClick={() => onIncrement(item.key)}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f4f4] text-[18px] text-black transition-colors hover:bg-[#ededed]"
-          aria-label={`${item.title} artır`}
+          aria-label={t("childDonation.increase").replace("{item}", item.title)}
         >
           <Plus className="h-4 w-4" />
         </button>

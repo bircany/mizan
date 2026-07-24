@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/lib/language-context";
 
 interface VideoSlide {
   id: string;
@@ -16,6 +17,7 @@ interface VideoCarouselProps {
 }
 
 export default function VideoCarousel({ slides }: VideoCarouselProps) {
+  const { t } = useLanguage();
   const [active, setActive] = useState(0);
   const total = slides.length;
 
@@ -67,14 +69,14 @@ export default function VideoCarousel({ slides }: VideoCarouselProps) {
           <button
             onClick={handlePrev}
             className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-md hover:bg-white hover:scale-105 transition-all duration-200 z-10"
-            aria-label="Previous video"
+            aria-label={t("home.videoPrevious")}
           >
             <span className="material-symbols-outlined text-on-surface">chevron_left</span>
           </button>
           <button
             onClick={handleNext}
             className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-md hover:bg-white hover:scale-105 transition-all duration-200 z-10"
-            aria-label="Next video"
+            aria-label={t("home.videoNext")}
           >
             <span className="material-symbols-outlined text-on-surface">chevron_right</span>
           </button>
@@ -90,7 +92,7 @@ export default function VideoCarousel({ slides }: VideoCarouselProps) {
                   ? "bg-primary w-10 h-2.5"
                   : "bg-outline-variant/30 w-2.5 h-2.5 hover:bg-outline-variant/60"
               }`}
-              aria-label={`Video ${i + 1}`}
+              aria-label={t("home.videoLabel").replace("{number}", String(i + 1))}
             />
           ))}
         </div>

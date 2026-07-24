@@ -23,6 +23,9 @@ export const Donations: CollectionConfig = {
     { name: "email", type: "email", required: true },
     { name: "phone", type: "text" },
     { name: "campaign", type: "relationship", relationTo: "campaigns", required: true },
+    { name: "fundingPool", type: "relationship", relationTo: "campaign-funding-pools", required: false, index: true },
+    { name: "qurbaniOrder", type: "relationship", relationTo: "qurbani-orders", required: false, index: true },
+    { name: "qurbaniCheckout", type: "relationship", relationTo: "qurbani-checkouts", required: false, index: true },
     { name: "grossAmount", type: "number", required: true, min: 1 },
     { name: "netConfirmedAmount", type: "number", required: true, min: 0 },
     {

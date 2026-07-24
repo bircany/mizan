@@ -11,7 +11,19 @@ export const dynamic = "force-dynamic";
 export default async function TechnicalPaymentEventsPage() {
   const user = await requireAdminUser(PANEL_ROUTE_ACCESS.systemPayments);
   const payload = await getPayloadClient();
-  const result = await payload.find({ collection: "payment-events", limit: 100, sort: "-createdAt" });
+  const result = await payload
+    .find({
+      collection: "payment-events",
+      limit: 100,
+      sort: "-createdAt",
+      pagination: false,
+    })
+    .catch((error: unknown) => {
+      console.warn("payment-events teknk listesi okunamadi, bos liste kullaniliyor.", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return { docs: [] as unknown[] };
+    });
 
   return (
     <ManagementShell currentPath="/panel/sistem/odemeler" name={user.name || user.email} role={user.role}>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_E164 } from "@/lib/contact";
+import { useLanguage } from "@/lib/language-context";
 
 const footerLinks = {
   hizli: [
@@ -12,11 +13,11 @@ const footerLinks = {
     { href: "/iletisim", label: "İletişim" },
   ],
   yasal: [
-    { href: "#", label: "KVKK Aydınlatma Metni" },
-    { href: "#", label: "Gizlilik Politikası" },
-    { href: "#", label: "Çerez Politikası" },
-    { href: "#", label: "Kullanım Koşulları" },
-    { href: "#", label: "Bağış ve Destek Şartları" },
+    { href: "/kvkk-aydinlatma-metni", label: "KVKK Aydınlatma Metni" },
+    { href: "/gizlilik-politikasi", label: "Gizlilik Politikası" },
+    { href: "/cerez-politikasi", label: "Çerez Politikası" },
+    { href: "/kullanim-kosullari", label: "Kullanım Koşulları" },
+    { href: "/bagis-ve-destek-sartlari", label: "Bağış ve Destek Şartları" },
   ],
 };
 
@@ -60,36 +61,30 @@ const socialLinks = [
 ];
 
 export default function Footer() {
+  const { t } = useLanguage();
+  const quickLinks = footerLinks.hizli.map((link, index) => ({ ...link, label: t(`footer.quickLinks.${index}`) }));
+  const legalLinks = footerLinks.yasal.map((link, index) => ({ ...link, label: t(`footer.legalLinks.${index}`) }));
+  const [addressLineOne, addressLineTwo] = t("footer.address").split("|");
   return (
-    <footer className="relative bg-[#273426] text-white pt-16 md:pt-24 pb-5 overflow-hidden">
-      <div
-        className="absolute inset-0 opacity-[0.03] pointer-events-none"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
-          backgroundSize: "32px 32px",
-        }}
-      />
-
-      <div className="relative z-10 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-14 mb-16">
+    <footer className="border-t border-gray-100 bg-white text-gray-700">
+      <div className="mx-auto max-w-7xl space-y-12 px-4 py-16 sm:px-6 lg:space-y-16 lg:px-8">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-14">
           <div className="lg:pr-12">
             <div className="flex items-center gap-3">
               <Image
                 src="/mizan-logo.png"
-                alt="Mizan Derneği"
+                alt={t("footer.organization")}
                 width={64}
                 height={64}
-                className="h-16 w-16 rounded-full object-contain bg-white/95 p-1.5 shadow-sm"
+                className="h-16 w-16 rounded-full border border-gray-100 bg-white p-1.5 shadow-sm"
               />
               <div>
-                <p className="text-headline-md font-bold text-gold">Mizan Derneği</p>
-                <p className="text-[13px] text-white/45 tracking-wide">İyilikte Mizan</p>
+                <p className="text-headline-md font-bold text-primary">{t("footer.organization")}</p>
+                <p className="text-[13px] tracking-wide text-gray-500">{t("footer.motto")}</p>
               </div>
             </div>
-            <p className="text-base text-white/55 leading-relaxed mt-5 mb-8">
-              Elbistan merkezli Mizan Derneği, dünyanın dört bir yanındaki mazlumlara
-              denge ve umut olmak için yola çıkmıştır.
+            <p className="mt-5 mb-8 text-base leading-relaxed text-gray-600">
+              {t("footer.description")}
             </p>
             <div className="flex gap-3">
               {socialLinks.map((social) => (
@@ -98,7 +93,7 @@ export default function Footer() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white/50 hover:text-gold hover:border-gold/30 transition-all duration-200"
+                  className="flex size-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-all duration-200 hover:border-primary/30 hover:text-primary"
                   aria-label={social.label}
                 >
                   {social.icon}
@@ -108,15 +103,15 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-base font-semibold text-white mb-5">
-              Hızlı Erişim
+            <h4 className="mb-5 text-base font-semibold text-gray-900">
+              {t("common.home")}
             </h4>
-            <div className="w-12 h-[2px] bg-gold/40 rounded-full mb-5" />
-            <ul className="space-y-3 text-base text-white/55">
-              {footerLinks.hizli.map((link) => (
+            <div className="mb-5 h-[2px] w-12 rounded-full bg-primary/30" />
+            <ul className="space-y-3 text-base text-gray-600">
+              {quickLinks.map((link) => (
                 <li key={link.label}>
                   <Link
-                    className="hover:text-gold transition-colors duration-200"
+                    className="transition-colors duration-200 hover:text-primary"
                     href={link.href}
                   >
                     {link.label}
@@ -127,15 +122,15 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-base font-semibold text-white mb-5">
-              Yasal Politikalar
+            <h4 className="mb-5 text-base font-semibold text-gray-900">
+              {t("common.about")}
             </h4>
-            <div className="w-12 h-[2px] bg-gold/40 rounded-full mb-5" />
-            <ul className="space-y-3 text-base text-white/55">
-              {footerLinks.yasal.map((link) => (
+            <div className="mb-5 h-[2px] w-12 rounded-full bg-primary/30" />
+            <ul className="space-y-3 text-base text-gray-600">
+              {legalLinks.map((link) => (
                 <li key={link.label}>
                   <Link
-                    className="hover:text-gold transition-colors duration-200"
+                    className="transition-colors duration-200 hover:text-primary"
                     href={link.href}
                   >
                     {link.label}
@@ -146,39 +141,39 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-base font-semibold text-white mb-5">
-              İletişim
+            <h4 className="mb-5 text-base font-semibold text-gray-900">
+              {t("common.contact")}
             </h4>
-            <div className="w-12 h-[2px] bg-gold/40 rounded-full mb-5" />
-            <div className="space-y-5 text-base text-white/55">
+            <div className="mb-5 h-[2px] w-12 rounded-full bg-primary/30" />
+            <div className="space-y-5 text-base text-gray-600">
               <div className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-gold/60 mt-0.5 text-[20px]">
+                <span className="material-symbols-outlined mt-0.5 text-[20px] text-primary/70">
                   location_on
                 </span>
                 <p>
-                  Yeşilyurt Mah. Güvenlik Cad. No:22
+                  {addressLineOne}
                   <br />
-                  Elbistan, Kahramanmaraş
+                  {addressLineTwo}
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-gold/60 text-[20px]">
+                <span className="material-symbols-outlined text-[20px] text-primary/70">
                   mail
                 </span>
                 <a
                   href="mailto:bilgi@mizandernegi.org.tr"
-                  className="hover:text-gold transition-colors duration-200"
+                  className="transition-colors duration-200 hover:text-primary"
                 >
                   bilgi@mizandernegi.org.tr
                 </a>
               </div>
               <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-gold/60 text-[20px]">
+                <span className="material-symbols-outlined text-[20px] text-primary/70">
                   phone_in_talk
                 </span>
                 <a
                   href={`tel:${SUPPORT_PHONE_E164}`}
-                  className="hover:text-gold transition-colors duration-200"
+                  className="transition-colors duration-200 hover:text-primary"
                 >
                   {SUPPORT_PHONE_DISPLAY}
                 </a>
@@ -187,12 +182,12 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="pt-6 border-t border-white/8 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <p className="text-[13px] text-white/35">
-            © 2024 Mizan Derneği. Tüm Hakları Saklıdır.
+        <div className="flex flex-col items-center justify-between gap-3 border-t border-gray-100 pt-6 sm:flex-row">
+          <p className="text-[13px] text-gray-500">
+            {t("footer.copyright")}
           </p>
-          <p className="text-[13px] text-white/25">
-            Mizan İnsani Yardım Derneği
+          <p className="text-[13px] text-gray-400">
+            {t("footer.organization")}
           </p>
         </div>
       </div>

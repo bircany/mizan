@@ -1,0 +1,47 @@
+services:
+  app:
+    environment:
+      QURBANI_STORAGE_ROOT: /data/qurbani
+      QURBANI_UPLOAD_BASE_URL: https://${APP_DOMAIN}/qurbani-uploads/files/
+      QURBANI_MAX_VIDEO_BYTES: "1073741824"
+      QURBANI_MAX_VIDEO_SECONDS: "900"
+    volumes:
+      - qurbani_data:/data/qurbani
+
+  qurbani-tusd:
+    image: tusproject/tusd:v2.8.0
+    restart: unless-stopped
+    command:
+      - -host=0.0.0.0
+      - -port=1080
+      - -base-path=/qurbani-uploads/files/
+      - -behind-proxy
+      - -hooks-http=http://app:3000/api/qurbani/uploads/hooks
+      - -hooks-enabled-events=pre-create,post-finish
+      - -upload-dir=/data/qurbani/uploads
+      - -max-size=1073741824
+    environment:
+      QURBANI_TUSD_HOOK_SECRET: ${QURBANI_TUSD_HOOK_SECRET}
+    volumes:
+      - qurbani_data:/data/qurbani
+    depends_on:
+      - app
+
+  qurbani-worker:
+    image: ${APP_IMAGE}
+    restart: unless-stopped
+    command: ["npm", "run", "qurbani:worker"]
+    environment:
+      NODE_ENV: production
+      QURBANI_STORAGE_ROOT: /data/qurbani
+      PAYLOAD_DATABASE_URI: ${PAYLOAD_DATABASE_URI}
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET}
+      EVOLUTION_API_URL: ${EVOLUTION_API_URL}
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
+      EVOLUTION_INSTANCE_NAME: ${EVOLUTION_INSTANCE_NAME}
+    volumes:
+      - qurbani_data:/data/qurbani
+
+volumes:
+  qurbani_data:
+    name: mizan_qurbani_data

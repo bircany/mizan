@@ -6,7 +6,7 @@ import { sendDonationReceipt } from "@/lib/resend";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 
 type FulfillmentStatus = "pending" | "processing" | "completed" | "action_required";
-type ReceiptStatus = "pending" | "stored" | "failed";
+type ReceiptStatus = "pending" | "stored" | "failed" | "not_requested";
 type ReportStatus = "pending" | "created" | "failed";
 type EmailStatus = "pending" | "sent" | "failed" | "skipped";
 
@@ -81,7 +81,9 @@ export async function fulfillPaidDonation(payload: Payload, donationId: number |
     overrideAccess: true,
   });
 
-  if (!donation.receiptPath) {
+  if (!donation.taxReceiptRequested) {
+    receiptStatus = "not_requested";
+  } else if (!donation.receiptPath) {
     try {
       const receipt = generateReceipt(
         donation.donorName,
@@ -140,7 +142,7 @@ export async function fulfillPaidDonation(payload: Payload, donationId: number |
     errors.push(errorMessage(error));
   }
 
-  if (emailStatus !== "sent") {
+  if (donation.taxReceiptRequested && emailStatus !== "sent") {
     try {
       const result = await sendDonationReceipt(
         donation.email,
@@ -162,8 +164,12 @@ export async function fulfillPaidDonation(payload: Payload, donationId: number |
     }
   }
 
+  if (!donation.taxReceiptRequested) {
+    emailStatus = "skipped";
+  }
+
   const status: FulfillmentStatus =
-    receiptStatus === "stored" && reportStatus === "created" && emailStatus === "sent"
+    (receiptStatus === "stored" || receiptStatus === "not_requested") && reportStatus === "created" && (emailStatus === "sent" || emailStatus === "skipped")
       ? "completed"
       : "action_required";
   const lastError = errors.length ? errors.join(" | ").slice(0, 1000) : undefined;

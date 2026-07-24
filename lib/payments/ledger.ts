@@ -3,6 +3,7 @@ import { getSupabaseServiceClient } from "@/lib/supabase-server";
 type LedgerEntryInput = {
   donationId: number;
   campaignId: number;
+  fundingPoolId: number;
   refundRequestId?: number | null;
   entryType: "capture" | "refund" | "cancel";
   amount: number;
@@ -14,9 +15,10 @@ type LedgerEntryInput = {
 };
 
 export async function recordPaymentLedgerEntry(input: LedgerEntryInput) {
-  const { data, error } = await getSupabaseServiceClient().rpc("record_payment_ledger_entry", {
+  const { data, error } = await getSupabaseServiceClient().rpc("record_funding_pool_ledger_entry", {
     p_donation_id: input.donationId,
     p_campaign_id: input.campaignId,
+    p_funding_pool_id: input.fundingPoolId,
     p_refund_request_id: input.refundRequestId ?? null,
     p_entry_type: input.entryType,
     p_amount: input.amount,

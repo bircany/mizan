@@ -8,6 +8,7 @@ interface CartContextType {
   addItem: (item: CartItem) => void
   removeItem: (campaignId: string) => void
   updateQuantity: (campaignId: string, quantity: number) => void
+  updateTitles: (titles: Record<string, string>) => void
   clearCart: () => void
   totalAmount: number
 }
@@ -80,6 +81,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems([])
   }, [])
 
+  const updateTitles = useCallback((titles: Record<string, string>) => {
+    setItems((prev) => prev.map((item) => titles[item.campaignId] ? { ...item, title: titles[item.campaignId] } : item))
+  }, [])
+
   const totalAmount = items.reduce(
     (sum, item) => sum + item.amount * item.quantity,
     0
@@ -87,7 +92,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQuantity, clearCart, totalAmount }}
+      value={{ items, addItem, removeItem, updateQuantity, updateTitles, clearCart, totalAmount }}
     >
       {children}
     </CartContext.Provider>

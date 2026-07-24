@@ -1,8 +1,8 @@
 import { jsPDF } from 'jspdf'
 
-const ASSOCIATION_NAME = 'Mizan Yardımlaşma ve Dayanışma Derneği'
-const ASSOCIATION_ADDRESS = 'Elbistan, Kahramanmaraş, Türkiye'
-const ASSOCIATION_TAX_ID = '1234567890'
+const ASSOCIATION_NAME = process.env.RECEIPT_ASSOCIATION_NAME || 'Mizan Yardimlasma ve Dayanisma Dernegi'
+const ASSOCIATION_ADDRESS = process.env.RECEIPT_ASSOCIATION_ADDRESS || 'Adres bilgisi yapilandirilmamistir'
+const ASSOCIATION_TAX_ID = process.env.RECEIPT_TAX_ID || 'Vergi numarasi yapilandirilmamistir'
 
 export function generateReceipt(
   donorName: string,

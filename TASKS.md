@@ -44,3 +44,21 @@
 - [ ] SEO (sitemap, robots)
 - [ ] Instagram widget
 - [ ] Vercel deploy
+
+## Phase 3 Baslangic Notu
+
+Roadmap'e gore sonraki somut is paketi:
+
+- `donations`
+- `field_tasks`
+- `proof_submissions`
+- `proof_assets`
+- `donor_reports`
+- `telegram_users`
+- `field_sessions`
+
+Ilk kontrol:
+
+1. Mevcut Payload collection'larinin bu modelle birebir eslesmesini dogrula.
+2. Eksik durum gecislerini belirle.
+3. Saha botu icin tek kullanimli kod akisini netlestir.

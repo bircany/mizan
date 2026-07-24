@@ -17,6 +17,7 @@ export const PANEL_ROUTE_ACCESS = {
   reports: ["super_admin", "approver"],
   fieldTasks: ["super_admin", "approver", "field_operator"],
   fieldSubmissions: ["super_admin", "approver", "field_operator"],
+  qurbani: ["super_admin", "field_operator"],
   users: ["super_admin"],
   auditLogs: ["super_admin"],
   systemPayments: ["super_admin"],
@@ -53,9 +54,18 @@ export type PanelNavigationIcon =
   | "reports"
   | "fieldTasks"
   | "fieldSubmissions"
+  | "qurbani"
   | "users"
   | "auditLogs"
   | "systemPayments";
+
+export type PanelQuickAccessItem = {
+  href: string;
+  icon: PanelNavigationIcon;
+  key: string;
+  label: string;
+  roles: readonly UserRole[];
+};
 
 /**
  * Paneldeki görünürlük, sayfa erişimi ve gelecekteki modül sırası tek kaynaktan yönetilir.
@@ -89,21 +99,22 @@ export const PANEL_NAVIGATION_GROUPS: readonly PanelNavigationGroup[] = [
   },
   {
     id: "finance",
-    label: "Finans",
+    label: "Bağış ve finans",
     items: [
       { href: "/panel/bagislar", icon: "donations", isAvailable: true, label: "Bağışlar", roles: PANEL_ROUTE_ACCESS.donations, route: "donations" },
       { href: "/panel/odemeler", icon: "payments", isAvailable: true, label: "Ödeme izleme", roles: PANEL_ROUTE_ACCESS.payments, route: "payments" },
       { href: "/panel/iadeler", icon: "refunds", isAvailable: true, label: "İade ve iptal", roles: PANEL_ROUTE_ACCESS.refunds, route: "refunds" },
       { href: "/panel/teslimatlar", icon: "fulfillments", isAvailable: true, label: "Makbuz ve teslim", roles: PANEL_ROUTE_ACCESS.fulfillments, route: "fulfillments" },
+      { href: "/panel/raporlar", icon: "reports", isAvailable: true, label: "Raporlar ve onay", roles: PANEL_ROUTE_ACCESS.reports, route: "reports" },
     ],
   },
   {
     id: "field",
-    label: "Saha ve onay",
+    label: "Operasyon",
     items: [
+      { href: "/panel/kurban", icon: "qurbani", isAvailable: true, label: "Kurban operasyonu", roles: PANEL_ROUTE_ACCESS.qurbani, route: "qurbani" },
       { href: "/panel/saha", icon: "fieldTasks", isAvailable: true, label: "Saha görevleri", roles: PANEL_ROUTE_ACCESS.fieldTasks, route: "fieldTasks" },
       { href: "/panel/saha/teslimler", icon: "fieldSubmissions", isAvailable: true, label: "Teslimler", roles: PANEL_ROUTE_ACCESS.fieldSubmissions, route: "fieldSubmissions" },
-      { href: "/panel/raporlar", icon: "reports", isAvailable: true, label: "Raporlar ve onay", roles: PANEL_ROUTE_ACCESS.reports, route: "reports" },
     ],
   },
   {
@@ -120,6 +131,30 @@ export const PANEL_NAVIGATION_GROUPS: readonly PanelNavigationGroup[] = [
 export const PANEL_NAV_ITEMS = PANEL_NAVIGATION_GROUPS.flatMap((group) =>
   group.items.filter((item) => item.isAvailable),
 );
+
+/** Safe, curated destinations used by the shared dashboard shortcuts. */
+export const PANEL_QUICK_ACCESS_ITEMS: readonly PanelQuickAccessItem[] = [
+  { key: "campaigns", label: "Bağış alanları", href: "/panel/icerik/bagis-alanlari", icon: "campaigns", roles: PANEL_ROUTE_ACCESS.contentCampaigns },
+  { key: "news", label: "Haberler", href: "/panel/icerik/haberler", icon: "news", roles: PANEL_ROUTE_ACCESS.contentNews },
+  { key: "media", label: "Medya", href: "/panel/icerik/medya", icon: "media", roles: PANEL_ROUTE_ACCESS.contentMedia },
+  { key: "payments", label: "Ödeme izleme", href: "/panel/odemeler", icon: "payments", roles: PANEL_ROUTE_ACCESS.payments },
+  { key: "fulfillments", label: "Makbuz ve teslim", href: "/panel/teslimatlar", icon: "fulfillments", roles: PANEL_ROUTE_ACCESS.fulfillments },
+  { key: "reports", label: "Raporlar", href: "/panel/raporlar", icon: "reports", roles: PANEL_ROUTE_ACCESS.reports },
+  { key: "quick-stock", label: "Hızlı kurbanlık ekle", href: "/panel/kurban?section=sales&action=quick-stock", icon: "qurbani", roles: PANEL_ROUTE_ACCESS.qurbani },
+] as const;
+
+export const DEFAULT_PANEL_QUICK_ACCESS_KEYS = [
+  "campaigns",
+  "news",
+  "media",
+  "payments",
+  "fulfillments",
+  "reports",
+] as const;
+
+export function getPanelQuickAccessItem(key: string) {
+  return PANEL_QUICK_ACCESS_ITEMS.find((item) => item.key === key);
+}
 
 export function canAccessPanelRoute(role: string | null | undefined, route: keyof typeof PANEL_ROUTE_ACCESS) {
   return hasRole(role, PANEL_ROUTE_ACCESS[route]);

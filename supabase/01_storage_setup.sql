@@ -32,6 +32,17 @@ values
       'video/mp4',
       'video/quicktime'
     ]
+  ),
+  (
+    'campaign-covers',
+    'campaign-covers',
+    true,
+    10485760,
+    array[
+      'image/jpeg',
+      'image/png',
+      'image/webp'
+    ]
   )
 on conflict (id) do update
 set

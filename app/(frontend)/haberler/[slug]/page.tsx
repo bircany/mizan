@@ -1,164 +1,45 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { CalendarDays, Clock3, Eye, Tag } from "lucide-react";
 
-const newsArticle = {
-  slug: "tanzanya-50-su-kuyusu",
-  title: "Tanzanya'da 50 Yeni Su Kuyusu Açılışı Gerçekleştirdik",
-  date: "15 Mayıs 2024",
-  category: "Projeler",
-  image:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuCVJVkUWx8VQk_xoUARGbGhjVP7xB3iY0rpvWPTzb17PI5JeFriU37Nm9rvx8m1n-9w_nTz7fOxEGR7LjJtc4dO57FUiymDTARhXH6CvMx3YxuDd0yFYJ5Sf5bDoZb5WgZCdoyLYbnOS3Ay1p8Z9PChSl-_TZmiHoEmzJF4ri0gN1UxSjx6qB5-gJt4V9vwmW_kJKFFHlUxaw3TXUjQe9rUsV8bRHr3yT2Xor-pYWrGn-pho7JiC9JOMejNRo0l013t4JO9z5_wopQ4",
-  content: `
-    <p>Kuraklıkla mücadele eden Afrika bölgelerinde sürdürdüğümüz "Bir Damla Umut" projesi kapsamında Tanzanya'nın kırsal kesimlerinde bağışçılarımızın destekleriyle 50 yeni su kuyusunu daha bölge halkının hizmetine sunduk.</p>
-    <p>Proje kapsamında açılan kuyular, her biri günde ortalama 5.000 litre temiz su sağlayarak yaklaşık 25.000 kişinin temiz içme suyuna erişimini mümkün kılmaktadır. Bölge halkı daha önce kilometrelerce yürüyerek ulaştıkları su kaynaklarına artık köylerinin hemen yanı başında ulaşabilmektedir.</p>
-    <p>Mizan Derneği olarak su kuyusu projelerimizde öncelikli hedefimiz, sürdürülebilir su kaynakları oluşturmak ve bölge halkının kendi su ihtiyacını karşılayabileceği altyapıyı kurmaktır. Bu amaçla açtığımız kuyuların bakım ve onarımı için yerel ekipler eğitilmekte ve yedek parça temini sağlanmaktadır.</p>
-    <p>Tanzanya'nın Dodoma, Morogoro ve Iringa bölgelerinde açılan kuyular, özellikle kadınların ve çocukların su taşıma yükünü hafifletmiş, kız çocuklarının okula gitme oranlarında gözle görülür bir artış sağlanmıştır. Temiz suya erişim, bölgedeki su kaynaklı hastalıkların da önemli ölçüde azalmasına vesile olmuştur.</p>
-    <p>Bağışçılarımıza teşekkür eder, hayırlarının kabul olmasını dileriz. Yeni projelerimizle ilgili gelişmeleri sizlerle paylaşmaya devam edeceğiz.</p>
-  `,
-};
+import { NewsBlockRenderer } from "@/components/news/news-block-renderer";
+import { NewsViewTracker } from "@/components/news/news-view-tracker";
+import { getPublicLocale, localeTag } from "@/lib/i18n";
+import { getPublishedNews, getPublishedNewsBySlug } from "@/lib/public/news";
 
-const relatedNews = [
-  {
-    title: "Erzak Dağıtımları Kapsamında Yeni Bölgelere Ulaştık",
-    date: "10 Mayıs 2024",
-    slug: "erzak-dagitimlari",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAOGzrVfXOW5xT5DwmakWnAm7m9Fb-Q69AEIT7Oq51Fe3D4g1RlAig7jfj5QENaoEmbGMkwtCwPpX5-kXY766NsqZmDJsoBwDIxGujlaWqqlp7jOXchjL3vqAjF5KDRRFK_sPgVcseCXo7VupXnnwVkb77IqptrZUuvWNkLipWZS2_iQJrlkY3NFLunCfJsVqSwoeH7CrozsTEm3UNT0dnzCegBXL0wDMbSW-yRwgW2UR-j5J5HNIOGrad_jZaSsLWhfrHDVkxnH8zW",
-  },
-  {
-    title: "Su Kuyusu Bağışlarınız İçin Teşekkür Ederiz",
-    date: "12 Mayıs 2024",
-    slug: "su-kuyusu-tesekkur",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuA037tcTRdmCAd-5RKNTIqPGl0oBfmmScPCPBD3FxPwmYt-n5nG9G94qvmIsGQezL8ojoql-8aGnf6l8RfKQFyhqVZfD4K85-cGF0AbKCJs6Sbfy1ci9cSVc8mieqUy-5RcabxSLtS3Do78rSHTv47jujsqCL5SrlwFvwVH80b536nkJXFM5aViLYWNB4vEz-tQHIXdnooat2dD7Jz7qggDsRNHdhR6xry6F_rGiJ5LlYuBZkj_1A99M7-hZTE8SN05rGruNykOrocc",
-  },
-  {
-    title: "Ramazan Kampanyası Raporumuz Yayınlandı",
-    date: "08 Mayıs 2024",
-    slug: "ramazan-kampanyasi-raporu",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuA8uizivtpax4te4k0-GpSZc1_FKNKOhrrJJBrVABPCeIqo_J_KFsQfQ6IEByLHXLlziaGoOH8BmcLdOyITXJuu_mJEorhfwDz41B_Hw5D6-t0JXlwvcOxzfmhwtTm7Ub7hk6Z1HPNSC8UdHbQsuU7fA0nV2d6jPhCdOrLDC23kzzPDsRcGgbRyRRnDo5JAJHbYcUjntbbf9Ci6EcjSeuA_X8JzkATi2A_BZa2lqsDNTkJLxCetY51ixGi90kBfJBD5fYrOXu6fbFwO",
-  },
-];
+export const dynamic = "force-dynamic";
+const fallbackBaseUrl = "https://www.mizandernegi.org";
 
-type Props = {
-  params: { slug: string };
-};
+function baseUrl() { return (process.env.NEXT_PUBLIC_BASE_URL || fallbackBaseUrl).replace(/\/$/, ""); }
 
-export default function NewsDetailPage({ params }: Props) {
-  const article = newsArticle;
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const [{ slug }, locale] = await Promise.all([params, getPublicLocale()]);
+  const post = await getPublishedNewsBySlug(slug, locale);
+  if (!post) return { title: "Haber bulunamadı | Mizan Derneği" };
+  const url = `${baseUrl()}/haberler/${post.slug}`;
+  return {
+    title: post.metaTitle,
+    description: post.metaDescription,
+    alternates: { canonical: url },
+    openGraph: { type: "article", title: post.metaTitle, description: post.metaDescription, url, publishedTime: post.publishedAt, modifiedTime: post.updatedAt, section: post.category?.name || "Haberler", images: post.coverImageUrl ? [{ url: post.coverImageUrl, alt: post.coverImageAlt }] : undefined },
+    twitter: { card: "summary_large_image", title: post.metaTitle, description: post.metaDescription, images: post.coverImageUrl ? [post.coverImageUrl] : undefined },
+  };
+}
 
-  return (
-    <>
-      <section className="relative h-[320px] md:h-[400px] overflow-hidden">
-        <Image
-          src={article.image}
-          alt={article.title}
-          fill
-          sizes="100vw"
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 max-w-container-max mx-auto px-margin-desktop pb-lg">
-          <span className="bg-primary text-white px-4 py-1.5 rounded-full text-label-sm font-bold inline-block mb-sm">
-            {article.category}
-          </span>
-          <h1 className="text-display-lg-mobile md:text-display-lg text-white max-w-3xl">
-            {article.title}
-          </h1>
-          <div className="flex items-center gap-4 mt-md text-white/80 text-label-md">
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[16px]">calendar_month</span>
-              {article.date}
-            </span>
-          </div>
-        </div>
-      </section>
-
-      <section className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-xl">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-lg">
-            <Link
-              href="/haberler"
-              className="inline-flex items-center gap-2 text-primary font-label-md font-bold hover:opacity-80 transition-opacity"
-            >
-              <span className="material-symbols-outlined">arrow_back</span>
-              Geri Dön
-            </Link>
-
-            <div className="flex items-center gap-2">
-              <span className="text-label-sm text-on-surface-variant">Paylaş:</span>
-              <button className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-primary hover:text-on-primary transition-all">
-                <span className="material-symbols-outlined text-[18px]">share</span>
-              </button>
-              <button className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-primary hover:text-on-primary transition-all">
-                <span className="material-symbols-outlined text-[18px]">content_copy</span>
-              </button>
-            </div>
-          </div>
-
-          <article
-            className="prose prose-lg max-w-none text-body-md text-on-surface-variant leading-relaxed space-y-md"
-            dangerouslySetInnerHTML={{ __html: article.content }}
-          />
-
-          <hr className="border-surface-container my-xl" />
-
-          <div className="flex items-center justify-between">
-            <Link
-              href="/haberler"
-              className="inline-flex items-center gap-2 text-primary font-label-md font-bold hover:opacity-80 transition-opacity"
-            >
-              <span className="material-symbols-outlined">arrow_back</span>
-              Geri Dön
-            </Link>
-
-            <div className="flex items-center gap-2">
-              <span className="text-label-sm text-on-surface-variant">Paylaş:</span>
-              <button className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-primary hover:text-on-primary transition-all">
-                <span className="material-symbols-outlined text-[18px]">share</span>
-              </button>
-              <button className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-primary hover:text-on-primary transition-all">
-                <span className="material-symbols-outlined text-[18px]">content_copy</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-surface-container-low py-xl">
-        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
-          <h2 className="font-headline-xl text-headline-xl text-primary mb-lg">İlgili Haberler</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-            {relatedNews.map((item) => (
-              <Link
-                key={item.slug}
-                href={`/haberler/${item.slug}`}
-                className="bg-surface rounded-xl overflow-hidden shadow-soft hover:shadow-ambient transition-shadow group"
-              >
-                <div className="relative h-48 overflow-hidden">
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                </div>
-                <div className="p-md">
-                  <span className="text-label-sm text-on-surface-variant flex items-center gap-1 mb-xs">
-                    <span className="material-symbols-outlined text-[14px]">calendar_month</span>
-                    {item.date}
-                  </span>
-                  <h3 className="font-headline-md text-headline-md text-on-surface group-hover:text-primary transition-colors line-clamp-2">
-                    {item.title}
-                  </h3>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-    </>
-  );
+export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const [{ slug }, locale] = await Promise.all([params, getPublicLocale()]);
+  const [post, allPosts] = await Promise.all([getPublishedNewsBySlug(slug, locale), getPublishedNews(locale)]);
+  if (!post) notFound();
+  const related = allPosts.filter((item) => item.id !== post.id && ((post.category && item.category?.id === post.category.id) || item.tags.some((tag) => post.tags.includes(tag)))).slice(0, 3);
+  const url = `${baseUrl()}/haberler/${post.slug}`;
+  const jsonLd = [{ "@context": "https://schema.org", "@type": "BlogPosting", headline: post.title, description: post.metaDescription, image: post.coverImageUrl ? [post.coverImageUrl] : undefined, datePublished: post.publishedAt, dateModified: post.updatedAt, author: { "@type": "Organization", name: "Mizan Derneği" }, publisher: { "@type": "Organization", name: "Mizan Derneği", logo: { "@type": "ImageObject", url: `${baseUrl()}/logo.png` } }, mainEntityOfPage: url, keywords: post.tags.join(", ") }, { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Ana Sayfa", item: baseUrl() }, { "@type": "ListItem", position: 2, name: "Haberler", item: `${baseUrl()}/haberler` }, { "@type": "ListItem", position: 3, name: post.title, item: url }] }];
+  return <>
+    <NewsViewTracker slug={post.slug} />
+    <script dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} type="application/ld+json" />
+    <header className="relative min-h-[420px] overflow-hidden bg-primary md:min-h-[520px]">{post.coverImageUrl ? <Image alt={post.coverImageAlt} className="object-cover" fill priority sizes="100vw" src={post.coverImageUrl} /> : null}<div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15"/><div className="relative mx-auto flex min-h-[420px] max-w-container-max flex-col justify-end px-margin-mobile py-xl text-white md:min-h-[520px] md:px-margin-desktop">{post.category ? <Link className="mb-4 w-fit rounded-full bg-secondary px-4 py-1.5 text-sm font-bold" href={`/haberler/kategori/${post.category.slug}`}>{post.category.name}</Link> : null}<h1 className="max-w-4xl text-display-lg-mobile md:text-display-lg">{post.title}</h1><div className="mt-5 flex flex-wrap gap-5 text-sm text-white/80"><span className="flex items-center gap-2"><CalendarDays className="size-4"/>{new Date(post.publishedAt).toLocaleDateString(localeTag(locale), { day:"numeric", month:"long", year:"numeric" })}</span><span className="flex items-center gap-2"><Clock3 className="size-4"/>{post.readTimeMinutes} dk okuma</span><span className="flex items-center gap-2"><Eye className="size-4"/>{post.viewCount} görüntülenme</span></div></div></header>
+    <main className="mx-auto grid max-w-container-max gap-xl px-margin-mobile py-xl md:px-margin-desktop lg:grid-cols-[minmax(0,1fr)_320px]"><article><p className="mb-8 text-headline-md leading-8 text-on-surface">{post.excerpt}</p><NewsBlockRenderer blocks={post.blocks} campaigns={post.relatedCampaigns} />{post.tags.length ? <div className="mt-10 flex flex-wrap items-center gap-2 border-t border-outline-variant pt-6"><Tag className="size-4 text-primary"/>{post.tags.map((tag) => <span className="rounded-full bg-surface-container px-3 py-1 text-sm" key={tag}>#{tag}</span>)}</div> : null}</article><aside className="space-y-5"><div className="rounded-[24px] border border-outline-variant bg-surface p-5"><h2 className="text-headline-md">İlgili bağış alanları</h2>{post.relatedCampaigns.length ? <div className="mt-4 space-y-3">{post.relatedCampaigns.map((campaign) => <Link className="block rounded-xl border border-outline-variant p-4 transition hover:border-primary" href={`/bagis/${campaign.slug}`} key={campaign.id}><strong className="text-on-surface">{campaign.title}</strong><p className="mt-1 line-clamp-2 text-sm text-on-surface-variant">{campaign.description}</p></Link>)}</div> : <p className="mt-3 text-sm text-on-surface-variant">Bu haber için bağlı bağış alanı yok.</p>}</div><Link className="block rounded-[24px] bg-primary p-6 text-white" href="/bagis"><strong className="text-headline-md">İyiliğe ortak olun</strong><p className="mt-2 text-sm text-white/80">Aktif bağış alanlarını inceleyin.</p><span className="mt-4 inline-flex rounded-full bg-secondary px-4 py-2 text-sm font-bold">Bağış alanları</span></Link></aside></main>
+    {related.length ? <section className="bg-surface-container-low py-xl"><div className="mx-auto max-w-container-max px-margin-mobile md:px-margin-desktop"><p className="text-sm font-bold uppercase tracking-widest text-secondary">Devam et</p><h2 className="mt-2 text-headline-xl text-primary">İlgili haberler</h2><div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{related.map((item) => <Link className="grid grid-cols-[80px_1fr] gap-4 rounded-[24px] border border-outline-variant bg-surface p-4 transition hover:border-primary" href={`/haberler/${item.slug}`} key={item.id}>{item.coverImageUrl ? <div className="relative size-20 overflow-hidden rounded-xl"><Image alt={item.coverImageAlt} className="object-cover" fill sizes="80px" src={item.coverImageUrl}/></div> : <div className="grid size-20 place-items-center rounded-xl bg-primary-container"><span className="material-symbols-outlined">newspaper</span></div>}<div><span className="text-xs font-bold text-primary">{item.category?.name}</span><h3 className="mt-1 line-clamp-2 font-semibold text-on-surface">{item.title}</h3><p className="mt-1 line-clamp-1 text-xs text-on-surface-variant">{item.excerpt}</p></div></Link>)}</div></div></section> : null}
+  </>;
 }

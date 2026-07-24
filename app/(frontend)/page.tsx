@@ -45,35 +45,17 @@ const donationTabs = [
   { label: "Sadaka", icon: "volunteer_activism" },
 ];
 
-const campaigns = [
-  {
-    img: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&q=80",
-    tag: "Kurban",
-    title: "Afrika Kurban Organizasyonu",
-    desc: "Afrika'daki ihtiyaç sahibi kardeşlerimize kurban emanetlerinizi ulaştırıyor, onların yüzünü güldürüyoruz.",
-    raised: 450000,
-    target: 600000,
-    percent: 75,
-  },
-  {
-    img: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=80",
-    tag: "İnşaat",
-    title: "Mizan Mescidi İnşaatı",
-    desc: "Elbistan'da inşa edilecek mescidimizle bölge halkına kalıcı bir ibadethane kazandırmayı hedefliyoruz.",
-    raised: 1200000,
-    target: 3000000,
-    percent: 40,
-  },
-  {
-    img: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&q=80",
-    tag: "Eğitim",
-    title: "İslami İlimler Medresesi",
-    desc: "Geleneksel medrese usulü ile modern eğitimi harmanlayarak ilim talebelerine kesintisiz eğitim sunuyoruz.",
-    raised: 85000,
-    target: 100000,
-    percent: 85,
-  },
-];
+type DonationAreaCard = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  image: string | null;
+  raised: number;
+  target: number;
+  percent: number;
+};
 
 const news = [
   {
@@ -121,26 +103,93 @@ const stories = [
 ];
 
 export default function HomePage() {
-  const { t, dir } = useLanguage();
+  const { t, dir, locale } = useLanguage();
   const { formatPrice } = useCurrency();
+  const [donationAreas, setDonationAreas] = useState<DonationAreaCard[]>([]);
+  const [donationAreasLoading, setDonationAreasLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeTab, setActiveTab] = useState(0);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
+  const slides = [
+    { img: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1920&q=80", title: t("home.heroTitle"), desc: t("home.heroDescription1") },
+    { img: "https://images.unsplash.com/photo-1594708767771-a7502209ff51?auto=format&fit=crop&w=1920&q=80", title: t("home.heroTitle2"), desc: t("home.heroDescription2") },
+    { img: "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&w=1920&q=80", title: t("home.heroTitle3"), desc: t("home.heroDescription3") },
+  ];
+  const donationTabs = ["payments", "temple_hindu", "school", "child_care", "water_drop", "emergency", "volunteer_activism"].map((icon, index) => ({
+    icon,
+    label: t(`home.quickDonationCategories.${index}`),
+  }));
+  const news = [
+    "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=600&q=80",
+    "https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&q=80",
+    "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600&q=80",
+  ].map((img, index) => ({ img, date: t(`home.newsItems.${index}.date`), title: t(`home.newsItems.${index}.title`), desc: t(`home.newsItems.${index}.description`) }));
+  const stories = ["A", "M", "A"].map((initial, index) => ({
+    initial,
+    rating: 5,
+    quote: t(`home.storiesItems.${index}.quote`),
+    author: t(`home.storiesItems.${index}.author`),
+    role: t(`home.storiesItems.${index}.role`),
+  }));
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [slides.length]);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveTestimonial((prev) => (prev + 1) % stories.length);
     }, 4000);
     return () => clearInterval(timer);
-  }, []);
+  }, [stories.length]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadDonationAreas() {
+      try {
+        const response = await fetch(`/api/bagis-alanlari?locale=${locale}`, { cache: "no-store" });
+        const payload = await response.json();
+        if (!active) return;
+        const areas = Array.isArray(payload?.areas) ? payload.areas : [];
+        setDonationAreas(
+          areas.slice(0, 3).map((area: {
+            id?: string;
+            slug?: string;
+            title?: string;
+            excerpt?: string;
+            category?: { name?: string } | null;
+            image?: { src?: string } | null;
+            collectedAmount?: number;
+            targetAmount?: number;
+            progress?: number;
+          }) => ({
+            id: String(area.id || area.title || Math.random()),
+            slug: area.slug || String(area.id || area.title || Math.random()),
+            title: area.title || t("home.donationAreaFallback"),
+            excerpt: area.excerpt || "",
+            category: area.category?.name || t("home.donationCategoryFallback"),
+            image: area.image?.src || null,
+            raised: Number(area.collectedAmount || 0),
+            target: Number(area.targetAmount || 0),
+            percent: Number(area.progress || 0),
+          })),
+        );
+      } catch {
+        if (active) setDonationAreas([]);
+      } finally {
+        if (active) setDonationAreasLoading(false);
+      }
+    }
+
+    loadDonationAreas();
+    return () => {
+      active = false;
+    };
+  }, [locale, t]);
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
@@ -183,7 +232,7 @@ export default function HomePage() {
                     transition={{ duration: 2, ease: "easeOut" }}
                     className="text-display-lg max-sm:text-display-lg-mobile text-white leading-[1.08] mb-5 max-w-[560px]"
                   >
-                    {currentSlide === 0 ? t("home.heroTitle") : currentSlide === 1 ? t("home.heroTitle2") : t("home.heroTitle3")}
+                    {slides[currentSlide].title}
                   </motion.h1>
 
                   <motion.p
@@ -239,7 +288,7 @@ export default function HomePage() {
                   ? "bg-white w-10 h-2.5"
                   : "bg-white/40 w-2.5 h-2.5 hover:bg-white/60"
               )}
-              aria-label={`Slide ${i + 1}`}
+              aria-label={t("home.slideLabel").replace("{number}", String(i + 1))}
             />
           ))}
         </div>
@@ -260,15 +309,15 @@ export default function HomePage() {
                 {t("about.title")}
               </h3>
               <p className="text-base text-on-surface-variant/60 leading-relaxed mb-8 max-w-lg">
-                İlim ve hizmeti birlikte yürüten Mizan Derneği, medrese geleneğini yaşatırken ihtiyaç sahiplerine onurlu ve sürdürülebilir destek sunar. Kalıcı iyilik anlayışıyla nesillere dokunur.
+                {t("home.introDescription")}
               </p>
               <div className="space-y-3 mb-8">
                 {[
-                  "Medrese ve İlim Eğitimi",
-                  "Sürekli Aşevi Hizmeti",
-                  "Burs ve Barınma Desteği",
-                  "Sosyal Yardım",
-                  "Manevi Çalışmalar",
+                  t("home.introItems.0"),
+                  t("home.introItems.1"),
+                  t("home.introItems.2"),
+                  t("home.introItems.3"),
+                  t("home.introItems.4"),
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-primary text-[20px]">check_circle</span>
@@ -280,7 +329,7 @@ export default function HomePage() {
                 href="/hakkimizda"
                 className="inline-flex items-center gap-2 bg-secondary text-white px-7 py-3.5 rounded-full text-[15px] font-semibold hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
               >
-                Vakfımızı Tanıyın
+                {t("home.meetFoundation")}
                 <span className="text-base">→</span>
               </Link>
             </motion.div>
@@ -296,10 +345,10 @@ export default function HomePage() {
                 <span className="material-symbols-outlined text-[32px] text-primary">volunteer_activism</span>
                 <div>
                   <h3 className="text-headline-md text-on-surface mb-2">
-                    Bağış ve İletişim
+                    {t("home.donationContactTitle")}
                   </h3>
                   <p className="text-base text-on-surface-variant/70 leading-relaxed">
-                    Vakfımıza bağışta bulunabilir, talebe olabilir ve faaliyetlerimiz ile ilgili bilgi sahibi edinebilirsiniz.
+                    {t("home.donationContactDescription")}
                   </p>
                 </div>
               </div>
@@ -328,13 +377,13 @@ export default function HomePage() {
                   className="inline-flex items-center gap-3 text-gold text-label-sm uppercase tracking-[0.15em] font-medium mb-4"
                 >
                   <span className="w-8 h-[2px] bg-gold rounded-full" />
-                  Vakfımız Hakkında
+                  {t("home.aboutEyebrow")}
                 </motion.span>
                 <h2 className="text-headline-xl text-on-surface leading-tight mb-6">
-                  İlim ve Hizmeti Birlikte Yürüten Köklü Bir Vakıf
+                  {t("home.aboutHeading")}
                 </h2>
                 <p className="text-base text-on-surface-variant/60 leading-relaxed mb-10 max-w-lg">
-                  Mizan Derneği, ilmi hayatın merkezine alan, hizmeti ise hayatın içine taşıyan bir anlayışla faaliyet gösterir. Medrese geleneğini yaşatırken, ihtiyaç sahiplerine onurlu ve sürdürülebilir destek sunmayı ilke edinir.
+                  {t("home.aboutDescription")}
                 </p>
 
                 <div className="space-y-6"
@@ -343,18 +392,18 @@ export default function HomePage() {
                   {[
                     {
                       icon: "school",
-                      title: "İlim Odaklı Eğitim",
-                      desc: "Geleneksel medrese usulü ile modern eğitim yöntemlerini harmanlayan yapımızla, ilim talebelerini hem ilmi hem ahlaki yönden destekliyoruz.",
+                      title: t("home.aboutFeatures.0.title"),
+                      desc: t("home.aboutFeatures.0.description"),
                     },
                     {
                       icon: "volunteer_activism",
-                      title: "Sürekli Sosyal Hizmet",
-                      desc: "Sadece dönemsel değil, yılın her günü devam eden aşevi ve sosyal yardım faaliyetleriyle ihtiyaç sahiplerinin yanında duruyoruz.",
+                      title: t("home.aboutFeatures.1.title"),
+                      desc: t("home.aboutFeatures.1.description"),
                     },
                     {
                       icon: "verified_user",
-                      title: "Güven ve Emanet Bilinci",
-                      desc: "Bağışları emanet bilinciyle yönetiyor, şeffaflık ve hesap verebilirlik ilkesinden asla taviz vermiyoruz.",
+                      title: t("home.aboutFeatures.2.title"),
+                      desc: t("home.aboutFeatures.2.description"),
                     },
                   ].map((item, i) => {
                     const isActive = hoveredFeature === i || (hoveredFeature === null && i === 0);
@@ -386,7 +435,7 @@ export default function HomePage() {
                     href="/hakkimizda"
                     className="inline-flex items-center gap-2 bg-secondary text-white px-7 py-3.5 rounded-full text-[15px] font-semibold hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 shrink-0"
                   >
-                    Yakından Tanıyın
+                    {t("home.getToKnowUs")}
                   </Link>
                   <div className="hidden lg:flex items-center gap-3.5">
                     <div className="w-[52px] h-[52px] rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -394,7 +443,7 @@ export default function HomePage() {
                     </div>
                     <div>
                       <p className="text-[18px] font-semibold leading-tight text-on-surface">Mizan Derneği</p>
-                      <p className="text-[16px] text-on-surface-variant mt-1">İyilikte Mizan.</p>
+                      <p className="text-[16px] text-on-surface-variant mt-1">{t("home.motto")}</p>
                     </div>
                   </div>
                 </div>
@@ -421,19 +470,19 @@ export default function HomePage() {
         <div className="max-w-[1200px] mx-auto px-margin-desktop">
           <div className="text-center max-w-xl mx-auto mb-10">
             <h2 className="text-headline-xl text-on-surface leading-tight">
-              Rakamlarla Mizan Derneği
+              {t("home.statsHeading")}
             </h2>
             <p className="text-base text-on-surface-variant/60 mt-3 leading-relaxed">
-              Her bağış bir hayatı değiştir. İşte ulaştığımız kardeşlerimizden bazıları.
+              {t("home.statsDescription")}
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-              { icon: "send", value: 954, suffix: "+", label: t("home.shipments"), sublabel: "Yardım Paketi" },
-              { icon: "group", value: 3588, suffix: "", label: t("home.supporters"), sublabel: "Bağışçı" },
-              { icon: "public", value: 10, suffix: "+", label: t("home.countries"), sublabel: "Ülke" },
-              { icon: "history", value: 2023, suffix: "", label: t("home.activeSince"), sublabel: "Beraberiz" },
+              { icon: "send", value: 954, suffix: "+", label: t("home.shipments"), sublabel: t("home.statSublabels.0") },
+              { icon: "group", value: 3588, suffix: "", label: t("home.supporters"), sublabel: t("home.statSublabels.1") },
+              { icon: "public", value: 10, suffix: "+", label: t("home.countries"), sublabel: t("home.statSublabels.2") },
+              { icon: "history", value: 2023, suffix: "", label: t("home.activeSince"), sublabel: t("home.statSublabels.3") },
             ].map((stat, i) => (
               <div
                 key={i}
@@ -458,25 +507,25 @@ export default function HomePage() {
         tabs={[
           {
             id: "medrese",
-            label: "Medrese Eğitimi",
+            label: t("home.gallery.0"),
             image:
               "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1600&q=80",
           },
           {
             id: "talebe",
-            label: "Talebeye Destek",
+            label: t("home.gallery.1"),
             image:
               "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1600&q=80",
           },
           {
             id: "asevi",
-            label: "Sürekli Aşevi",
+            label: t("home.gallery.2"),
             image:
               "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1600&q=80",
           },
           {
             id: "yardim",
-            label: "Sosyal Yardım",
+            label: t("home.gallery.3"),
             image:
               "https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=1600&q=80",
           },
@@ -490,88 +539,107 @@ export default function HomePage() {
             <div>
               <span className="inline-flex items-center gap-3 text-gold text-label-sm uppercase tracking-[0.15em] font-medium mb-4">
                 <span className="w-8 h-[2px] bg-gold rounded-full" />
-                {t("home.campaigns")}
+                {t("home.donationAreasEyebrow")}
               </span>
               <h2 className="text-headline-xl text-on-surface leading-tight">
-                {t("home.campaigns")}
+                {t("home.donationAreasEyebrow")}
               </h2>
               <p className="text-base text-on-surface-variant/60 mt-3 max-w-md leading-relaxed">
-                Bağışlarınızla hayatları değiştirebilirsiniz. Her kuruş bir umuda dönüşür.
+                {t("home.donationAreasDescription")}
               </p>
             </div>
             <Link
               href="/bagis"
               className="inline-flex items-center gap-2 border-2 border-outline-variant/25 text-on-surface-variant/70 px-7 py-3.5 rounded-full text-[15px] font-semibold hover:border-primary/40 hover:text-primary hover:-translate-y-0.5 transition-all duration-200 shrink-0"
             >
-              {t("home.allCampaigns")}
+                {t("home.allDonationAreas")}
               <span className="text-lg ml-0.5">→</span>
             </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-12">
-            {campaigns.map((campaign, i) => (
-              <div key={i} className="relative group/card">
-                <div className="absolute -inset-x-6 -inset-y-10 rounded-[40px] bg-[radial-gradient(circle,rgba(14,90,58,.18)_0%,rgba(172,120,15,.08)_45%,transparent_75%)] opacity-0 group-hover/card:opacity-100 blur-3xl transition-opacity duration-500 pointer-events-none z-0" />
-                <div
-                  className="relative z-10 bg-white rounded-3xl overflow-hidden shadow-lg group-hover/card:shadow-2xl transition-all duration-500 ease-out group-hover/card:scale-105 group-hover/card:-translate-y-3 cursor-pointer"
-                >
-                  <div className="relative h-56 overflow-hidden">
-                                        <Image
-                      alt={campaign.title}
-                      src={campaign.img}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                      className="object-cover group-hover/card:scale-110 transition-transform duration-700 ease-out"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
-                    <span className="absolute top-4 left-4 bg-white/80 backdrop-blur-md text-primary px-4 py-1.5 rounded-full text-label-sm font-semibold shadow-sm group-hover/card:shadow-lg transition-shadow duration-500">
-                      {campaign.tag}
-                    </span>
+            {donationAreasLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="rounded-3xl border border-outline-variant/20 bg-white p-6">
+                  <div className="h-56 rounded-2xl bg-surface-container-high animate-pulse" />
+                  <div className="mt-6 space-y-3">
+                    <div className="h-5 w-2/3 rounded bg-surface-container-high animate-pulse" />
+                    <div className="h-4 w-full rounded bg-surface-container-high animate-pulse" />
+                    <div className="h-4 w-5/6 rounded bg-surface-container-high animate-pulse" />
                   </div>
-
-                  <div className="p-6 flex flex-col">
-                    <h3 className="text-headline-md text-on-surface mb-2 group-hover/card:text-primary transition-colors duration-200 leading-snug">
-                      {campaign.title}
-                    </h3>
-                    <p className="text-base text-on-surface-variant/55 leading-relaxed mb-6 line-clamp-2">
-                      {campaign.desc}
-                    </p>
-
-                    <div className="mt-auto space-y-5">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-on-surface-variant/70">
-                          Toplanan
-                          <span className="block text-on-surface font-semibold text-base">{formatPrice(campaign.raised)}</span>
-                        </span>
-                        <span className="text-on-surface-variant/70 text-right">
-                          Hedef
-                          <span className="block text-on-surface font-semibold text-base">{formatPrice(campaign.target)}</span>
-                        </span>
-                      </div>
-
-                      <div className="relative w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
-                        <div
-                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-gold rounded-full transition-all duration-1000 ease-out group-hover/card:brightness-110"
-                          style={{ width: `${campaign.percent}%` }}
+                </div>
+              ))
+            ) : donationAreas.length ? (
+              donationAreas.map((area) => (
+                <div key={area.id} className="relative group/card">
+                  <div className="absolute -inset-x-6 -inset-y-10 rounded-[40px] bg-[radial-gradient(circle,rgba(14,90,58,.18)_0%,rgba(172,120,15,.08)_45%,transparent_75%)] opacity-0 group-hover/card:opacity-100 blur-3xl transition-opacity duration-500 pointer-events-none z-0" />
+                  <div className="relative z-10 bg-white rounded-3xl overflow-hidden shadow-lg group-hover/card:shadow-2xl transition-all duration-500 ease-out group-hover/card:scale-105 group-hover/card:-translate-y-3 cursor-pointer">
+                    <div className="relative h-56 overflow-hidden">
+                      {area.image ? (
+                        <Image
+                          alt={area.title}
+                          src={area.image}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover group-hover/card:scale-110 transition-transform duration-700 ease-out"
                         />
-                        <span className="absolute -top-7 right-0 bg-gold text-white text-xs font-bold px-2.5 py-0.5 rounded-full">
-                          %{campaign.percent}
-                        </span>
-                      </div>
+                      ) : (
+                        <div className="h-full w-full bg-[linear-gradient(135deg,_rgba(14,90,58,.14),_rgba(172,120,15,.14))]" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
+                      <span className="absolute top-4 left-4 bg-white/80 backdrop-blur-md text-primary px-4 py-1.5 rounded-full text-label-sm font-semibold shadow-sm group-hover/card:shadow-lg transition-shadow duration-500">
+                        {area.category}
+                      </span>
+                    </div>
 
-                      <Link
-                        href="/bagis"
-                        className="group/btn mt-1 inline-flex items-center justify-center gap-2 bg-secondary text-white px-6 py-3.5 rounded-full text-[15px] font-semibold hover:shadow-lg hover:shadow-secondary/25 group-hover/card:scale-105 transition-all duration-300"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">volunteer_activism</span>
-                        Hemen Bağış Yap
-                        <span className="text-base transition-transform duration-300 group-hover/btn:translate-x-1">→</span>
-                      </Link>
+                    <div className="p-6 flex flex-col">
+                      <h3 className="text-headline-md text-on-surface mb-2 group-hover/card:text-primary transition-colors duration-200 leading-snug">
+                        {area.title}
+                      </h3>
+                      <p className="text-base text-on-surface-variant/55 leading-relaxed mb-6 line-clamp-2">
+                        {area.excerpt}
+                      </p>
+
+                      <div className="mt-auto space-y-5">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-on-surface-variant/70">
+                            {t("home.collected")}
+                            <span className="block text-on-surface font-semibold text-base">{formatPrice(area.raised)}</span>
+                          </span>
+                          <span className="text-on-surface-variant/70 text-right">
+                            {t("home.target")}
+                            <span className="block text-on-surface font-semibold text-base">{formatPrice(area.target)}</span>
+                          </span>
+                        </div>
+
+                        <div className="relative w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
+                          <div
+                            className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-gold rounded-full transition-all duration-1000 ease-out group-hover/card:brightness-110"
+                            style={{ width: `${area.percent}%` }}
+                          />
+                          <span className="absolute -top-7 right-0 bg-gold text-white text-xs font-bold px-2.5 py-0.5 rounded-full">
+                            %{area.percent}
+                          </span>
+                        </div>
+
+                        <Link
+                          href={`/bagis/${area.slug}`}
+                          className="group/btn mt-1 inline-flex items-center justify-center gap-2 bg-secondary text-white px-6 py-3.5 rounded-full text-[15px] font-semibold hover:shadow-lg hover:shadow-secondary/25 group-hover/card:scale-105 transition-all duration-300"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">volunteer_activism</span>
+                          {t("common.donate")}
+                          <span className="text-base transition-transform duration-300 group-hover/btn:translate-x-1">→</span>
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="md:col-span-2 lg:col-span-3 rounded-3xl border border-dashed border-outline-variant/30 bg-white p-8 text-center text-on-surface-variant">
+                {t("home.noDonationAreas")}
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -581,10 +649,10 @@ export default function HomePage() {
         <div className="max-w-container-max mx-auto px-margin-desktop">
           <div className="text-center mb-10">
             <h2 className="mx-auto max-w-3xl text-3xl font-bold leading-tight text-center text-on-surface sm:text-4xl lg:text-5xl">
-              Hangi Alanda Bağış Yapmak İstersiniz?
+              {t("home.quickDonationHeading")}
             </h2>
             <p className="text-base text-on-surface-variant/60 mt-6 leading-relaxed">
-              İhtiyaç sahiplerine doğrudan ulaşan yardım kategorilerimizden birini seçin.
+              {t("home.quickDonationDescription")}
             </p>
           </div>
 
@@ -606,18 +674,18 @@ export default function HomePage() {
               <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.08)] lg:aspect-auto lg:min-h-[500px]">
                                 <Image
                   src="https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&w=800&q=80"
-                  alt="Bağış ve Destek"
+                  alt={t("home.donationContactTitle")}
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover"
                 />
                 <div className="absolute bottom-0 left-0 right-0 bg-secondary/95 backdrop-blur-sm p-6 text-white text-center rounded-b-3xl">
-                  <h3 className="text-headline-md mb-2">Bir İyiliğe Sen de Ortak Ol</h3>
+                  <h3 className="text-headline-md mb-2">{t("home.processCardTitle")}</h3>
                   <Link
                     href="/bagis"
                     className="inline-flex items-center gap-2 bg-white text-secondary px-8 py-3.5 rounded-full text-[15px] font-semibold hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 mt-2"
                   >
-                    Bağış Yap / Destek Ol
+                    {t("home.processCardButton")}
                     <span className="text-base">→</span>
                   </Link>
                 </div>
@@ -626,13 +694,13 @@ export default function HomePage() {
               <div>
                 <span className="inline-flex items-center gap-3 text-gold text-label-sm uppercase tracking-[0.15em] font-medium mb-4">
                   <span className="w-8 h-[2px] bg-gold rounded-full" />
-                  Bağış ve Destek Süreci
+                  {t("home.processEyebrow")}
                 </span>
                 <h2 className="text-headline-xl text-on-surface leading-tight mb-4">
-                  Bir İyiliğe Vesile Olmak Çok Kolay
+                  {t("home.processHeading")}
                 </h2>
                 <p className="text-base text-on-surface-variant/60 leading-relaxed mb-10">
-                  Mizan Derneği&apos;ne yapacağınız destekle; ilim talebelerine umut olabilir, ihtiyaç sahiplerinin sofrasına katkı sunabilirsiniz. Süreç şeffaf, destek kalıcıdır.
+                  {t("home.processDescription")}
                 </p>
 
                 <div className="space-y-1">
@@ -640,26 +708,26 @@ export default function HomePage() {
                     {
                       step: "01",
                       icon: "touch_app",
-                      title: "Destek Türünü Belirle",
-                      desc: "Bağış, burs, aşevi veya genel destek seçeneklerinden size uygun olanı seçin.",
+                      title: t("home.processSteps.0.title"),
+                      desc: t("home.processSteps.0.description"),
                     },
                     {
                       step: "02",
                       icon: "description",
-                      title: "Bilgilerinizi Paylaşın",
-                      desc: "Bağışınız güvenli ve şeffaf bir sistem üzerinden kayıt altına alınır.",
+                      title: t("home.processSteps.1.title"),
+                      desc: t("home.processSteps.1.description"),
                     },
                     {
                       step: "03",
                       icon: "volunteer_activism",
-                      title: "Bir Hayra Vesile Olun",
-                      desc: "Desteğiniz, ilim talebelerine ve ihtiyaç sahiplerine doğrudan ulaştırılır.",
+                      title: t("home.processSteps.2.title"),
+                      desc: t("home.processSteps.2.description"),
                     },
                     {
                       step: "04",
                       icon: "eco",
-                      title: "Kalıcı Bir İyilik Bırakın",
-                      desc: "Yaptığınız destek, sürdürülebilir vakıf çalışmalarıyla uzun vadeli bir hayra dönüşür.",
+                      title: t("home.processSteps.3.title"),
+                      desc: t("home.processSteps.3.description"),
                     },
                   ].map((item, i) => (
                     <div
@@ -728,13 +796,13 @@ export default function HomePage() {
           <div className="text-center max-w-xl mx-auto mb-14">
             <span className="inline-flex items-center justify-center gap-3 text-gold text-label-sm uppercase tracking-[0.15em] font-medium mb-4">
               <span className="w-8 h-[2px] bg-gold rounded-full" />
-              Son Gelişmeler
+              {t("home.newsEyebrow")}
             </span>
             <h2 className="text-headline-xl text-on-surface leading-tight">
-              Haberler ve Duyurular
+              {t("home.news")}
             </h2>
             <p className="text-base text-on-surface-variant/60 mt-4 leading-relaxed">
-              Sahadan haberler, kampanya güncellemeleri ve duyurularımız.
+              {t("home.newsDescription")}
             </p>
           </div>
 
@@ -770,7 +838,7 @@ export default function HomePage() {
                   </p>
 
                   <div className="flex items-center gap-1.5 text-label-sm font-semibold text-primary pt-1 group-hover:gap-3 transition-all duration-300">
-                    Devamını Oku
+                    {t("common.readMore")}
                     <span className="text-base">→</span>
                   </div>
                 </div>
@@ -786,13 +854,13 @@ export default function HomePage() {
           <div className="text-center max-w-xl mx-auto mb-14">
             <span className="inline-flex items-center justify-center gap-3 text-gold text-label-sm uppercase tracking-[0.15em] font-medium mb-4">
               <span className="w-8 h-[2px] bg-gold rounded-full" />
-              Gönüllere Dokunanlar
+              {t("home.storiesEyebrow")}
             </span>
             <h2 className="text-headline-xl text-on-surface leading-tight">
-              Sahadan Hikayeler
+              {t("home.stories")}
             </h2>
             <p className="text-base text-on-surface-variant/60 mt-4 leading-relaxed">
-              Yardımlarınızın ulaştığı yerlerden gerçek hikayeler ve sesler.
+              {t("home.storiesDescription")}
             </p>
           </div>
 
@@ -874,14 +942,9 @@ export default function HomePage() {
       >
         <span className="material-symbols-outlined text-[28px]">volunteer_activism</span>
         <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 group-hover:ml-2 text-label-md font-medium whitespace-nowrap">
-          Hızlı Bağış
+          {t("home.quickDonate")}
         </span>
       </Link>
     </div>
   );
 }
-
-
-
-
-

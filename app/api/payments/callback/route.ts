@@ -19,8 +19,8 @@ async function readToken(request: Request) {
   return String(body?.token || "");
 }
 
-function getResultUrl(request: Request) {
-  return new URL(getPaymentPublicUrl(request.url, "/odeme/sonuc"));
+function getResultUrl(request: Request, qurbani = false) {
+  return new URL(getPaymentPublicUrl(request.url, qurbani ? "/kurban/sonuc" : "/odeme/sonuc"));
 }
 
 async function handleCallback(request: Request, token: string) {
@@ -37,12 +37,34 @@ async function handleCallback(request: Request, token: string) {
 
     const payload = await getPayloadClient();
     const result = await confirmCheckoutToken(payload, token, "callback");
-    const redirectUrl = getResultUrl(request);
+    let qurbaniOrder: any = null;
+    let qurbaniCheckout: any = null;
+    if ("donation" in result && result.donation?.qurbaniOrder) {
+      const orderId = typeof result.donation.qurbaniOrder === "object" ? result.donation.qurbaniOrder.id : result.donation.qurbaniOrder;
+      qurbaniOrder = await payload.findByID({ collection: "qurbani-orders", id: orderId, depth: 0, overrideAccess: true }).catch(() => null);
+    }
+    if ("qurbaniCheckoutId" in result && result.qurbaniCheckoutId) {
+      qurbaniCheckout = await payload.findByID({ collection: "qurbani-checkouts" as never, id: result.qurbaniCheckoutId as never, depth: 0, overrideAccess: true }).catch(() => null);
+    }
+    const redirectUrl = getResultUrl(request, Boolean(qurbaniOrder || qurbaniCheckout));
 
     redirectUrl.searchParams.set("status", result.state);
     redirectUrl.searchParams.set("token", token);
     if ("donation" in result && result.donation?.receiptNumber) {
       redirectUrl.searchParams.set("receipt", result.donation.receiptNumber);
+      if (result.donation.taxReceiptRequested) {
+        redirectUrl.searchParams.set("receiptRequested", "1");
+      }
+    }
+    if (qurbaniOrder) {
+      redirectUrl.searchParams.set("order", qurbaniOrder.orderNumber);
+      redirectUrl.searchParams.set("method", "iyzico");
+      redirectUrl.searchParams.set("expires", qurbaniOrder.reservedUntil);
+    }
+    if (qurbaniCheckout) {
+      redirectUrl.searchParams.set("order", String(qurbaniCheckout.publicId || qurbaniCheckout.id));
+      redirectUrl.searchParams.set("method", "iyzico");
+      if (qurbaniCheckout.expiresAt) redirectUrl.searchParams.set("expires", String(qurbaniCheckout.expiresAt));
     }
 
     return NextResponse.redirect(redirectUrl, 303);

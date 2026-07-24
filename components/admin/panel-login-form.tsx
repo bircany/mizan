@@ -50,31 +50,31 @@ export function PanelLoginForm() {
   }
 
   return (
-    <main className="admin-panel grid min-h-screen place-items-center bg-[radial-gradient(circle_at_top_right,_rgba(172,120,15,0.16),_transparent_28rem),linear-gradient(135deg,_#0b2117,_#122a1d_52%,_#5b3919)] p-5 text-[var(--admin-text)] sm:p-8">
-      <section className="w-full max-w-md overflow-hidden rounded-2xl border border-white/15 bg-[#11271b]/95 shadow-[0_1.5rem_5rem_rgba(0,0,0,0.34)] backdrop-blur" aria-labelledby="panel-login-title">
-        <div className="border-b border-white/10 px-6 pb-6 pt-7 sm:px-8">
+    <main className="admin-panel grid min-h-screen place-items-center bg-[radial-gradient(circle_at_top_right,_rgba(57,120,90,0.14),_transparent_28rem),linear-gradient(135deg,_#f7f7f2,_#edf3ed_58%,_#f5efe2)] p-5 text-[var(--admin-text)] sm:p-8">
+      <section className="w-full max-w-md overflow-hidden rounded-3xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] shadow-[0_1.5rem_5rem_rgba(31,63,46,0.13)]" aria-labelledby="panel-login-title">
+        <div className="border-b border-[var(--admin-border)] px-6 pb-6 pt-7 sm:px-8">
           <div className="flex items-center gap-4">
             <Image alt="Mizan Derneği" className="rounded-full bg-[#f7f3ea] p-1" height={54} priority src="/mizan-logo.png" width={54} />
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#d8b66b]">Mizan Derneği</p>
-              <h1 className="mt-1 text-xl font-semibold text-white" id="panel-login-title">Personel girişi</h1>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--admin-primary-strong)]">Mizan Derneği</p>
+              <h1 className="mt-1 text-xl font-semibold text-[var(--admin-text)]" id="panel-login-title">Personel girişi</h1>
             </div>
           </div>
-          <p className="mt-5 text-sm leading-6 text-[#c4d0c3]">Görevlerinize, finans kayıtlarına ve onay süreçlerine rolünüze göre erişin.</p>
+          <p className="mt-5 text-sm leading-6 text-[var(--admin-muted)]">Görevlerinize, finans kayıtlarına ve onay süreçlerine rolünüze göre erişin.</p>
         </div>
 
         <form className="space-y-5 px-6 py-7 sm:px-8" onSubmit={handleSubmit}>
           <label className="block">
-            <span className="mb-2 flex items-center gap-2 text-sm font-medium text-[#ecf1e8]"><Mail aria-hidden="true" className="size-4 text-[#d8b66b]" /> E-posta adresi</span>
+            <span className="mb-2 flex items-center gap-2 text-sm font-medium text-[var(--admin-text)]"><Mail aria-hidden="true" className="size-4 text-[var(--admin-primary)]" /> E-posta adresi</span>
             <input autoComplete="email" className="admin-input" disabled={isPending} inputMode="email" name="email" type="email" />
           </label>
 
           <label className="block">
-            <span className="mb-2 flex items-center gap-2 text-sm font-medium text-[#ecf1e8]"><KeyRound aria-hidden="true" className="size-4 text-[#d8b66b]" /> Şifre</span>
+            <span className="mb-2 flex items-center gap-2 text-sm font-medium text-[var(--admin-text)]"><KeyRound aria-hidden="true" className="size-4 text-[var(--admin-primary)]" /> Şifre</span>
             <input autoComplete="current-password" className="admin-input" disabled={isPending} name="password" type="password" />
           </label>
 
-          {error ? <p aria-live="polite" className="rounded-lg border border-[#c47b70]/50 bg-[#c47b70]/10 px-3 py-2 text-sm text-[#ffd7d1]">{error}</p> : null}
+          {error ? <p aria-live="polite" className="rounded-lg border border-[var(--admin-danger)]/30 bg-[var(--admin-danger)]/5 px-3 py-2 text-sm text-[var(--admin-danger)]">{error}</p> : null}
 
           <button className="admin-action-button group" disabled={isPending} type="submit">
             {isPending ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : <ShieldCheck aria-hidden="true" className="size-4" />}
@@ -83,7 +83,7 @@ export function PanelLoginForm() {
           </button>
         </form>
 
-        <p className="border-t border-white/10 px-6 py-4 text-xs leading-5 text-[#aebdad] sm:px-8">Yetkisiz erişim denetlenir. Hesabınız pasifse giriş yapılamaz.</p>
+        <p className="border-t border-[var(--admin-border)] bg-[var(--admin-surface)] px-6 py-4 text-xs leading-5 text-[var(--admin-muted)] sm:px-8">Yetkisiz erişim denetlenir. Hesabınız pasifse giriş yapılamaz.</p>
       </section>
     </main>
   );

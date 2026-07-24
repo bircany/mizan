@@ -14,11 +14,15 @@ import {
   LayoutDashboard,
   Menu,
   Newspaper,
+  Pin,
+  PinOff,
   ReceiptText,
   ScrollText,
   Tag,
   Users,
   WalletCards,
+  Beef,
+  ChevronDown,
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -42,6 +46,7 @@ const icons: Record<PanelNavigationIcon, LucideIcon> = {
   reports: BarChart3,
   fieldTasks: FileCheck2,
   fieldSubmissions: ClipboardCheck,
+  qurbani: Beef,
   users: Users,
   auditLogs: ScrollText,
   systemPayments: WalletCards,
@@ -49,6 +54,7 @@ const icons: Record<PanelNavigationIcon, LucideIcon> = {
 
 const mobileRoutePriority: readonly PanelRouteKey[] = [
   "dashboard",
+  "qurbani",
   "donations",
   "payments",
   "fulfillments",
@@ -60,43 +66,41 @@ const mobileRoutePriority: readonly PanelRouteKey[] = [
 
 type PanelNavigationProps = {
   currentPath: string;
+  desktopOpen: boolean;
   name: string;
+  onDesktopEnter(): void;
+  onDesktopLeave(): void;
+  onPinToggle(): void;
+  pinned: boolean;
   role: UserRole;
 };
 
-export function PanelNavigation({ currentPath, name, role }: PanelNavigationProps) {
+export function PanelNavigation({ currentPath, desktopOpen, name, onDesktopEnter, onDesktopLeave, onPinToggle, pinned, role }: PanelNavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
   const groups = PANEL_NAVIGATION_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter(
-      (item) => item.isAvailable && hasRole(role, item.roles as readonly UserRole[]),
-    ),
+    items: group.items.filter((item) => item.isAvailable && hasRole(role, item.roles as readonly UserRole[])),
   })).filter((group) => group.items.length > 0);
+
   const items = groups.flatMap((group) => group.items);
+  const activeGroupId = groups.find((group) => group.items.some((item) => currentPath === item.href || (item.href !== "/panel" && currentPath.startsWith(`${item.href}/`))))?.id || null;
+  const [openGroupOverride, setOpenGroupOverride] = useState<string | false | null>(null);
+  const openGroupId = openGroupOverride === null ? activeGroupId : openGroupOverride || null;
   const mobileItems = mobileRoutePriority
     .map((route) => items.find((item) => item.route === route))
     .filter((item): item is (typeof items)[number] => Boolean(item))
     .slice(0, 5);
 
   const navigation = (variant: "desktop" | "mobile") => (
-    <nav
-      aria-label="Panel navigasyonu"
-      className={cn("flex", variant === "desktop" ? "flex-col gap-1" : "flex-col gap-2")}
-    >
+    <nav aria-label="Panel navigasyonu" className={cn("flex", variant === "desktop" ? "flex-col gap-1" : "flex-col gap-2")}>
       {groups.map((group) => (
         <div className="space-y-1" key={group.id}>
-          {groups.length > 1 ? <p className="admin-nav-group-label">{group.label}</p> : null}
-          {group.items.map((item) => {
+          {group.id === "workspace" ? group.items.map((item) => {
             const Icon = icons[item.icon];
             const active = currentPath === item.href || (item.href !== "/panel" && currentPath.startsWith(`${item.href}/`));
-
             return (
               <Link
-                className={cn(
-                  "admin-nav-link",
-                  active && "admin-nav-link-active",
-                  variant === "mobile" && "min-h-12 text-base",
-                )}
+                className={cn("admin-nav-link", active && "admin-nav-link-active", variant === "mobile" && "min-h-12 text-base")}
                 href={item.href}
                 key={item.href}
                 onClick={() => setIsOpen(false)}
@@ -105,7 +109,28 @@ export function PanelNavigation({ currentPath, name, role }: PanelNavigationProp
                 <span>{item.label}</span>
               </Link>
             );
-          })}
+          }) : <>
+            <button
+              aria-controls={`panel-nav-${variant}-${group.id}`}
+              aria-expanded={openGroupId === group.id}
+              className="admin-nav-group-button"
+              onClick={() => setOpenGroupOverride((current) => (current === group.id || (current === null && activeGroupId === group.id)) ? false : group.id)}
+              type="button"
+            >
+              <span>{group.label}</span>
+              <ChevronDown aria-hidden="true" className={cn("size-3.5 transition-transform", openGroupId === group.id && "rotate-180")} />
+            </button>
+            {openGroupId === group.id ? <div className="space-y-1" id={`panel-nav-${variant}-${group.id}`}>
+              {group.items.map((item) => {
+                const Icon = icons[item.icon];
+                const active = currentPath === item.href || (item.href !== "/panel" && currentPath.startsWith(`${item.href}/`));
+                return <Link className={cn("admin-nav-link", active && "admin-nav-link-active", variant === "mobile" && "min-h-12 text-base")} href={item.href} key={item.href} onClick={() => setIsOpen(false)}>
+                  <Icon aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.8} />
+                  <span>{item.label}</span>
+                </Link>;
+              })}
+            </div> : null}
+          </>}
         </div>
       ))}
     </nav>
@@ -113,23 +138,36 @@ export function PanelNavigation({ currentPath, name, role }: PanelNavigationProp
 
   return (
     <>
-      <aside className="hidden border-r border-[var(--admin-border)] bg-[var(--admin-surface-deep)] p-4 md:block">
-        <div className="mb-5 flex items-center gap-3 border-b border-[var(--admin-border)] pb-5">
+      <aside
+        aria-hidden={!desktopOpen}
+        className={cn(
+          "hidden w-[248px] overflow-y-auto bg-[var(--admin-shell-surface)] p-4 transition-[transform,opacity] duration-200 md:block",
+          pinned ? "relative" : "fixed bottom-0 left-0 top-[73px] z-50 shadow-[18px_0_48px_rgba(28,55,41,0.14)]",
+          !desktopOpen && "pointer-events-none -translate-x-full opacity-0",
+        )}
+        onFocus={onDesktopEnter}
+        onMouseEnter={onDesktopEnter}
+        onMouseLeave={onDesktopLeave}
+      >
+        <div className="mb-5 flex items-center gap-3 border-b border-[var(--admin-shell-border)] pb-5">
           <NextImage alt="Mizan Derneği" className="rounded-full bg-[#f7f3ea] p-0.5" height={36} src="/mizan-logo.png" width={36} />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-[var(--admin-text)]">{name}</p>
-            <p className="mt-0.5 truncate font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--admin-muted)]">
+            <p className="truncate text-sm font-semibold text-[var(--admin-shell-text)]">{name}</p>
+            <p className="mt-0.5 truncate font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--admin-shell-muted)]">
               {role.replace("_", " ")}
             </p>
           </div>
+          <button aria-label={pinned ? "Menünün sabitlemesini kaldır" : "Menüyü sabitle"} className="admin-icon-button ml-auto shrink-0" onClick={onPinToggle} type="button">
+            {pinned ? <PinOff aria-hidden="true" className="size-4" /> : <Pin aria-hidden="true" className="size-4" />}
+          </button>
         </div>
         {navigation("desktop")}
       </aside>
 
-      <div className="flex items-center justify-between border-b border-[var(--admin-border)] bg-[var(--admin-surface-deep)] px-4 py-3 md:hidden">
+      <div className="flex items-center justify-between border-b border-[var(--admin-shell-border)] bg-[var(--admin-shell-surface-deep)] px-4 py-3 md:hidden">
         <div className="flex items-center gap-2">
           <NextImage alt="Mizan Derneği" className="rounded-full bg-[#f7f3ea] p-0.5" height={32} src="/mizan-logo.png" width={32} />
-          <span className="text-sm font-semibold text-[var(--admin-text)]">Operasyon Merkezi</span>
+          <span className="text-sm font-semibold text-[var(--admin-shell-text)]">Operasyon Merkezi</span>
         </div>
         <button
           aria-controls="panel-mobile-navigation"
@@ -151,11 +189,11 @@ export function PanelNavigation({ currentPath, name, role }: PanelNavigationProp
             onClick={() => setIsOpen(false)}
             type="button"
           />
-          <aside className="relative h-full w-[min(20rem,86vw)] border-r border-[var(--admin-border)] bg-[var(--admin-surface-deep)] p-4 shadow-[16px_0_36px_rgba(0,0,0,0.45)]">
+          <aside className="relative h-full w-[min(20rem,86vw)] border-r border-[var(--admin-shell-border)] bg-[var(--admin-shell-surface-deep)] p-4 shadow-[16px_0_36px_rgba(0,0,0,0.45)]">
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--admin-primary)]">Mizan</p>
-                <p className="mt-1 text-base font-semibold text-[var(--admin-text)]">Operasyon Merkezi</p>
+                <p className="mt-1 text-base font-semibold text-[var(--admin-shell-text)]">Operasyon Merkezi</p>
               </div>
               <button
                 aria-label="Panel menüsünü kapat"
@@ -171,7 +209,11 @@ export function PanelNavigation({ currentPath, name, role }: PanelNavigationProp
         </div>
       ) : null}
 
-      <nav aria-label="Hızlı navigasyon" className="admin-bottom-nav md:hidden" style={{ gridTemplateColumns: `repeat(${Math.max(mobileItems.length, 1)}, minmax(0, 1fr))` }}>
+      <nav
+        aria-label="Hızlı navigasyon"
+        className="admin-bottom-nav md:hidden"
+        style={{ gridTemplateColumns: `repeat(${Math.max(mobileItems.length, 1)}, minmax(0, 1fr))` }}
+      >
         {mobileItems.map((item) => {
           const Icon = icons[item.icon];
           const active = currentPath === item.href || (item.href !== "/panel" && currentPath.startsWith(`${item.href}/`));

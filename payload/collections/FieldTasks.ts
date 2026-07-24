@@ -67,6 +67,13 @@ export const FieldTasks: CollectionConfig = {
       required: true,
       access: { update: canManageTaskDefinition },
     },
+    {
+      name: "qurbaniPool",
+      type: "relationship",
+      relationTo: "qurbani-pools",
+      access: { update: canManageTaskDefinition },
+      admin: { description: "Bu görev bir kurban havuzuna bağlıysa seçilir." },
+    },
     { name: "title", type: "text", required: true, access: { update: canManageTaskDefinition } },
     { name: "location", type: "text", required: true, access: { update: canManageTaskDefinition } },
     {

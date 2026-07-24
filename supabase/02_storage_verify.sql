@@ -5,5 +5,5 @@ select
   file_size_limit,
   allowed_mime_types
 from storage.buckets
-where id in ('receipts', 'proof-assets')
+where id in ('receipts', 'proof-assets', 'campaign-covers')
 order by id;

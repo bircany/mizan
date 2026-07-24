@@ -19,10 +19,10 @@ export default function MobileBottomNav() {
   };
 
   const navItems = [
-    { href: "/", label: "Anasayfa", icon: "home" },
-    { href: "/bagis", label: "Bağış Yap", icon: "favorite" },
-    { href: "/bagis", label: "Sepetim", icon: "shopping_bag", isCart: true },
-    { href: "/admin", label: "Giriş Yap", icon: "person" },
+    { href: "/", label: t("common.home"), icon: "home" },
+    { href: "/bagis", label: t("common.donate"), icon: "favorite" },
+    { href: "/bagis", label: t("common.cart"), icon: "shopping_bag", isCart: true },
+    { href: "/panel/giris", label: t("navigation.login"), icon: "person" },
   ];
 
   return (

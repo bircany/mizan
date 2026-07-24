@@ -4,6 +4,7 @@ import type { UserRole } from "@/lib/auth/roles";
 import { canManageFinance, canReviewFieldWork, hasRole } from "@/lib/auth/roles";
 import { getAdminSession } from "@/lib/auth/session";
 import { getPayloadClient } from "@/lib/payload";
+export { getQurbaniAdminSnapshot } from "@/lib/admin/qurbani-data";
 
 export type AdminUser = {
   id: string | number;
@@ -31,23 +32,47 @@ export async function getManagementSnapshot(user: AdminUser) {
   const canReview = canReviewFieldWork(user.role);
   const isFieldOperator = user.role === "field_operator";
 
-  const [donations, sessions, refunds, fieldTasks, reports, paymentEvents] = await Promise.all([
-    hasFinanceAccess ? payload.find({ collection: "donations", limit: 5, sort: "-createdAt" }) : undefined,
-    hasFinanceAccess ? payload.find({ collection: "payment-sessions", limit: 5, sort: "-createdAt" }) : undefined,
-    hasFinanceAccess ? payload.find({ collection: "refund-requests", limit: 5, sort: "-createdAt" }) : undefined,
-    canReview || isFieldOperator
-      ? payload.find({
-          collection: "field-tasks",
+  async function safeFind(collection: string, options: Record<string, unknown>, label: string) {
+    try {
+      return await payload.find({
+        collection,
+        pagination: false,
+        ...options,
+      });
+    } catch (error) {
+      console.warn(`${label} okunamadi, bos liste kullaniliyor.`, {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return undefined;
+    }
+  }
+
+  const donations = hasFinanceAccess
+    ? await safeFind("donations", { limit: 5, sort: "-createdAt" }, "donations ozeti")
+    : undefined;
+  const sessions = hasFinanceAccess
+    ? await safeFind("payment-sessions", { limit: 5, sort: "-createdAt" }, "payment-sessions ozeti")
+    : undefined;
+  const refunds = hasFinanceAccess
+    ? await safeFind("refund-requests", { limit: 5, sort: "-createdAt" }, "refund-requests ozeti")
+    : undefined;
+  const fieldTasks = canReview || isFieldOperator
+    ? await safeFind(
+        "field-tasks",
+        {
           limit: 5,
           sort: "-updatedAt",
-          where: isFieldOperator
-            ? { assignedTo: { equals: user.id } }
-            : undefined,
-        })
-      : undefined,
-    canReview ? payload.find({ collection: "donor-reports", limit: 5, sort: "-updatedAt" }) : undefined,
-    hasFinanceAccess ? payload.find({ collection: "payment-events", limit: 10, sort: "-createdAt" }) : undefined,
-  ]);
+          where: isFieldOperator ? { assignedTo: { equals: user.id } } : undefined,
+        },
+        "field-tasks ozeti",
+      )
+    : undefined;
+  const reports = canReview
+    ? await safeFind("donor-reports", { limit: 5, sort: "-updatedAt" }, "donor-reports ozeti")
+    : undefined;
+  const paymentEvents = hasFinanceAccess
+    ? await safeFind("payment-events", { limit: 10, sort: "-createdAt" }, "payment-events ozeti")
+    : undefined;
 
   const donationDocs = donations?.docs ?? [];
   const sessionDocs = sessions?.docs ?? [];

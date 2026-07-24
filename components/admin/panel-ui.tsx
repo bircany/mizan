@@ -1,7 +1,13 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { AlertTriangle, CheckCircle2, Clock3, Inbox, XCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+
+export function PanelBreadcrumbs({ items }: { items: Array<{ label: string; href?: string }> }) {
+  return <nav aria-label="İçerik yolu" className="flex flex-wrap items-center gap-1 text-xs text-[var(--admin-muted)]">{items.map((item, index) => <span className="flex items-center gap-1" key={`${item.label}-${index}`}>{index ? <ChevronRight aria-hidden="true" className="size-3" /> : null}{item.href ? <Link className="transition hover:text-[var(--admin-primary-strong)]" href={item.href}>{item.label}</Link> : <span aria-current="page">{item.label}</span>}</span>)}</nav>;
+}
 
 export function PanelPageHeader({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: string; action?: ReactNode }) {
   return (
@@ -61,7 +67,7 @@ export function StatusBadge({ status, className }: { status: string | null | und
 
 export function EmptyPanelState({ title, description }: { title: string; description: string }) {
   return (
-    <div className="grid min-h-40 place-items-center rounded-md border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface-muted)] p-6 text-center">
+    <div className="grid min-h-40 place-items-center rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface-raised)] p-6 text-center shadow-sm">
       <div>
         <Inbox aria-hidden="true" className="mx-auto size-6 text-[var(--admin-muted)]" strokeWidth={1.5} />
         <p className="mt-3 text-sm font-semibold text-[var(--admin-text)]">{title}</p>

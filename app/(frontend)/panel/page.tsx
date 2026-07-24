@@ -1,32 +1,50 @@
 import { ArrowUpRight, FileCheck2, ShieldAlert, WalletCards } from "lucide-react";
 
 import { ManagementShell } from "@/components/admin/management-shell";
+import { DashboardAnalyticsPanel } from "@/components/admin/dashboard-analytics";
+import { DashboardQuickAccess, QuickAccessSettings } from "@/components/admin/panel-quick-access";
 import { EmptyPanelState, PanelCard, PanelMetric, PanelPageHeader, StatusBadge } from "@/components/admin/panel-ui";
 import { PANEL_ROUTE_ACCESS } from "@/lib/auth/panel-access";
 import { getManagementSnapshot, requireAdminUser } from "@/lib/admin/data";
+import { getDashboardAnalytics, parseDashboardRange } from "@/lib/admin/dashboard-analytics";
+import { getSharedPanelQuickLinkKeys, getVisiblePanelQuickLinks } from "@/lib/admin/panel-settings";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function OperationsDashboardPage() {
+export default async function OperationsDashboardPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const user = await requireAdminUser(PANEL_ROUTE_ACCESS.dashboard);
-  const snapshot = await getManagementSnapshot(user);
+  const range = parseDashboardRange((await searchParams).range);
+  const [snapshot, analytics, quickLinks, selectedQuickLinks] = await Promise.all([
+    getManagementSnapshot(user),
+    getDashboardAnalytics(user.role, range),
+    getVisiblePanelQuickLinks(user.role),
+    getSharedPanelQuickLinkKeys(),
+  ]);
 
   return (
     <ManagementShell currentPath="/panel" name={user.name || user.email} role={user.role}>
       <div className="space-y-6">
         <PanelPageHeader
+          action={<QuickAccessSettings role={user.role} selectedKeys={selectedQuickLinks} />}
           description="Tahsilat, saha ve onay süreçlerindeki öncelikli kayıtları tek ekranda takip edin."
           eyebrow="Genel görünüm"
           title="Operasyon özeti"
         />
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <DashboardQuickAccess items={quickLinks} />
+
+        <div>
+          <p className="admin-eyebrow mb-3">İş bekleyenler</p>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <PanelMetric detail="Onaylanmış net bağışlar" label="Onaylı tahsilat" value={formatCurrency(snapshot.metrics.paidTotal)} />
           <PanelMetric detail="Finans kontrolü bekleyen işlem" label="İnceleme kuyruğu" tone="warning" value={String(snapshot.metrics.pendingReview)} />
           <PanelMetric detail="Atama veya teslim bekleyen görev" label="Saha kuyruğu" tone="warning" value={String(snapshot.metrics.fieldQueue)} />
           <PanelMetric detail="Bağışçıya gönderim öncesi kontrol" label="Taslak rapor" value={String(snapshot.metrics.reportsToApprove)} />
+          </div>
         </div>
+
+        <DashboardAnalyticsPanel analytics={analytics} range={range} />
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.85fr)]">
           <PanelCard>

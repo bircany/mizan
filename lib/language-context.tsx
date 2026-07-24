@@ -8,6 +8,10 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
+import trMessages from "@/messages/tr.json";
+import enMessages from "@/messages/en.json";
+import arMessages from "@/messages/ar.json";
 
 type Locale = "tr" | "en" | "ar";
 
@@ -22,24 +26,34 @@ const LanguageContext = createContext<LanguageContextType | null>(null);
 
 const STORAGE_KEY = "mizan-locale";
 
-// Lazy-load messages so we don't block render
-const messagesCache: Record<string, Record<string, string>> = {};
+function flattenMessages(source: Record<string, unknown>) {
+  const flat: Record<string, string> = {};
+  const flatten = (obj: Record<string, unknown>, prefix = "") => {
+    for (const [key, val] of Object.entries(obj)) {
+      if (typeof val === "object" && val !== null) {
+        flatten(val as Record<string, unknown>, `${prefix}${key}.`);
+      } else {
+        flat[`${prefix}${key}`] = String(val);
+      }
+    }
+  };
+  flatten(source);
+  return flat;
+}
+
+// Keeping the small language dictionaries in memory prevents untranslated keys
+// from flashing while a visitor changes their language.
+const messagesCache: Record<Locale, Record<string, string>> = {
+  tr: flattenMessages(trMessages),
+  en: flattenMessages(enMessages),
+  ar: flattenMessages(arMessages),
+};
 
 async function loadMessages(locale: Locale): Promise<Record<string, string>> {
   if (messagesCache[locale]) return messagesCache[locale];
   try {
     const messagesModule = await import(`@/messages/${locale}.json`);
-    const flat: Record<string, string> = {};
-    const flatten = (obj: Record<string, unknown>, prefix = "") => {
-      for (const [key, val] of Object.entries(obj)) {
-        if (typeof val === "object" && val !== null) {
-          flatten(val as Record<string, unknown>, `${prefix}${key}.`);
-        } else {
-          flat[`${prefix}${key}`] = String(val);
-        }
-      }
-    };
-    flatten(messagesModule.default || messagesModule);
+    const flat = flattenMessages(messagesModule.default || messagesModule);
     messagesCache[locale] = flat;
     return flat;
   } catch {
@@ -54,8 +68,9 @@ const dirMap: Record<Locale, "ltr" | "rtl"> = {
 };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [locale, setLocaleState] = useState<Locale>("tr");
-  const [messages, setMessages] = useState<Record<string, string>>({});
+  const [messages, setMessages] = useState<Record<string, string>>(messagesCache.tr);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -75,9 +90,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(STORAGE_KEY, locale);
     } catch {}
+    document.cookie = `${STORAGE_KEY}=${locale}; path=/; max-age=31536000; samesite=lax`;
     document.documentElement.lang = locale;
     document.documentElement.dir = dirMap[locale];
-  }, [locale, ready]);
+    router.refresh();
+  }, [locale, ready, router]);
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);

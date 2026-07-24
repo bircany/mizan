@@ -2,6 +2,7 @@
   "name": "mizan-dernegi",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,7 +10,11 @@
     "lint": "eslint . --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
     "db:check": "tsx scripts/check-db.ts",
-    "test:roles": "tsx scripts/check-role-access.ts"
+    "test:roles": "tsx scripts/check-role-access.ts",
+    "test:qurbani": "node --conditions=react-server --import tsx scripts/check-qurbani.ts",
+    "qurbani:worker": "tsx scripts/qurbani-video-worker.ts",
+    "qurbani:cleanup": "tsx scripts/qurbani-storage-cleanup.ts",
+    "qurbani:tusd": "docker compose -f deploy/qurbani/docker-compose.local.yml up"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "^3.85.2",
@@ -19,6 +24,7 @@
     "@supabase/supabase-js": "2.108.1",
     "clsx": "^2.1.0",
     "date-fns": "^3.6.0",
+    "dejavu-fonts-ttf": "2.37.3",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.42.2",
@@ -30,15 +36,22 @@
     "next-auth": "^4.24.0",
     "next-intl": "^4.13.1",
     "payload": "^3.85.2",
+    "pg": "^8.22.0",
+    "qrcode": "1.5.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "resend": "^6.17.2",
-    "tailwind-merge": "^2.3.0"
+    "server-only": "^0.0.1",
+    "sharp": "0.35.3",
+    "tailwind-merge": "^2.3.0",
+    "tus-js-client": "^4.3.1"
   },
   "devDependencies": {
     "@tailwindcss/container-queries": "^0.1.0",
     "@tailwindcss/forms": "^0.5.0",
     "@types/node": "^20.12.0",
+    "@types/pg": "^8.20.0",
+    "@types/qrcode": "1.5.5",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "autoprefixer": "^10.4.0",
@@ -50,6 +63,7 @@
     "typescript": "^5.4.0"
   },
   "overrides": {
+    "brace-expansion": "1.1.16",
     "monaco-editor": {
       "dompurify": "3.4.12"
     },

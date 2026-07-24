@@ -16,6 +16,11 @@ function text(formData: FormData, name: string, required = false) {
   return value;
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  return fallback;
+}
+
 export async function saveFieldTask(_: FieldTaskActionState, formData: FormData): Promise<FieldTaskActionState> {
   await requireAdminUser(["super_admin", "approver"]);
 
@@ -42,7 +47,10 @@ export async function saveFieldTask(_: FieldTaskActionState, formData: FormData)
     revalidatePath("/panel/saha/teslimler");
     revalidatePath("/panel");
     return { message: id ? "Saha görevi güncellendi." : "Saha görevi oluşturuldu.", success: true };
-  } catch {
-    return { message: "Görev kaydedilemedi. Kampanya, saha görevlisi ve zorunlu alanları kontrol edin.", success: false };
+  } catch (error) {
+    return {
+      message: getErrorMessage(error, "Görev kaydedilemedi. Bağış alanı, saha görevlisi ve zorunlu alanları kontrol edin."),
+      success: false,
+    };
   }
 }

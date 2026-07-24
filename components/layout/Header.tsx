@@ -10,25 +10,24 @@ import { useCart } from "@/lib/cart-context";
 import { useCurrency } from "@/lib/currency-context";
 import { SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_E164 } from "@/lib/contact";
 
-const navLinks = [
-  { href: "/hakkimizda", label: "Hakkımızda" },
-  { href: "/bagis", label: "Bağış Alanları" },
-  { href: "/haberler", label: "Haberler" },
-  { href: "/kurban", label: "Kurban" },
-  { href: "/iletisim", label: "İletişim" },
-];
-
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<"lang" | "currency" | null>(null);
-  const { locale, setLocale } = useLanguage();
+  const { locale, setLocale, t } = useLanguage();
   const { items } = useCart();
   const { currency, setCurrency } = useCurrency();
   const pathname = usePathname();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const navLinks = [
+    { href: "/hakkimizda", label: t("common.about") },
+    { href: "/bagis", label: t("navigation.donationAreas") },
+    { href: "/haberler", label: t("common.news") },
+    { href: "/kurban", label: t("common.qurbani") },
+    { href: "/iletisim", label: t("common.contact") },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -84,7 +83,7 @@ export default function Header() {
             <span className="hidden sm:inline text-outline-variant/30">|</span>
             <button className="hidden sm:flex items-center gap-1.5 hover:text-primary transition-colors">
               <span className="material-symbols-outlined text-[15px] text-primary/70">share</span>
-              <span className="tracking-wide">Takip Et</span>
+              <span className="tracking-wide">{t("navigation.follow")}</span>
             </button>
           </div>
 
@@ -246,7 +245,7 @@ export default function Header() {
               className="hidden sm:inline-flex items-center gap-2 bg-secondary text-white px-5 py-2.5 rounded-xl text-[14px] font-semibold shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
             >
               <span className="material-symbols-outlined text-[18px]">volunteer_activism</span>
-              Bağış Yap
+              {t("common.donate")}
             </Link>
 
             {/* Mobile Toggle */}
@@ -380,7 +379,7 @@ export default function Header() {
                 className="flex items-center justify-center gap-2 w-full bg-secondary text-white px-5 py-3.5 rounded-xl text-[15px] font-semibold shadow-sm hover:shadow-md transition-all"
               >
                 <span className="material-symbols-outlined text-[20px]">volunteer_activism</span>
-                Bağış Yap
+                {t("common.donate")}
               </Link>
             </div>
           </div>

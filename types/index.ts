@@ -49,6 +49,7 @@ export interface Category {
 
 export interface CartItem {
   campaignId: string;
+  currency: string;
   title: string;
   amount: number;
   quantity: number;

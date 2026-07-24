@@ -7,7 +7,7 @@ export const Categories: CollectionConfig = {
   admin: {
     useAsTitle: "name",
     group: "Icerik",
-    defaultColumns: ["name", "icon", "color", "slug"],
+    defaultColumns: ["name", "isActive", "sortOrder", "slug"],
   },
   access: {
     read: anyone,
@@ -22,6 +22,12 @@ export const Categories: CollectionConfig = {
       type: "text",
       required: true,
       localized: true,
+    },
+    {
+      name: "description",
+      type: "textarea",
+      localized: true,
+      defaultValue: "",
     },
     {
       name: "icon",
@@ -63,6 +69,19 @@ export const Categories: CollectionConfig = {
           },
         ],
       },
+    },
+    {
+      name: "sortOrder",
+      type: "number",
+      defaultValue: 0,
+      min: 0,
+      admin: { position: "sidebar" },
+    },
+    {
+      name: "isActive",
+      type: "checkbox",
+      defaultValue: true,
+      admin: { position: "sidebar" },
     },
   ],
 };
