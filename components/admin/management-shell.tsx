@@ -6,6 +6,7 @@ import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { PanelNavigation } from "@/components/admin/panel-navigation";
+import { AdminContactMessageNotifier } from "@/components/admin/admin-contact-message-notifier";
 import { PanelSessionActions } from "@/components/admin/panel-session-actions";
 import { PanelBreadcrumbs } from "@/components/admin/panel-ui";
 import type { UserRole } from "@/lib/auth/roles";
@@ -44,6 +45,7 @@ export function ManagementShell({
   const breadcrumbLabels: Record<string, string> = {
     icerik: "İçerik", "bagis-alanlari": "Bağış alanları", kategoriler: "Kategoriler", haberler: "Haberler", sayfalar: "Sayfalar", medya: "Medya",
     bagislar: "Bağışlar", odemeler: "Ödemeler", iadeler: "İadeler", teslimatlar: "Teslimatlar", kurban: "Kurban", saha: "Saha", teslimler: "Teslimler", raporlar: "Raporlar", kullanicilar: "Kullanıcılar", denetim: "Denetim", sistem: "Sistem",
+    "bagis-yonetimi": "Bağış Yönetimi", "video-teslimat": "Video Teslimat", icerikler: "İçerikler", ayarlar: "Denetim ve Ayarlar",
   };
   const pathParts = currentPath.split("/").filter(Boolean).slice(1);
   const breadcrumbs = [{ label: "Panel", href: currentPath === "/panel" ? undefined : "/panel" }, ...pathParts.map((part) => ({ label: breadcrumbLabels[part] || part }))];
@@ -80,6 +82,7 @@ export function ManagementShell({
 
   return (
     <div className="admin-panel min-h-screen bg-[var(--admin-surface)] text-[var(--admin-text)]">
+      {role === "admin" ? <AdminContactMessageNotifier /> : null}
       <div className="min-h-screen bg-[var(--admin-surface)]">
         <header className="hidden h-[73px] items-center justify-between border-b border-[var(--admin-shell-border)] bg-[var(--admin-shell-surface)] px-6 md:flex">
           <div className="flex items-center gap-3">
@@ -97,7 +100,7 @@ export function ManagementShell({
           <div className="flex items-center gap-4">
             <div className="hidden text-right lg:block">
               <p className="text-sm font-medium text-[var(--admin-shell-text)]">{name}</p>
-              <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--admin-shell-muted)]">{role.replace("_", " ")}</p>
+              <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--admin-shell-muted)]">{role === "field_operator" ? "Saha görevlisi" : "Yönetici"}</p>
             </div>
             <PanelSessionActions />
           </div>

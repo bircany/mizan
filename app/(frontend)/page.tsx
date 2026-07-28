@@ -6,7 +6,6 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/language-context";
-import { useCurrency } from "@/lib/currency-context";
 import ChildInteractiveDonate from "@/components/home/ChildInteractiveDonate";
 import InteractiveGallery from "@/components/home/interactive-gallery";
 import VideoCarousel from "@/components/home/video-carousel";
@@ -52,9 +51,6 @@ type DonationAreaCard = {
   excerpt: string;
   category: string;
   image: string | null;
-  raised: number;
-  target: number;
-  percent: number;
 };
 
 const news = [
@@ -104,7 +100,6 @@ const stories = [
 
 export default function HomePage() {
   const { t, dir, locale } = useLanguage();
-  const { formatPrice } = useCurrency();
   const [donationAreas, setDonationAreas] = useState<DonationAreaCard[]>([]);
   const [donationAreasLoading, setDonationAreasLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -173,9 +168,6 @@ export default function HomePage() {
             excerpt: area.excerpt || "",
             category: area.category?.name || t("home.donationCategoryFallback"),
             image: area.image?.src || null,
-            raised: Number(area.collectedAmount || 0),
-            target: Number(area.targetAmount || 0),
-            percent: Number(area.progress || 0),
           })),
         );
       } catch {
@@ -196,9 +188,9 @@ export default function HomePage() {
   };
 
   return (
-    <div dir={dir}>
+    <div className="overflow-x-hidden" dir={dir}>
       {/* HERO */}
-      <section className="relative h-[580px] sm:h-[600px] lg:h-[700px] overflow-hidden">
+      <section className="relative h-[560px] overflow-hidden sm:h-[600px] lg:h-[700px]">
         <AnimatePresence>
           <motion.div
             key={currentSlide}
@@ -212,7 +204,7 @@ export default function HomePage() {
         </AnimatePresence>
         <div className="absolute inset-0 bg-black/45" />
 
-        <div className="relative z-10 max-w-[1140px] mx-auto px-4 lg:px-2.5 h-full flex items-center">
+        <div className="relative z-10 mx-auto flex h-full max-w-[1140px] items-center px-5 sm:px-8 lg:px-2.5">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-6 items-center w-full">
             <div className="max-w-lg lg:max-w-none">
               <AnimatePresence mode="wait">
@@ -252,7 +244,7 @@ export default function HomePage() {
                     >
                       <Link
                         href="/bagis"
-                        className="inline-flex items-center gap-2 bg-secondary text-white px-8 sm:px-10 py-4 sm:py-5 rounded-full text-base font-semibold hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                        className="inline-flex min-h-12 items-center justify-center gap-2 bg-secondary px-6 py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:px-10 sm:py-5 sm:text-base"
                       >
                         {t("common.donate")} →
                       </Link>
@@ -264,7 +256,7 @@ export default function HomePage() {
                     >
                       <Link
                         href="/hakkimizda"
-                        className="inline-flex items-center gap-2 border-2 border-white/30 text-white px-8 sm:px-10 py-4 sm:py-5 rounded-full text-base font-semibold hover:bg-white/10 hover:border-white/50 hover:-translate-y-0.5 transition-all duration-200"
+                        className="inline-flex min-h-12 items-center justify-center gap-2 border-2 border-white/30 px-6 py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/10 sm:px-10 sm:py-5 sm:text-base"
                       >
                         {t("common.learnMore")} →
                       </Link>
@@ -303,35 +295,43 @@ export default function HomePage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="bg-surface-container-low rounded-3xl p-8 lg:p-10 relative overflow-hidden"
+              className="relative isolate overflow-hidden rounded-[28px] bg-[#FAF7F1] p-8 shadow-[0_18px_45px_rgba(73,54,30,0.08)] sm:p-10 lg:p-12"
+              data-home-intro-card
             >
-              <h3 className="text-headline-md text-on-surface mb-4">
-                {t("about.title")}
-              </h3>
-              <p className="text-base text-on-surface-variant/60 leading-relaxed mb-8 max-w-lg">
-                {t("home.introDescription")}
-              </p>
-              <div className="space-y-3 mb-8">
-                {[
-                  t("home.introItems.0"),
-                  t("home.introItems.1"),
-                  t("home.introItems.2"),
-                  t("home.introItems.3"),
-                  t("home.introItems.4"),
-                ].map((item) => (
-                  <div key={item} className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-primary text-[20px]">check_circle</span>
-                    <span className="text-base text-on-surface-variant/70">{item}</span>
-                  </div>
-                ))}
+              <div
+                aria-hidden="true"
+                data-intro-card-background
+                className="pointer-events-none absolute inset-0 bg-[url('/images/home/mizan-adalet-ve-denge-bg.png')] bg-cover bg-[position:78%_center] bg-no-repeat"
+              />
+              <div className="relative z-10 max-w-[430px]">
+                <h3 className="text-headline-md text-on-surface mb-4">
+                  {t("about.title")}
+                </h3>
+                <p className="text-base text-on-surface-variant/70 leading-relaxed mb-8">
+                  {t("home.introDescription")}
+                </p>
+                <div className="space-y-3 mb-8">
+                  {[
+                    t("home.introItems.0"),
+                    t("home.introItems.1"),
+                    t("home.introItems.2"),
+                    t("home.introItems.3"),
+                    t("home.introItems.4"),
+                  ].map((item) => (
+                    <div key={item} className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+                      <span className="text-base text-on-surface-variant/75">{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <Link
+                  href="/hakkimizda"
+                  className="inline-flex items-center gap-2 bg-secondary text-white px-7 py-3.5 rounded-full text-[15px] font-semibold hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                >
+                  {t("home.meetFoundation")}
+                  <span className="text-base">→</span>
+                </Link>
               </div>
-              <Link
-                href="/hakkimizda"
-                className="inline-flex items-center gap-2 bg-secondary text-white px-7 py-3.5 rounded-full text-[15px] font-semibold hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-              >
-                {t("home.meetFoundation")}
-                <span className="text-base">→</span>
-              </Link>
             </motion.div>
 
             <motion.div
@@ -339,25 +339,33 @@ export default function HomePage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.15, ease: "easeOut" }}
-              className="bg-primary-container rounded-3xl p-8 lg:p-10 flex flex-col justify-center"
+              className="relative isolate overflow-hidden rounded-[28px] bg-primary-container p-8 shadow-[0_18px_45px_rgba(31,76,53,0.12)] sm:p-10 lg:p-12"
+              data-home-contact-card
             >
-              <div className="flex items-start gap-4 mb-6">
-                <span className="material-symbols-outlined text-[32px] text-primary">volunteer_activism</span>
-                <div>
-                  <h3 className="text-headline-md text-on-surface mb-2">
-                    {t("home.donationContactTitle")}
-                  </h3>
-                  <p className="text-base text-on-surface-variant/70 leading-relaxed">
-                    {t("home.donationContactDescription")}
-                  </p>
+              <div
+                aria-hidden="true"
+                data-contact-card-background
+                className="pointer-events-none absolute inset-0 scale-[1.08] bg-[url('/images/home/sosyal-yardim.webp')] bg-cover bg-[position:70%_center] bg-no-repeat opacity-[0.50] blur-md"
+              />
+              <div className="relative z-10 max-w-[430px]">
+                <div className="flex items-start gap-5 mb-6">
+                  <span className="material-symbols-outlined text-[32px] text-primary">volunteer_activism</span>
+                  <div>
+                    <h3 className="text-headline-md text-on-surface mb-2">
+                      {t("home.donationContactTitle")}
+                    </h3>
+                    <p className="text-base text-on-surface-variant/80 leading-relaxed">
+                      {t("home.donationContactDescription")}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-3 text-on-surface-variant mt-4">
-                <span className="material-symbols-outlined text-primary">phone_in_talk</span>
-                <a href={`tel:${SUPPORT_PHONE_E164}`} className="text-lg font-semibold hover:text-gold transition-colors">
-                  {SUPPORT_PHONE_DISPLAY}
+                <div className="flex items-center gap-3 text-on-surface-variant mt-4">
+                  <span className="material-symbols-outlined text-primary">phone_in_talk</span>
+                  <a href={`tel:${SUPPORT_PHONE_E164}`} className="text-lg font-semibold hover:text-gold transition-colors">
+                    {SUPPORT_PHONE_DISPLAY}
                   </a>
                 </div>
+              </div>
             </motion.div>
           </div>
         </div>
@@ -450,10 +458,10 @@ export default function HomePage() {
               </div>
 
               <div className="relative">
-                <div className="relative rounded-3xl overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.08)] aspect-[3/4]">
+                <div className="relative aspect-[3/4] overflow-hidden rounded-3xl shadow-[0_4px_30px_rgba(0,0,0,0.08)]">
                   <Image
-                    src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80"
-                    alt="Mizan Derneği"
+                    src="/images/home/vakif-egitim-kutuphanesi.webp"
+                    alt={t("home.aboutHeading")}
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"
                     className="object-cover"
@@ -466,18 +474,18 @@ export default function HomePage() {
       </section>
 
       {/* IMPACT STATS */}
-      <section className="pt-12 pb-20 lg:pb-28 bg-white">
-        <div className="max-w-[1200px] mx-auto px-margin-desktop">
-          <div className="text-center max-w-xl mx-auto mb-10">
-            <h2 className="text-headline-xl text-on-surface leading-tight">
+      <section className="bg-white pb-14 pt-8 sm:pb-20 sm:pt-12 lg:pb-28">
+        <div className="mx-auto max-w-[1200px] px-5 sm:px-margin-desktop">
+          <div className="mx-auto mb-6 max-w-xl text-center sm:mb-10">
+            <h2 className="text-3xl leading-tight text-on-surface sm:text-headline-xl">
               {t("home.statsHeading")}
             </h2>
-            <p className="text-base text-on-surface-variant/60 mt-3 leading-relaxed">
+            <p className="mt-2 text-sm leading-relaxed text-on-surface-variant/60 sm:mt-3 sm:text-base">
               {t("home.statsDescription")}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4 lg:gap-8">
             {[
               { icon: "send", value: 954, suffix: "+", label: t("home.shipments"), sublabel: t("home.statSublabels.0") },
               { icon: "group", value: 3588, suffix: "", label: t("home.supporters"), sublabel: t("home.statSublabels.1") },
@@ -486,16 +494,16 @@ export default function HomePage() {
             ].map((stat, i) => (
               <div
                 key={i}
-                className="bg-primary rounded-3xl shadow-lg p-10 flex flex-col items-center text-center transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl"
+                className="flex flex-col items-center rounded-2xl bg-primary p-4 text-center shadow-md transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl sm:rounded-3xl sm:p-7 lg:p-10"
               >
-                <span className="material-symbols-outlined text-[44px] text-white">
+                <span className="material-symbols-outlined text-[28px] text-white sm:text-[36px] lg:text-[44px]">
                   {stat.icon}
                 </span>
-                <h4 className="text-5xl font-bold text-white mt-6">
+                <h4 className="mt-3 text-2xl font-bold text-white sm:mt-4 sm:text-4xl lg:mt-6 lg:text-5xl">
                   <CountUp end={stat.value} suffix={stat.suffix} />
                 </h4>
-                <p className="text-white/80 text-base font-medium mt-3">{stat.label}</p>
-                <p className="text-white/50 text-sm mt-1">{stat.sublabel}</p>
+                <p className="mt-2 text-xs font-medium text-white/85 sm:text-base">{stat.label}</p>
+                <p className="mt-1 hidden text-sm text-white/50 sm:block">{stat.sublabel}</p>
               </div>
             ))}
           </div>
@@ -508,26 +516,22 @@ export default function HomePage() {
           {
             id: "medrese",
             label: t("home.gallery.0"),
-            image:
-              "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1600&q=80",
+            image: "/images/home/medrese-egitimi.webp",
           },
           {
             id: "talebe",
             label: t("home.gallery.1"),
-            image:
-              "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1600&q=80",
+            image: "/images/home/talebeye-destek.webp",
           },
           {
             id: "asevi",
             label: t("home.gallery.2"),
-            image:
-              "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1600&q=80",
+            image: "/images/home/surekli-asevi.webp",
           },
           {
             id: "yardim",
             label: t("home.gallery.3"),
-            image:
-              "https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=1600&q=80",
+            image: "/images/home/sosyal-yardim.webp",
           },
         ]}
       />
@@ -600,28 +604,7 @@ export default function HomePage() {
                         {area.excerpt}
                       </p>
 
-                      <div className="mt-auto space-y-5">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-on-surface-variant/70">
-                            {t("home.collected")}
-                            <span className="block text-on-surface font-semibold text-base">{formatPrice(area.raised)}</span>
-                          </span>
-                          <span className="text-on-surface-variant/70 text-right">
-                            {t("home.target")}
-                            <span className="block text-on-surface font-semibold text-base">{formatPrice(area.target)}</span>
-                          </span>
-                        </div>
-
-                        <div className="relative w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
-                          <div
-                            className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-gold rounded-full transition-all duration-1000 ease-out group-hover/card:brightness-110"
-                            style={{ width: `${area.percent}%` }}
-                          />
-                          <span className="absolute -top-7 right-0 bg-gold text-white text-xs font-bold px-2.5 py-0.5 rounded-full">
-                            %{area.percent}
-                          </span>
-                        </div>
-
+                      <div className="mt-auto">
                         <Link
                           href={`/bagis/${area.slug}`}
                           className="group/btn mt-1 inline-flex items-center justify-center gap-2 bg-secondary text-white px-6 py-3.5 rounded-full text-[15px] font-semibold hover:shadow-lg hover:shadow-secondary/25 group-hover/card:scale-105 transition-all duration-300"
@@ -645,18 +628,18 @@ export default function HomePage() {
       </section>
 
       {/* QUICK DONATION CATEGORIES */}
-      <section className="pt-10 lg:pt-16 pb-20 lg:pb-28 bg-white relative">
-        <div className="max-w-container-max mx-auto px-margin-desktop">
-          <div className="text-center mb-10">
-            <h2 className="mx-auto max-w-3xl text-3xl font-bold leading-tight text-center text-on-surface sm:text-4xl lg:text-5xl">
+      <section className="relative bg-white pb-14 pt-8 sm:pb-20 sm:pt-12 lg:pb-28 lg:pt-16">
+        <div className="mx-auto max-w-container-max px-5 sm:px-margin-desktop">
+          <div className="mb-7 text-center sm:mb-10">
+            <h2 className="mx-auto max-w-3xl text-3xl font-bold leading-[1.08] text-on-surface sm:text-4xl lg:text-5xl">
               {t("home.quickDonationHeading")}
             </h2>
-            <p className="text-base text-on-surface-variant/60 mt-6 leading-relaxed">
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-on-surface-variant/60 sm:mt-6 sm:text-base">
               {t("home.quickDonationDescription")}
             </p>
           </div>
 
-          <div className="max-w-4xl mx-auto">
+          <div className="mx-auto max-w-4xl">
             <QuickDonationCarousel
               categories={donationTabs}
               activeIndex={activeTab}
@@ -667,23 +650,25 @@ export default function HomePage() {
       </section>
 
       {/* DONATION PROCESS + CTA BANNER */}
-      <section className="py-20 lg:py-28 bg-white">
-        <div className="max-w-container-max mx-auto px-margin-desktop">
+      <section className="bg-[#f6f8f5] py-14 sm:py-20 lg:py-28">
+        <div className="mx-auto max-w-container-max px-5 sm:px-margin-desktop">
           <ScrollReveal>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
-              <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.08)] lg:aspect-auto lg:min-h-[500px]">
-                                <Image
-                  src="https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&w=800&q=80"
+            <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+              <div className="relative min-h-[360px] overflow-hidden rounded-[28px] shadow-[0_18px_50px_rgba(28,55,39,0.16)] sm:min-h-[440px] lg:min-h-[540px]">
+                <Image
+                  src="/images/home/sosyal-yardim.webp"
                   alt={t("home.donationContactTitle")}
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover"
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-secondary/95 backdrop-blur-sm p-6 text-white text-center rounded-b-3xl">
-                  <h3 className="text-headline-md mb-2">{t("home.processCardTitle")}</h3>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#173525]/90 via-[#173525]/20 to-transparent" />
+                <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/20 bg-[#173525]/85 p-5 text-white shadow-xl backdrop-blur-md sm:inset-x-6 sm:bottom-6 sm:p-7">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#ead6b2]">Mizan Derneği</p>
+                  <h3 className="mt-2 text-2xl font-bold leading-tight sm:text-3xl">{t("home.processCardTitle")}</h3>
                   <Link
                     href="/bagis"
-                    className="inline-flex items-center gap-2 bg-white text-secondary px-8 py-3.5 rounded-full text-[15px] font-semibold hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 mt-2"
+                    className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-[#173525] transition hover:-translate-y-0.5 hover:shadow-lg sm:w-auto"
                   >
                     {t("home.processCardButton")}
                     <span className="text-base">→</span>
@@ -691,19 +676,19 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div>
+              <div className="lg:py-5">
                 <span className="inline-flex items-center gap-3 text-gold text-label-sm uppercase tracking-[0.15em] font-medium mb-4">
                   <span className="w-8 h-[2px] bg-gold rounded-full" />
                   {t("home.processEyebrow")}
                 </span>
-                <h2 className="text-headline-xl text-on-surface leading-tight mb-4">
+                <h2 className="text-3xl font-bold leading-[1.1] text-on-surface sm:text-4xl lg:text-5xl">
                   {t("home.processHeading")}
                 </h2>
-                <p className="text-base text-on-surface-variant/60 leading-relaxed mb-10">
+                <p className="mt-5 max-w-2xl text-base leading-relaxed text-on-surface-variant/70 sm:text-lg">
                   {t("home.processDescription")}
                 </p>
 
-                <div className="space-y-1">
+                <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                   {[
                     {
                       step: "01",
@@ -732,20 +717,17 @@ export default function HomePage() {
                   ].map((item, i) => (
                     <div
                       key={i}
-                      className="flex gap-5 py-4 group"
+                      className="group flex gap-4 rounded-2xl border border-[#e1e7e1] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
                     >
-                      <div className="flex flex-col items-center shrink-0">
-                        <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
-                          <span className="material-symbols-outlined text-primary text-[22px]">{item.icon}</span>
+                      <div className="shrink-0">
+                        <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 transition-all duration-300 group-hover:scale-105 group-hover:bg-primary group-hover:text-white">
+                          <span className="material-symbols-outlined text-[22px] text-primary group-hover:text-white">{item.icon}</span>
                         </div>
-                        {i < 3 && (
-                          <div className="w-[1px] h-6 bg-outline-variant/20 mt-1" />
-                        )}
                       </div>
-                      <div className="pb-2">
-                        <p className="text-label-sm text-primary font-bold mb-1">{item.step}</p>
-                        <h4 className="text-base font-semibold text-on-surface mb-1">{item.title}</h4>
-                        <p className="text-sm text-on-surface-variant/55 leading-relaxed">{item.desc}</p>
+                      <div>
+                        <p className="mb-1 text-xs font-bold tracking-[0.12em] text-primary">{item.step}</p>
+                        <h4 className="text-sm font-bold text-on-surface sm:text-base">{item.title}</h4>
+                        <p className="mt-1 text-sm leading-relaxed text-on-surface-variant/65">{item.desc}</p>
                       </div>
                     </div>
                   ))}

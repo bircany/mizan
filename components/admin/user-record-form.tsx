@@ -16,9 +16,7 @@ type PanelUserRecord = {
 };
 
 const roleOptions: readonly { label: string; value: UserRole }[] = [
-  { label: "Süper yönetici", value: "super_admin" },
-  { label: "Finans", value: "finance" },
-  { label: "Onaylayıcı", value: "approver" },
+  { label: "Yönetici", value: "admin" },
   { label: "Saha operasyon", value: "field_operator" },
 ];
 

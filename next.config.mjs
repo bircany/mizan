@@ -8,6 +8,35 @@ const supabaseHostname = supabaseUrl ? new URL(supabaseUrl).hostname : null;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/kurban/odeme",
+        destination: "/odeme",
+        permanent: true,
+      },
+      {
+        source: "/kurban/sonuc",
+        destination: "/odeme/sonuc",
+        permanent: true,
+      },
+      {
+        source: "/kurban/takip/:token",
+        destination: "/video/:token",
+        permanent: false,
+      },
+      {
+        source: "/panel/kurban/:path*",
+        destination: "/panel/video-teslimat",
+        permanent: false,
+      },
+      {
+        source: "/panel/saha/:path*",
+        destination: "/panel/video-teslimat",
+        permanent: false,
+      },
+    ];
+  },
   experimental: {
     proxyClientMaxBodySize: "11mb",
     serverActions: {

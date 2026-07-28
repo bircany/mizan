@@ -6,9 +6,7 @@ import { useLanguage } from "@/lib/language-context";
 const footerLinks = {
   hizli: [
     { href: "/hakkimizda", label: "Hakkımızda" },
-    { href: "#", label: "Medreselerimiz" },
-    { href: "#", label: "Faaliyetlerimiz" },
-    { href: "#", label: "Talebe Ol" },
+    { href: "/talebe-ol", label: "Talebe Ol" },
     { href: "/bagis", label: "Bağış ve Destek" },
     { href: "/iletisim", label: "İletişim" },
   ],

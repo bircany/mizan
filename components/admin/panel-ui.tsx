@@ -39,8 +39,8 @@ export function PanelMetric({ label, value, detail, tone = "default" }: { label:
 type StatusTone = "success" | "warning" | "danger" | "neutral" | "info";
 
 const statusToneMap: Record<string, StatusTone> = {
-  paid: "success", approved: "success", completed: "success", sent: "success", success: "success",
-  pending_review: "warning", pending: "warning", review_pending: "warning", external_pending: "warning",
+  paid: "success", approved: "success", completed: "success", sent: "success", success: "success", confirmed: "success",
+  pending_review: "warning", pending: "warning", review_pending: "warning", external_pending: "warning", reserved: "warning",
   draft: "neutral", todo: "neutral", failed: "danger", rejected: "danger", cancelled: "danger", refunded: "danger", needs_revision: "danger", stopped: "danger",
   partially_refunded: "info", submitted: "info", in_progress: "info",
 };
@@ -50,6 +50,7 @@ const statusLabelMap: Record<string, string> = {
   partially_refunded: "Kısmi iade", refunded: "İade edildi", approved: "Onaylandı", rejected: "Reddedildi",
   draft: "Taslak", todo: "Başlamadı", submitted: "Gönderildi", external_pending: "Dış onay bekliyor", review_pending: "Onay bekliyor",
   in_progress: "Devam ediyor", needs_revision: "Düzeltme bekliyor", stopped: "Durduruldu", completed: "Tamamlandı", success: "Başarılı", pending: "Bekliyor", sent: "Gönderildi",
+  confirmed: "Ödeme onaylı", reserved: "Ödeme bekliyor",
 };
 
 export function StatusBadge({ status, className }: { status: string | null | undefined; className?: string }) {

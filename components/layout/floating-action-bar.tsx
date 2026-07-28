@@ -66,9 +66,9 @@ export default function FloatingActionBar() {
       initial={{ opacity: 0, x: -40 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.6, delay: 0.5, ease: "easeOut" }}
-      className="fixed left-4 bottom-8 z-[90] hidden lg:flex flex-col items-center gap-4"
+      className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] left-3 z-[90] flex flex-col items-center gap-2.5 lg:bottom-8 lg:left-4 lg:gap-4"
     >
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col items-center gap-2.5 lg:gap-4">
         {actionButtons.map((btn) => (
           <motion.a
             key={btn.key}
@@ -80,11 +80,11 @@ export default function FloatingActionBar() {
             href={btn.href}
             target={btn.external ? "_blank" : undefined}
             rel={btn.external ? "noopener noreferrer" : undefined}
-            className={`${btn.color} w-14 h-14 rounded-full text-white flex items-center justify-center shadow-lg hover:-translate-y-0.5 hover:scale-105 hover:shadow-xl transition-all duration-250 ease-out`}
+            className={`${btn.color} flex size-11 items-center justify-center rounded-full text-white shadow-lg transition-all duration-250 ease-out hover:-translate-y-0.5 hover:scale-105 hover:shadow-xl lg:size-14 ${expanded ? "" : "pointer-events-none"}`}
             aria-label={btn.label}
           >
             {typeof btn.icon === "string" ? (
-              <span className="material-symbols-outlined text-[24px]">{btn.icon}</span>
+              <span className="material-symbols-outlined text-[21px] lg:text-[24px]">{btn.icon}</span>
             ) : (
               btn.icon
             )}
@@ -94,13 +94,13 @@ export default function FloatingActionBar() {
 
       <button
         onClick={() => setExpanded((p) => !p)}
-        className="w-14 h-14 rounded-full bg-on-background text-white flex items-center justify-center shadow-lg hover:-translate-y-0.5 hover:scale-105 hover:shadow-xl transition-all duration-250 ease-out shrink-0"
+        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-on-background text-white shadow-lg transition-all duration-250 ease-out hover:-translate-y-0.5 hover:scale-105 hover:shadow-xl lg:size-14"
         aria-label={expanded ? "Collapse actions" : "Expand actions"}
       >
         <motion.span
           animate={{ rotate: expanded ? 0 : 180 }}
           transition={{ duration: 0.25, ease: "easeInOut" }}
-          className="material-symbols-outlined text-[24px]"
+          className="material-symbols-outlined text-[21px] lg:text-[24px]"
         >
           expand_more
         </motion.span>

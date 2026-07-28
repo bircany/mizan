@@ -13,11 +13,11 @@ function getRequestRole(user: unknown) {
 
 const canManageTaskDefinition = ({ req }: { req: { user: unknown } }) => {
   const role = getRequestRole(req.user);
-  return role === "super_admin" || role === "approver";
+  return role === "admin";
 };
 
 const isSuperAdmin = ({ req }: { req: { user: unknown } }) =>
-  getRequestRole(req.user) === "super_admin";
+  getRequestRole(req.user) === "admin";
 
 const getRelationId = (value: unknown) =>
   typeof value === "object" && value && "id" in value

@@ -56,6 +56,32 @@ function PageEditor({ record, onClose }: { record?: PageAdminRecord; onClose(): 
           <label><span className="admin-label">Başlık ({locale.toUpperCase()})</span><input autoFocus className="admin-input" dir={locale === "ar" ? "rtl" : "ltr"} onChange={(event) => updateTitle(event.target.value)} value={translation.title} /></label>
           <label><span className="admin-label">URL kısalığı</span><input className="admin-input disabled:cursor-not-allowed disabled:opacity-60" disabled={record?.isSystemPage} onChange={(event) => { setSlugDirty(true); setForm({ ...form, slug: event.target.value }); }} value={form.slug} /></label>
           <label className="sm:col-span-2"><span className="admin-label">İçerik ({locale.toUpperCase()})</span><textarea className="admin-input min-h-72 resize-y leading-7" dir={locale === "ar" ? "rtl" : "ltr"} onChange={(event) => updateTranslation({ content: event.target.value })} placeholder="Paragrafları boş satırla ayırabilirsiniz." value={translation.content} /></label>
+          {form.slug === "eft-havale-bilgileri" && locale === "tr" ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-6 text-amber-900 sm:col-span-2">
+              <strong className="block">EFT alanlarını bu etiketlerle yazın:</strong>
+              Telefon, WhatsApp, Çalışma Saatleri, Banka, Hesap Sahibi, IBAN ve
+              Para Birimi. Birden fazla hesap için “Banka” ile başlayan hesap
+              bloğunu tekrarlayın. Sayfa yayımlanırken TR IBAN doğrulaması yapılır;
+              geçersiz veya eksik IBAN kaydedilmez.
+            </div>
+          ) : null}
+          {form.slug === "iletisim" && locale === "tr" ? (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-6 text-emerald-900 sm:col-span-2">
+              <strong className="block">İletişim alanlarını bu etiketlerle yazın:</strong>
+              Açıklama, Adres, Telefon, WhatsApp, E-posta, Çalışma Saatleri ve
+              Harita. Birden fazla e-posta veya çalışma saati için ilgili etiketi
+              tekrarlayabilirsiniz. Harita alanına açık adres veya Google Maps
+              arama metni yazın. Form bildirimleri ilk E-posta adresine gönderilir.
+            </div>
+          ) : null}
+          {form.slug === "talebe-ol" && locale === "tr" ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-6 text-amber-900 sm:col-span-2">
+              <strong className="block">Talebe Ol alanlarını bu etiketlerle yazın:</strong>
+              Açıklama, Eğitim Seçeneği, Hafta İçi, Hafta Sonu, Telefon ve
+              E-posta. Formdaki açılır listeye yeni seçenek eklemek için “Eğitim
+              Seçeneği:” satırını tekrarlayın.
+            </div>
+          ) : null}
           <label className="flex items-center gap-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-sm font-semibold sm:col-span-2"><input checked={form.published} onChange={(event) => setForm({ ...form, published: event.target.checked })} type="checkbox" />Sayfayı yayınla</label>
         </div>
         {state.message ? <p aria-live="polite" className={state.success ? "admin-toast text-sm text-[var(--admin-primary-strong)]" : "admin-toast text-sm text-[var(--admin-danger)]"}>{state.message}</p> : null}

@@ -87,10 +87,9 @@ function newsMediaUrl(path: string) {
 
 export async function getDonationCategoryAdminRecords(): Promise<DonationCategoryAdminRecord[]> {
   const payload = await getPayloadClient();
-  const [categories, campaigns, pools] = await Promise.all([
+  const [categories, campaigns] = await Promise.all([
     payload.find({ collection: "categories", locale: "all", fallbackLocale: false, pagination: false, limit: 500, sort: "sortOrder" }),
     payload.find({ collection: "campaigns", depth: 0, pagination: false, limit: 500 }),
-    payload.find({ collection: "campaign-funding-pools", locale: "all", fallbackLocale: false, depth: 0, pagination: false, limit: 1000 }),
   ]);
 
   return categories.docs.map((item) => {
@@ -100,13 +99,6 @@ export async function getDonationCategoryAdminRecords(): Promise<DonationCategor
     campaigns.docs.forEach((campaignValue) => {
       const campaign = record(campaignValue);
       if (relationId(campaign.category) === id) campaignIds.add(String(campaign.id));
-    });
-    pools.docs.forEach((poolValue) => {
-      const pool = record(poolValue);
-      const localizedCategory = record(pool.category);
-      if (EDITORIAL_LOCALES.some((locale) => relationId(localizedCategory[locale]) === id)) {
-        campaignIds.add(relationId(pool.campaign));
-      }
     });
     return {
       id,

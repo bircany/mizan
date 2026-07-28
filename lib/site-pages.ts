@@ -6,23 +6,73 @@ export type ManagedSitePageDefinition = {
 
 export const MANAGED_SITE_PAGES: readonly ManagedSitePageDefinition[] = [
   {
+    slug: "eft-havale-bilgileri",
+    title: "EFT / Havale ile Bağış",
+    content: `EFT/Havale bağışları dernek ekibimiz tarafından birebir takip edilir. Transfer yapmadan önce telefon veya WhatsApp üzerinden bize ulaşın.
+
+Telefon: 0552 402 67 38
+
+WhatsApp: 0552 402 67 38
+
+Çalışma Saatleri: Hafta içi 09:00 - 18:00
+
+Banka: Banka adını yazın
+
+Hesap Sahibi: Mizan Derneği
+
+IBAN: Geçerli TR IBAN bilgisini yazın
+
+Para Birimi: TRY`,
+  },
+  {
     slug: "iletisim",
     title: "İletişim",
-    content: `Adres
-Şehit Mehmet Efendi Bulvarı No:42
-Elbistan / Kahramanmaraş
+    content: `Açıklama: Bağış, faaliyet, gönüllülük ve diğer sorularınız için bizimle iletişime geçebilirsiniz. Size en kısa sürede dönüş sağlamaktan memnuniyet duyarız.
 
-Telefon ve WhatsApp
-0552 402 67 38
+Adres: Şehit Mehmet Efendi Bulvarı No:42, Elbistan / Kahramanmaraş
 
-E-posta
-info@mizandernegi.org
-bagis@mizandernegi.org
+Telefon: 0552 402 67 38
 
-Çalışma saatleri
-Hafta içi: 09:00 - 18:00
-Cumartesi: 09:00 - 13:00
-Pazar: Kapalı`,
+WhatsApp: 0552 402 67 38
+
+E-posta: info@mizandernegi.org
+
+E-posta: bagis@mizandernegi.org
+
+Çalışma Saatleri: Hafta içi 09:00 - 18:00
+
+Çalışma Saatleri: Cumartesi 09:00 - 13:00
+
+Harita: Şehit Mehmet Efendi Bulvarı No:42, Elbistan, Kahramanmaraş`,
+  },
+  {
+    slug: "talebe-ol",
+    title: "Talebe Ol",
+    content: `Açıklama: Eğitim çalışmalarımız hakkında bilgi almak, uygun programı öğrenmek ve ön başvuru bırakmak için formu doldurabilirsiniz. Ekibimiz başvurunuz sonrasında sizinle iletişime geçecektir.
+
+  Eğitim Seçeneği: Hazırlık Hazırlık
+
+  Eğitim Seçeneği: Hafızlık Eğitimi
+
+  Eğitim Seçeneği: Kıraat Eğitimi
+
+  Eğitim Seçeneği: Lisan Eğitimi (Pratik Arapça)
+
+  Eğitim Seçeneği: Ulûm-i Şer’iyye (Arapça Eğitim)
+
+  Eğitim Seçeneği: Ulûm-i Şer’iyye (Türkçe Eğitim)
+
+  Eğitim Seçeneği: İhtisas Programı
+
+  Eğitim Seçeneği: Kız Medresesi
+
+Hafta İçi: Bilgi ve randevu için iletişime geçin
+
+Hafta Sonu: Bilgi ve randevu için iletişime geçin
+
+Telefon: 0552 402 67 38
+
+E-posta: info@mizandernegi.org`,
   },
   {
     slug: "hakkimizda",
@@ -99,5 +149,6 @@ export function isManagedSitePageSlug(slug: string) {
 }
 
 export function managedSitePagePath(slug: string) {
+  if (slug === "eft-havale-bilgileri") return "/odeme";
   return isManagedSitePageSlug(slug) ? `/${slug}` : `/sayfa/${slug}`;
 }

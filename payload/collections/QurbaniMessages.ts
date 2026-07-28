@@ -16,7 +16,7 @@ export const QurbaniMessages: CollectionConfig = {
     { name: "shareSummary", type: "json", required: true },
     { name: "body", type: "textarea", required: true },
     { name: "idempotencyKey", type: "text", required: true, unique: true, index: true },
-    { name: "status", type: "select", required: true, defaultValue: "queued", index: true, options: ["queued", "paused", "sending", "sent", "delivered", "read", "failed", "cancelled"] },
+    { name: "status", type: "select", required: true, defaultValue: "draft", index: true, options: ["draft", "queued", "paused", "sending", "sent", "delivered", "read", "failed", "cancelled"] },
     { name: "dispatchBatchId", type: "text", index: true },
     { name: "scheduledAt", type: "date", index: true },
     { name: "providerMessageId", type: "text", index: true },

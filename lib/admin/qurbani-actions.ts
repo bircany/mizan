@@ -22,6 +22,7 @@ import {
   setQurbaniStockBatchStatus as setQurbaniStockBatchStatusService,
   updateQurbaniStockPrice as updateQurbaniStockPriceService,
 } from "@/lib/qurbani/inventory";
+import { purgeQurbaniData } from "@/lib/qurbani/cleanup";
 import {
   groupQurbaniImportRows,
   parseQurbaniImportCsv,
@@ -215,6 +216,24 @@ export async function saveQurbaniSeason(
   }
 }
 
+export async function deleteQurbaniSeason(
+  _: QurbaniActionState,
+  formData: FormData,
+): Promise<QurbaniActionState> {
+  await requireAdminUser(["super_admin"]);
+  try {
+    const seasonId = formText(formData, "id", true);
+    const result = await purgeQurbaniData({ seasonIds: [seasonId] });
+    revalidateQurbani();
+    return {
+      success: true,
+      message: `Kurban sezonu ve bağlı kayıtlar temizlendi. Silinen toplam kayıt: ${result.totalDeleted}.`,
+    };
+  } catch (error) {
+    return initialFailure(errorMessage(error, "Sezon silinemedi."));
+  }
+}
+
 export async function saveQurbaniProduct(
   _: QurbaniActionState,
   formData: FormData,
@@ -307,6 +326,24 @@ export async function saveQurbaniProduct(
     };
   } catch (error) {
     return initialFailure(errorMessage(error, "Kurbanlık seçeneği kaydedilemedi."));
+  }
+}
+
+export async function deleteQurbaniProduct(
+  _: QurbaniActionState,
+  formData: FormData,
+): Promise<QurbaniActionState> {
+  await requireAdminUser(["super_admin"]);
+  try {
+    const productId = formText(formData, "id", true);
+    const result = await purgeQurbaniData({ productIds: [productId] });
+    revalidateQurbani();
+    return {
+      success: true,
+      message: `Kurbanlık ve bağlı kayıtlar temizlendi. Silinen toplam kayıt: ${result.totalDeleted}.`,
+    };
+  } catch (error) {
+    return initialFailure(errorMessage(error, "Kurbanlık silinemedi."));
   }
 }
 

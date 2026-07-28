@@ -1,5 +1,5 @@
-import { ManagedSitePage } from "@/components/pages/managed-site-page";
+import { ContactPage } from "@/components/pages/contact-page";
 
 export default function IletisimPage() {
-  return <ManagedSitePage slug="iletisim" />;
+  return <ContactPage />;
 }

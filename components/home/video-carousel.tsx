@@ -32,8 +32,8 @@ export default function VideoCarousel({ slides }: VideoCarouselProps) {
   if (!slides.length) return null;
 
   return (
-    <section className="py-20 lg:py-28 bg-white">
-      <div className="max-w-container-max mx-auto px-margin-desktop">
+    <section className="bg-white py-14 sm:py-20 lg:py-28">
+      <div className="mx-auto max-w-container-max px-5 sm:px-margin-desktop">
         <div className="relative overflow-hidden rounded-3xl">
           <AnimatePresence mode="wait">
             <motion.div
@@ -55,10 +55,10 @@ export default function VideoCarousel({ slides }: VideoCarouselProps) {
                 href={slides[active].url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors group"
+                className="group absolute inset-0 flex items-end justify-end bg-transparent p-3 transition-colors sm:items-center sm:justify-center sm:bg-black/10 sm:p-0 sm:hover:bg-black/25"
               >
-                <span className="w-20 h-20 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                  <span className="material-symbols-outlined text-[40px] text-primary">
+                <span className="flex size-11 items-center justify-center rounded-full bg-[#173525]/90 text-white shadow-lg transition-transform duration-300 group-hover:scale-110 sm:size-20 sm:bg-white/90 sm:text-primary">
+                  <span className="material-symbols-outlined text-[22px] sm:text-[40px]">
                     play_arrow
                   </span>
                 </span>
@@ -68,14 +68,14 @@ export default function VideoCarousel({ slides }: VideoCarouselProps) {
 
           <button
             onClick={handlePrev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-md hover:bg-white hover:scale-105 transition-all duration-200 z-10"
+            className="absolute left-2 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 shadow-md backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:bg-white sm:left-4 sm:size-12"
             aria-label={t("home.videoPrevious")}
           >
             <span className="material-symbols-outlined text-on-surface">chevron_left</span>
           </button>
           <button
             onClick={handleNext}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-md hover:bg-white hover:scale-105 transition-all duration-200 z-10"
+            className="absolute right-2 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 shadow-md backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:bg-white sm:right-4 sm:size-12"
             aria-label={t("home.videoNext")}
           >
             <span className="material-symbols-outlined text-on-surface">chevron_right</span>

@@ -12,8 +12,15 @@
     "db:check": "tsx scripts/check-db.ts",
     "test:roles": "tsx scripts/check-role-access.ts",
     "test:qurbani": "node --conditions=react-server --import tsx scripts/check-qurbani.ts",
+    "test:delivery": "node --conditions=react-server --import tsx scripts/check-delivery.ts",
+    "test:delivery:webhook": "node --conditions=react-server --import tsx scripts/check-delivery-webhook.ts",
+    "test:payments": "tsx scripts/check-payment-limits.ts",
+    "test:eft-guidance": "tsx scripts/check-eft-guidance.ts",
+    "test:inquiry-pages": "tsx scripts/check-inquiry-pages.ts",
+    "delivery:worker": "node -e \"console.error('Legacy delivery worker is disabled; use services/video-platform.'); process.exit(1)\"",
     "qurbani:worker": "tsx scripts/qurbani-video-worker.ts",
     "qurbani:cleanup": "tsx scripts/qurbani-storage-cleanup.ts",
+    "qurbani:purge-data": "tsx scripts/purge-qurbani-data.ts",
     "qurbani:tusd": "docker compose -f deploy/qurbani/docker-compose.local.yml up"
   },
   "dependencies": {
@@ -33,7 +40,7 @@
     "jspdf": "^4.2.1",
     "lucide-react": "^0.400.0",
     "next": "^16.2.10",
-    "next-auth": "^4.24.0",
+    "next-auth": "4.24.15",
     "next-intl": "^4.13.1",
     "payload": "^3.85.2",
     "pg": "^8.22.0",
@@ -42,7 +49,7 @@
     "react-dom": "^19.2.7",
     "resend": "^6.17.2",
     "server-only": "^0.0.1",
-    "sharp": "0.35.3",
+    "sharp": "0.34.5",
     "tailwind-merge": "^2.3.0",
     "tus-js-client": "^4.3.1"
   },

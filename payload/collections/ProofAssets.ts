@@ -14,7 +14,7 @@ const getRelationId = (value: unknown) =>
 const canSetDonorVisibility = ({ req }: { req: { user: unknown } }) => {
   if (!req.user || typeof req.user !== "object") return false;
   const role = (req.user as { role?: string | null }).role;
-  return role === "super_admin" || role === "approver";
+  return role === "admin";
 };
 
 const assertAssetOwnership: CollectionBeforeChangeHook = async ({ data, originalDoc, operation, req }) => {

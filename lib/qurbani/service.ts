@@ -89,7 +89,7 @@ export async function prepareQurbaniMessages(payload: Payload, input: { poolId: 
     const trackingUrl = `${baseUrl}/kurban/takip/${encodeURIComponent(token)}`;
     const correctionPrefix = video.correctionRequired ? "Duzeltme: " : "";
     const body = `${correctionPrefix}Kurban organizasyonunuz tamamlandi. Kod: ${pool.code}. ${shares.length} hisse: ${names.join(", ")}. Kisisel video baglantiniz: ${trackingUrl}`;
-    const message = await payload.create({ collection: "qurbani-messages", data: { pool: pool.id, accessLink: accessLink.id, channel: "whatsapp", recipientPhone: phone, recipientPhoneHash: hash, shareSummary: { count: shares.length, names, shareIds: shares.map((share) => String(share.id)) }, body, idempotencyKey, status: "queued" }, overrideAccess: true });
+    const message = await payload.create({ collection: "qurbani-messages", data: { pool: pool.id, accessLink: accessLink.id, channel: "whatsapp", recipientPhone: phone, recipientPhoneHash: hash, shareSummary: { count: shares.length, names, shareIds: shares.map((share) => String(share.id)) }, body, idempotencyKey, status: "draft" }, overrideAccess: true });
     created.push(message);
   }
   await logAuditEvent(payload, { action: "qurbani.messages_prepared", actorEmail: input.actorEmail, targetCollection: "qurbani-pools", targetId: pool.id, details: { count: created.length } });
@@ -103,7 +103,7 @@ export async function sendQueuedQurbaniMessages(payload: Payload, messageIds: st
   const selected = [];
   for (const id of [...new Set(messageIds)].slice(0, 250)) {
     const message = await payload.findByID({ collection: "qurbani-messages", id, depth: 0, overrideAccess: true });
-    if (message.channel === "whatsapp" && ["queued", "failed"].includes(message.status))
+    if (message.channel === "whatsapp" && ["draft", "queued", "failed"].includes(message.status))
       selected.push(message);
   }
   const byPhone = new Map<string, typeof selected>();

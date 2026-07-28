@@ -6,6 +6,7 @@ import path from "node:path";
 import type { Payload } from "payload";
 
 import { getQurbaniVideoLimits, getQurbaniVideoStorage } from "@/lib/qurbani/storage";
+import { prepareQurbaniMessages } from "@/lib/qurbani/service";
 
 function relationId(value: unknown) {
   return typeof value === "object" && value && "id" in value ? String((value as { id: number | string }).id) : String(value || "");
@@ -106,6 +107,9 @@ export async function processQurbaniVideo(payload: Payload, videoId: string | nu
       data: { status: "ready" },
       overrideAccess: true,
     });
+    // Video hazır olduğunda yalnızca taslaklar üretilir; kuyruk ve gönderim
+    // her zaman yönetici onayına bağlı kalır.
+    await prepareQurbaniMessages(payload, { poolId, actorId: "video-worker", actorEmail: "video-worker" });
     return { duration, processedKey, coverKey };
   } catch (error) {
     await payload.update({ collection: "qurbani-videos", id: video.id, data: { status: "failed", lastError: error instanceof Error ? error.message.slice(0, 1000) : "Video isleme hatasi." }, overrideAccess: true });

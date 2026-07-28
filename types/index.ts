@@ -55,4 +55,10 @@ export interface CartItem {
   quantity: number;
   image?: string;
   isRecurring?: boolean;
+  pricingModel?: "free" | "fixed";
+  unitLabel?: string | null;
+  participantRequired?: boolean;
+  videoDelivery?: "none" | "video";
+  childDonationPackages?: Partial<Record<"food" | "stationery" | "toy" | "clothing", number>>;
+  childDonationCurrency?: "TRY" | "USD" | "EUR";
 }

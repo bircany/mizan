@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getPayloadClient } from "@/lib/payload";
-import { confirmCheckoutToken } from "@/lib/payments/service";
+import { confirmCheckoutToken } from "@/lib/payments/confirmation";
 import { getPaymentPublicUrl } from "@/lib/payments/urls";
 
 async function readToken(request: Request) {
@@ -19,8 +19,8 @@ async function readToken(request: Request) {
   return String(body?.token || "");
 }
 
-function getResultUrl(request: Request, qurbani = false) {
-  return new URL(getPaymentPublicUrl(request.url, qurbani ? "/kurban/sonuc" : "/odeme/sonuc"));
+function getResultUrl(request: Request) {
+  return new URL(getPaymentPublicUrl(request.url, "/odeme/sonuc"));
 }
 
 async function handleCallback(request: Request, token: string) {
@@ -37,16 +37,7 @@ async function handleCallback(request: Request, token: string) {
 
     const payload = await getPayloadClient();
     const result = await confirmCheckoutToken(payload, token, "callback");
-    let qurbaniOrder: any = null;
-    let qurbaniCheckout: any = null;
-    if ("donation" in result && result.donation?.qurbaniOrder) {
-      const orderId = typeof result.donation.qurbaniOrder === "object" ? result.donation.qurbaniOrder.id : result.donation.qurbaniOrder;
-      qurbaniOrder = await payload.findByID({ collection: "qurbani-orders", id: orderId, depth: 0, overrideAccess: true }).catch(() => null);
-    }
-    if ("qurbaniCheckoutId" in result && result.qurbaniCheckoutId) {
-      qurbaniCheckout = await payload.findByID({ collection: "qurbani-checkouts" as never, id: result.qurbaniCheckoutId as never, depth: 0, overrideAccess: true }).catch(() => null);
-    }
-    const redirectUrl = getResultUrl(request, Boolean(qurbaniOrder || qurbaniCheckout));
+    const redirectUrl = getResultUrl(request);
 
     redirectUrl.searchParams.set("status", result.state);
     redirectUrl.searchParams.set("token", token);
@@ -56,17 +47,6 @@ async function handleCallback(request: Request, token: string) {
         redirectUrl.searchParams.set("receiptRequested", "1");
       }
     }
-    if (qurbaniOrder) {
-      redirectUrl.searchParams.set("order", qurbaniOrder.orderNumber);
-      redirectUrl.searchParams.set("method", "iyzico");
-      redirectUrl.searchParams.set("expires", qurbaniOrder.reservedUntil);
-    }
-    if (qurbaniCheckout) {
-      redirectUrl.searchParams.set("order", String(qurbaniCheckout.publicId || qurbaniCheckout.id));
-      redirectUrl.searchParams.set("method", "iyzico");
-      if (qurbaniCheckout.expiresAt) redirectUrl.searchParams.set("expires", String(qurbaniCheckout.expiresAt));
-    }
-
     return NextResponse.redirect(redirectUrl, 303);
   } catch (error) {
     console.error("iyzico callback doğrulaması başarısız oldu.", {

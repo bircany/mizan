@@ -22,7 +22,6 @@ export default function MobileBottomNav() {
     { href: "/", label: t("common.home"), icon: "home" },
     { href: "/bagis", label: t("common.donate"), icon: "favorite" },
     { href: "/bagis", label: t("common.cart"), icon: "shopping_bag", isCart: true },
-    { href: "/panel/giris", label: t("navigation.login"), icon: "person" },
   ];
 
   return (

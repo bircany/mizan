@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/auth/session";
 import { canManageFinance } from "@/lib/auth/roles";
 import { getPayloadClient } from "@/lib/payload";
-import { executeFinanceAction } from "@/lib/payments/service";
+import { executeFinanceAction } from "@/lib/payments/finance-actions";
 
 function getRequestIp(request: Request) {
   return (
@@ -28,6 +28,9 @@ export async function POST(request: Request) {
       amount: body.amount ? Number(body.amount) : undefined,
       reason: body.reason,
       description: body.description,
+      evidenceBucket: body.evidenceBucket,
+      evidencePath: body.evidencePath,
+      evidenceMimeType: body.evidenceMimeType,
       actorEmail: user.email,
       actorId: user.id,
       ip: getRequestIp(request),

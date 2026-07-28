@@ -13,6 +13,7 @@ import {
   Image,
   LayoutDashboard,
   Menu,
+  MessagesSquare,
   Newspaper,
   Pin,
   PinOff,
@@ -23,10 +24,15 @@ import {
   WalletCards,
   Beef,
   ChevronDown,
+  CircleHelp,
+  Clapperboard,
+  PanelsTopLeft,
+  Settings,
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import { PanelSessionActions } from "@/components/admin/panel-session-actions";
 import type { UserRole } from "@/lib/auth/roles";
 import { hasRole } from "@/lib/auth/roles";
 import { PANEL_NAVIGATION_GROUPS, type PanelNavigationIcon, type PanelRouteKey } from "@/lib/auth/panel-access";
@@ -34,6 +40,10 @@ import { cn } from "@/lib/utils";
 
 const icons: Record<PanelNavigationIcon, LucideIcon> = {
   dashboard: LayoutDashboard,
+  donationManagement: HandCoins,
+  videoDelivery: Clapperboard,
+  content: PanelsTopLeft,
+  settings: Settings,
   campaigns: Folder,
   categories: Tag,
   news: Newspaper,
@@ -50,18 +60,16 @@ const icons: Record<PanelNavigationIcon, LucideIcon> = {
   users: Users,
   auditLogs: ScrollText,
   systemPayments: WalletCards,
+  contactMessages: MessagesSquare,
 };
 
 const mobileRoutePriority: readonly PanelRouteKey[] = [
   "dashboard",
-  "qurbani",
-  "donations",
-  "payments",
-  "fulfillments",
-  "fieldTasks",
-  "reports",
-  "fieldSubmissions",
+  "donationManagement",
+  "videoDelivery",
+  "content",
   "users",
+  "settings",
 ];
 
 type PanelNavigationProps = {
@@ -154,7 +162,7 @@ export function PanelNavigation({ currentPath, desktopOpen, name, onDesktopEnter
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-[var(--admin-shell-text)]">{name}</p>
             <p className="mt-0.5 truncate font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--admin-shell-muted)]">
-              {role.replace("_", " ")}
+              {role === "field_operator" ? "Saha görevlisi" : "Yönetici"}
             </p>
           </div>
           <button aria-label={pinned ? "Menünün sabitlemesini kaldır" : "Menüyü sabitle"} className="admin-icon-button ml-auto shrink-0" onClick={onPinToggle} type="button">
@@ -162,6 +170,10 @@ export function PanelNavigation({ currentPath, desktopOpen, name, onDesktopEnter
           </button>
         </div>
         {navigation("desktop")}
+        <Link className={cn("admin-nav-link mt-6 border-t border-[var(--admin-shell-border)] pt-5", currentPath.startsWith("/panel/yardim") && "admin-nav-link-active")} href="/panel/yardim">
+          <CircleHelp aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.8} />
+          <span>Yardım ve Destek</span>
+        </Link>
       </aside>
 
       <div className="flex items-center justify-between border-b border-[var(--admin-shell-border)] bg-[var(--admin-shell-surface-deep)] px-4 py-3 md:hidden">
@@ -169,16 +181,19 @@ export function PanelNavigation({ currentPath, desktopOpen, name, onDesktopEnter
           <NextImage alt="Mizan Derneği" className="rounded-full bg-[#f7f3ea] p-0.5" height={32} src="/mizan-logo.png" width={32} />
           <span className="text-sm font-semibold text-[var(--admin-shell-text)]">Operasyon Merkezi</span>
         </div>
-        <button
-          aria-controls="panel-mobile-navigation"
-          aria-expanded={isOpen}
-          aria-label="Panel menüsünü aç"
-          className="admin-icon-button"
-          onClick={() => setIsOpen(true)}
-          type="button"
-        >
-          <Menu aria-hidden="true" className="size-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <PanelSessionActions mobile />
+          <button
+            aria-controls="panel-mobile-navigation"
+            aria-expanded={isOpen}
+            aria-label="Panel menüsünü aç"
+            className="admin-icon-button"
+            onClick={() => setIsOpen(true)}
+            type="button"
+          >
+            <Menu aria-hidden="true" className="size-5" />
+          </button>
+        </div>
       </div>
 
       {isOpen ? (
@@ -205,6 +220,10 @@ export function PanelNavigation({ currentPath, desktopOpen, name, onDesktopEnter
               </button>
             </div>
             {navigation("mobile")}
+            <Link className={cn("admin-nav-link mt-6 border-t border-[var(--admin-shell-border)] pt-5", currentPath.startsWith("/panel/yardim") && "admin-nav-link-active")} href="/panel/yardim" onClick={() => setIsOpen(false)}>
+              <CircleHelp aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.8} />
+              <span>Yardım ve Destek</span>
+            </Link>
           </aside>
         </div>
       ) : null}

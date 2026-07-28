@@ -1,0 +1,20 @@
+{
+  "name": "@mizan/video-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start:api": "node src/video-api.js",
+    "start:video-worker": "node src/video-worker.js",
+    "start:message-worker": "node src/message-worker.js",
+    "start:retention": "node src/retention-worker.js",
+    "check": "node scripts/check-syntax.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "pg": "8.22.0"
+  }
+}

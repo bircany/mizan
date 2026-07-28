@@ -8,43 +8,24 @@ import sharp from "sharp";
 
 import { AuditLogs } from "./payload/collections/AuditLogs";
 import { Campaigns } from "./payload/collections/Campaigns";
-import { CampaignFundingPools } from "./payload/collections/CampaignFundingPools";
 import { Categories } from "./payload/collections/Categories";
+import { ChildDonationSettings } from "./payload/collections/ChildDonationSettings";
+import { ContactMessages } from "./payload/collections/ContactMessages";
 import { DonationIntents } from "./payload/collections/DonationIntents";
+import { DonationParticipants } from "./payload/collections/DonationParticipants";
 import { DonationFulfillments } from "./payload/collections/DonationFulfillments";
 import { Donations } from "./payload/collections/Donations";
-import { DonorReports } from "./payload/collections/DonorReports";
-import { FieldTasks } from "./payload/collections/FieldTasks";
+import { DeliveryMessages } from "./payload/collections/DeliveryMessages";
 import { Media } from "./payload/collections/Media";
 import { News } from "./payload/collections/News";
 import { NewsCategories } from "./payload/collections/NewsCategories";
+import { OperationGroupMembers } from "./payload/collections/OperationGroupMembers";
+import { OperationGroups } from "./payload/collections/OperationGroups";
+import { OperationVideos } from "./payload/collections/OperationVideos";
 import { Pages } from "./payload/collections/Pages";
+import { PanelSettings } from "./payload/collections/PanelSettings";
 import { PaymentEvents } from "./payload/collections/PaymentEvents";
 import { PaymentSessions } from "./payload/collections/PaymentSessions";
-import { PanelSettings } from "./payload/collections/PanelSettings";
-import { ProofAssets } from "./payload/collections/ProofAssets";
-import { ProofSubmissions } from "./payload/collections/ProofSubmissions";
-import { QurbaniAccessLinks } from "./payload/collections/QurbaniAccessLinks";
-import { QurbaniAllocations } from "./payload/collections/QurbaniAllocations";
-import { QurbaniCheckoutLines } from "./payload/collections/QurbaniCheckoutLines";
-import { QurbaniCheckouts } from "./payload/collections/QurbaniCheckouts";
-import { QurbaniCountries } from "./payload/collections/QurbaniCountries";
-import { QurbaniDocuments } from "./payload/collections/QurbaniDocuments";
-import { QurbaniFieldPackageItems } from "./payload/collections/QurbaniFieldPackageItems";
-import { QurbaniFieldPackages } from "./payload/collections/QurbaniFieldPackages";
-import { QurbaniInventoryHolds } from "./payload/collections/QurbaniInventoryHolds";
-import { QurbaniJobs } from "./payload/collections/QurbaniJobs";
-import { QurbaniMessages } from "./payload/collections/QurbaniMessages";
-import { QurbaniOrders } from "./payload/collections/QurbaniOrders";
-import { QurbaniPools } from "./payload/collections/QurbaniPools";
-import { QurbaniPriceRevisions } from "./payload/collections/QurbaniPriceRevisions";
-import { QurbaniProducts } from "./payload/collections/QurbaniProducts";
-import { QurbaniSeasons } from "./payload/collections/QurbaniSeasons";
-import { QurbaniShares } from "./payload/collections/QurbaniShares";
-import { QurbaniStockBatchLines } from "./payload/collections/QurbaniStockBatchLines";
-import { QurbaniStockBatches } from "./payload/collections/QurbaniStockBatches";
-import { QurbaniVideos } from "./payload/collections/QurbaniVideos";
-import { QurbaniRegions } from "./payload/collections/QurbaniRegions";
 import { RefundRequests } from "./payload/collections/RefundRequests";
 import { Users } from "./payload/collections/Users";
 import { ensureLocalEnvLoaded } from "./lib/env";
@@ -68,43 +49,24 @@ export default buildConfig({
     Users,
     Media,
     Categories,
+    ContactMessages,
+    ChildDonationSettings,
     Campaigns,
-    CampaignFundingPools,
     NewsCategories,
     News,
     Pages,
-    QurbaniSeasons,
-    QurbaniCountries,
-    QurbaniRegions,
-    QurbaniProducts,
-    QurbaniStockBatches,
-    QurbaniStockBatchLines,
-    QurbaniPriceRevisions,
-    QurbaniPools,
-    QurbaniCheckouts,
-    QurbaniCheckoutLines,
-    QurbaniInventoryHolds,
-    QurbaniOrders,
-    QurbaniShares,
-    QurbaniAllocations,
-    QurbaniFieldPackages,
-    QurbaniFieldPackageItems,
-    QurbaniDocuments,
-    QurbaniVideos,
-    QurbaniAccessLinks,
-    QurbaniMessages,
-    QurbaniJobs,
-    DonationIntents,
-    PaymentSessions,
     PanelSettings,
+    DonationIntents,
+    DonationParticipants,
+    PaymentSessions,
     PaymentEvents,
     Donations,
+    OperationGroups,
+    OperationGroupMembers,
+    OperationVideos,
+    DeliveryMessages,
     DonationFulfillments,
     RefundRequests,
-    FieldTasks,
-    ProofSubmissions,
-    ProofAssets,
-    DonorReports,
     AuditLogs,
   ],
   db: postgresAdapter({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/lib/currency-context";
@@ -17,6 +17,9 @@ type PackageItem = {
   image: string;
   accent: string;
 };
+
+type Currency = "TRY" | "USD" | "EUR";
+type ChildDonationConfiguration = { campaigns: Record<Currency, string>; prices: Record<Currency, Record<PackageKey, number>> };
 
 const orphanAssets = {
   stationeryCard: "/images/orphan/tools/stationary.svg",
@@ -64,7 +67,7 @@ const packageMeta = {
 >;
 
 export default function ChildInteractiveDonate() {
-  const { formatPrice } = useCurrency();
+  const { currency } = useCurrency();
   const { addItem } = useCart();
   const { t } = useLanguage();
 
@@ -73,19 +76,34 @@ export default function ChildInteractiveDonate() {
   const [toy, setToy] = useState(0);
   const [clothing, setClothing] = useState(0);
   const [isAdding, setIsAdding] = useState(false);
+  const [configuration, setConfiguration] = useState<ChildDonationConfiguration | null>(null);
+
+  useEffect(() => {
+    void fetch("/api/child-donation")
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!data?.configured || !data.campaigns || !data.prices) return;
+        const configuredPrices = data.prices as Record<Currency, Record<PackageKey, unknown>>;
+        if ((["TRY", "USD", "EUR"] as Currency[]).every((unit) => data.campaigns[unit] && (["food", "stationery", "toy", "clothing"] as PackageKey[]).every((key) => Number.isFinite(Number(configuredPrices[unit]?.[key])) && Number(configuredPrices[unit]?.[key]) > 0))) {
+          setConfiguration({ campaigns: { TRY: String(data.campaigns.TRY), USD: String(data.campaigns.USD), EUR: String(data.campaigns.EUR) }, prices: { TRY: Object.fromEntries(Object.entries(configuredPrices.TRY).map(([key, value]) => [key, Number(value)])) as Record<PackageKey, number>, USD: Object.fromEntries(Object.entries(configuredPrices.USD).map(([key, value]) => [key, Number(value)])) as Record<PackageKey, number>, EUR: Object.fromEntries(Object.entries(configuredPrices.EUR).map(([key, value]) => [key, Number(value)])) as Record<PackageKey, number> } });
+        }
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const activeCurrency = currency as Currency;
+  const prices = configuration?.prices[activeCurrency] || { food: packageMeta.food.price, stationery: packageMeta.stationery.price, toy: packageMeta.toy.price, clothing: packageMeta.clothing.price };
+  const formatPackagePrice = (amount: number) => new Intl.NumberFormat(activeCurrency === "TRY" ? "tr-TR" : activeCurrency === "USD" ? "en-US" : "de-DE", { style: "currency", currency: activeCurrency, maximumFractionDigits: 2 }).format(amount);
 
   const totalTry =
-    food * packageMeta.food.price +
-    stationery * packageMeta.stationery.price +
-    toy * packageMeta.toy.price +
-    clothing * packageMeta.clothing.price;
+    food * prices.food + stationery * prices.stationery + toy * prices.toy + clothing * prices.clothing;
 
   const totalItems = food + stationery + toy + clothing;
   const packageItems: PackageItem[] = [
-    { key: "food", count: food, ...packageMeta.food, title: t("childDonation.packages.food") },
-    { key: "stationery", count: stationery, ...packageMeta.stationery, title: t("childDonation.packages.stationery") },
-    { key: "toy", count: toy, ...packageMeta.toy, title: t("childDonation.packages.toy") },
-    { key: "clothing", count: clothing, ...packageMeta.clothing, title: t("childDonation.packages.clothing") },
+    { key: "food", count: food, ...packageMeta.food, price: prices.food, title: t("childDonation.packages.food") },
+    { key: "stationery", count: stationery, ...packageMeta.stationery, price: prices.stationery, title: t("childDonation.packages.stationery") },
+    { key: "toy", count: toy, ...packageMeta.toy, price: prices.toy, title: t("childDonation.packages.toy") },
+    { key: "clothing", count: clothing, ...packageMeta.clothing, price: prices.clothing, title: t("childDonation.packages.clothing") },
   ];
 
   const happy = totalItems > 0;
@@ -105,15 +123,18 @@ export default function ChildInteractiveDonate() {
   };
 
   const handleAddToCart = () => {
-    if (totalItems === 0 || isAdding) return;
+    if (totalItems === 0 || isAdding || !configuration) return;
 
     setIsAdding(true);
     addItem({
-      campaignId: "yetim",
-      currency: "TRY",
+      campaignId: configuration.campaigns[activeCurrency],
+      currency: activeCurrency,
       title: t("childDonation.supportPackage"),
       amount: totalTry,
       quantity: 1,
+      pricingModel: "free",
+      childDonationPackages: { ...(food ? { food } : {}), ...(stationery ? { stationery } : {}), ...(toy ? { toy } : {}), ...(clothing ? { clothing } : {}) },
+      childDonationCurrency: activeCurrency,
     });
 
     window.setTimeout(() => {
@@ -145,7 +166,7 @@ export default function ChildInteractiveDonate() {
                 item={item}
                 onDecrement={handleDecrement}
                 onIncrement={handleIncrement}
-                formatPrice={formatPrice}
+                formatPrice={formatPackagePrice}
                 t={t}
               />
             ))}
@@ -233,7 +254,7 @@ export default function ChildInteractiveDonate() {
             `}</style>
 
             <div className="mt-5 text-[17px] text-black">
-              {t("childDonation.total")} <strong>{formatPrice(totalTry)}</strong>
+              {t("childDonation.total")} <strong>{formatPackagePrice(totalTry)}</strong>
             </div>
 
             <button
@@ -242,7 +263,7 @@ export default function ChildInteractiveDonate() {
               disabled={totalItems === 0 || isAdding}
               className={cn(
                 "mt-4 inline-flex items-center justify-center gap-2 rounded-[10px] px-6 py-3 text-[15px] font-semibold text-white transition-colors",
-                totalItems > 0 ? "bg-[#1688e0] hover:bg-[#1278c7]" : "bg-[#9e9e9e] cursor-not-allowed"
+                totalItems > 0 && configuration ? "bg-[#1688e0] hover:bg-[#1278c7]" : "bg-[#9e9e9e] cursor-not-allowed"
               )}
             >
               {isAdding ? t("childDonation.adding") : t("donate.addToCart")}
@@ -257,7 +278,7 @@ export default function ChildInteractiveDonate() {
                 item={item}
                 onDecrement={handleDecrement}
                 onIncrement={handleIncrement}
-                formatPrice={formatPrice}
+                formatPrice={formatPackagePrice}
                 t={t}
               />
             ))}

@@ -1,26 +1,32 @@
 import type { UserRole } from "@/lib/auth/roles";
 import { hasRole } from "@/lib/auth/roles";
 
-const ALL_PANEL_ROLES = ["super_admin", "finance", "approver", "field_operator"] as const;
+const ALL_PANEL_ROLES = ["admin", "field_operator"] as const;
 
 export const PANEL_ROUTE_ACCESS = {
   dashboard: ALL_PANEL_ROLES,
-  contentCampaigns: ["super_admin"],
-  contentCategories: ["super_admin"],
-  contentNews: ["super_admin"],
-  contentPages: ["super_admin"],
-  contentMedia: ["super_admin"],
-  donations: ["super_admin", "finance"],
-  payments: ["super_admin", "finance"],
-  refunds: ["super_admin", "finance"],
-  fulfillments: ["super_admin", "finance"],
-  reports: ["super_admin", "approver"],
-  fieldTasks: ["super_admin", "approver", "field_operator"],
-  fieldSubmissions: ["super_admin", "approver", "field_operator"],
-  qurbani: ["super_admin", "field_operator"],
-  users: ["super_admin"],
-  auditLogs: ["super_admin"],
-  systemPayments: ["super_admin"],
+  donationManagement: ["admin"],
+  videoDelivery: ["admin", "field_operator"],
+  content: ["admin"],
+  settings: ["admin"],
+  contentCampaigns: ["admin"],
+  contentCategories: ["admin"],
+  contentNews: ["admin"],
+  contentPages: ["admin"],
+  contentMedia: ["admin"],
+  donations: ["admin"],
+  payments: ["admin"],
+  refunds: ["admin"],
+  fulfillments: ["admin"],
+  reports: ["admin"],
+  fieldTasks: ["admin", "field_operator"],
+  fieldSubmissions: ["admin", "field_operator"],
+  qurbani: ["admin", "field_operator"],
+  help: ALL_PANEL_ROLES,
+  users: ["admin"],
+  auditLogs: ["admin"],
+  systemPayments: ["admin"],
+  contactMessages: ["admin"],
 } as const satisfies Record<string, readonly UserRole[]>;
 
 export type PanelRouteKey = keyof typeof PANEL_ROUTE_ACCESS;
@@ -35,13 +41,17 @@ export type PanelNavigationItem = {
 };
 
 export type PanelNavigationGroup = {
-  id: "workspace" | "content" | "finance" | "field" | "governance";
+  id: "workspace" | "management";
   items: readonly PanelNavigationItem[];
   label: string;
 };
 
 export type PanelNavigationIcon =
   | "dashboard"
+  | "donationManagement"
+  | "videoDelivery"
+  | "content"
+  | "settings"
   | "campaigns"
   | "categories"
   | "news"
@@ -57,7 +67,8 @@ export type PanelNavigationIcon =
   | "qurbani"
   | "users"
   | "auditLogs"
-  | "systemPayments";
+  | "systemPayments"
+  | "contactMessages";
 
 export type PanelQuickAccessItem = {
   href: string;
@@ -87,43 +98,15 @@ export const PANEL_NAVIGATION_GROUPS: readonly PanelNavigationGroup[] = [
     ],
   },
   {
-    id: "content",
-    label: "İçerik yönetimi",
+    id: "management",
+    label: "Yönetim",
     items: [
-      { href: "/panel/icerik/bagis-alanlari", icon: "campaigns", isAvailable: true, label: "Bağış alanları", roles: PANEL_ROUTE_ACCESS.contentCampaigns, route: "contentCampaigns" },
-      { href: "/panel/icerik/kategoriler", icon: "categories", isAvailable: true, label: "Kategoriler", roles: PANEL_ROUTE_ACCESS.contentCategories, route: "contentCategories" },
-      { href: "/panel/icerik/haberler", icon: "news", isAvailable: true, label: "Haberler", roles: PANEL_ROUTE_ACCESS.contentNews, route: "contentNews" },
-      { href: "/panel/icerik/sayfalar", icon: "pages", isAvailable: true, label: "Sayfalar", roles: PANEL_ROUTE_ACCESS.contentPages, route: "contentPages" },
-      { href: "/panel/icerik/medya", icon: "media", isAvailable: true, label: "Medya", roles: PANEL_ROUTE_ACCESS.contentMedia, route: "contentMedia" },
-    ],
-  },
-  {
-    id: "finance",
-    label: "Bağış ve finans",
-    items: [
-      { href: "/panel/bagislar", icon: "donations", isAvailable: true, label: "Bağışlar", roles: PANEL_ROUTE_ACCESS.donations, route: "donations" },
-      { href: "/panel/odemeler", icon: "payments", isAvailable: true, label: "Ödeme izleme", roles: PANEL_ROUTE_ACCESS.payments, route: "payments" },
-      { href: "/panel/iadeler", icon: "refunds", isAvailable: true, label: "İade ve iptal", roles: PANEL_ROUTE_ACCESS.refunds, route: "refunds" },
-      { href: "/panel/teslimatlar", icon: "fulfillments", isAvailable: true, label: "Makbuz ve teslim", roles: PANEL_ROUTE_ACCESS.fulfillments, route: "fulfillments" },
-      { href: "/panel/raporlar", icon: "reports", isAvailable: true, label: "Raporlar ve onay", roles: PANEL_ROUTE_ACCESS.reports, route: "reports" },
-    ],
-  },
-  {
-    id: "field",
-    label: "Operasyon",
-    items: [
-      { href: "/panel/kurban", icon: "qurbani", isAvailable: true, label: "Kurban operasyonu", roles: PANEL_ROUTE_ACCESS.qurbani, route: "qurbani" },
-      { href: "/panel/saha", icon: "fieldTasks", isAvailable: true, label: "Saha görevleri", roles: PANEL_ROUTE_ACCESS.fieldTasks, route: "fieldTasks" },
-      { href: "/panel/saha/teslimler", icon: "fieldSubmissions", isAvailable: true, label: "Teslimler", roles: PANEL_ROUTE_ACCESS.fieldSubmissions, route: "fieldSubmissions" },
-    ],
-  },
-  {
-    id: "governance",
-    label: "Sistem yönetimi",
-    items: [
-      { href: "/panel/kullanicilar", icon: "users", isAvailable: true, label: "Kullanıcılar ve roller", roles: PANEL_ROUTE_ACCESS.users, route: "users" },
-      { href: "/panel/denetim", icon: "auditLogs", isAvailable: true, label: "Denetim kayıtları", roles: PANEL_ROUTE_ACCESS.auditLogs, route: "auditLogs" },
-      { href: "/panel/sistem/odemeler", icon: "systemPayments", isAvailable: true, label: "Teknik ödeme kayıtları", roles: PANEL_ROUTE_ACCESS.systemPayments, route: "systemPayments" },
+      { href: "/panel/bagis-yonetimi", icon: "donationManagement", isAvailable: true, label: "Bağış Yönetimi", roles: PANEL_ROUTE_ACCESS.donationManagement, route: "donationManagement" },
+      { href: "/panel/video-teslimat", icon: "videoDelivery", isAvailable: true, label: "Video Teslimat", roles: PANEL_ROUTE_ACCESS.videoDelivery, route: "videoDelivery" },
+      { href: "/panel/icerikler", icon: "content", isAvailable: true, label: "İçerikler", roles: PANEL_ROUTE_ACCESS.content, route: "content" },
+      { href: "/panel/mesajlar", icon: "contactMessages", isAvailable: true, label: "Mesajlar", roles: PANEL_ROUTE_ACCESS.contactMessages, route: "contactMessages" },
+      { href: "/panel/kullanicilar", icon: "users", isAvailable: true, label: "Kullanıcılar", roles: PANEL_ROUTE_ACCESS.users, route: "users" },
+      { href: "/panel/ayarlar", icon: "settings", isAvailable: true, label: "Denetim ve Ayarlar", roles: PANEL_ROUTE_ACCESS.settings, route: "settings" },
     ],
   },
 ];
@@ -139,8 +122,8 @@ export const PANEL_QUICK_ACCESS_ITEMS: readonly PanelQuickAccessItem[] = [
   { key: "media", label: "Medya", href: "/panel/icerik/medya", icon: "media", roles: PANEL_ROUTE_ACCESS.contentMedia },
   { key: "payments", label: "Ödeme izleme", href: "/panel/odemeler", icon: "payments", roles: PANEL_ROUTE_ACCESS.payments },
   { key: "fulfillments", label: "Makbuz ve teslim", href: "/panel/teslimatlar", icon: "fulfillments", roles: PANEL_ROUTE_ACCESS.fulfillments },
-  { key: "reports", label: "Raporlar", href: "/panel/raporlar", icon: "reports", roles: PANEL_ROUTE_ACCESS.reports },
-  { key: "quick-stock", label: "Hızlı kurbanlık ekle", href: "/panel/kurban?section=sales&action=quick-stock", icon: "qurbani", roles: PANEL_ROUTE_ACCESS.qurbani },
+  { key: "reports", label: "Video teslimat", href: "/panel/video-teslimat", icon: "reports", roles: PANEL_ROUTE_ACCESS.videoDelivery },
+  { key: "quick-stock", label: "Yeni kampanya", href: "/panel/bagis-yonetimi?tab=campaigns", icon: "campaigns", roles: PANEL_ROUTE_ACCESS.donationManagement },
 ] as const;
 
 export const DEFAULT_PANEL_QUICK_ACCESS_KEYS = [
@@ -161,7 +144,7 @@ export function canAccessPanelRoute(role: string | null | undefined, route: keyo
 }
 
 export function canAccessPayloadApi(role: string | null | undefined) {
-  return hasRole(role, ["super_admin"]);
+  return hasRole(role, ["admin"]);
 }
 
 export function getSafePanelReturnTo(value: string | null | undefined) {

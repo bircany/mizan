@@ -20,6 +20,14 @@ export const PaymentSessions: CollectionConfig = {
   fields: [
     { name: "donationIntent", type: "relationship", relationTo: "donation-intents", required: true },
     { name: "conversationId", type: "text", required: true, unique: true, index: true },
+    {
+      name: "paymentMethod",
+      type: "select",
+      options: ["card", "bank_transfer"],
+      defaultValue: "card",
+      required: true,
+    },
+    { name: "reservationExpiresAt", type: "date", index: true },
     { name: "checkoutToken", type: "text", unique: true, index: true },
     { name: "checkoutFormContent", type: "textarea" },
     { name: "paymentPageUrl", type: "text" },
@@ -28,6 +36,15 @@ export const PaymentSessions: CollectionConfig = {
     { name: "paymentId", type: "text", index: true },
     { name: "lastFourDigits", type: "text" },
     { name: "cardAssociation", type: "text" },
+    { name: "eftProofBucket", type: "text" },
+    { name: "eftProofPath", type: "text" },
+    {
+      name: "eftReviewStatus",
+      type: "select",
+      options: ["pending", "approved", "rejected"],
+    },
+    { name: "eftReviewedAt", type: "date" },
+    { name: "eftReviewedBy", type: "relationship", relationTo: "users" },
     { name: "rawResponse", type: "json" },
   ],
 };

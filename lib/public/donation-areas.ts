@@ -31,6 +31,13 @@ export type DonationArea = {
   isDonationOpen: boolean;
   suggestedAmounts: number[];
   progress: number;
+  pricingModel: "free" | "fixed";
+  unitPrice: number | null;
+  unitLabel: string | null;
+  totalStock: number | null;
+  availableStock: number | null;
+  videoDelivery: "none" | "video";
+  participantRequired: boolean;
 };
 
 function localizedText(value: unknown, locale: AppLocale) {
@@ -56,10 +63,6 @@ function localizedText(value: unknown, locale: AppLocale) {
   }
 
   return "";
-}
-
-function supportsLocale(value: unknown, locale: AppLocale) {
-  return Array.isArray(value) && value.includes(locale);
 }
 
 function lexicalText(value: unknown): string {
@@ -110,10 +113,6 @@ function slugify(value: string) {
     .trim()
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
-}
-
-function isOpen(value: unknown) {
-  return value === true;
 }
 
 function extractImage(image: unknown, fallbackAlt: string) {
@@ -191,6 +190,19 @@ function toDonationArea(document: Record<string, unknown>, locale: AppLocale, po
   if (!title.trim()) return null;
   const image = extractCampaignCover(coverImagePath, coverImageAlt, title) ?? extractImage(document.image, title);
   const progress = targetAmount > 0 ? Math.min(100, Math.round((collectedAmount / targetAmount) * 100)) : 0;
+  const pricingModel = source.pricingModel === "fixed" ? "fixed" : "free";
+  const unitPrice = pricingModel === "fixed" ? numberValue(source.unitPrice) : null;
+  const totalStock =
+    typeof source.totalStock === "number" ? source.totalStock : null;
+  const unavailable =
+    numberValue(source.reservedUnits) + numberValue(source.confirmedUnits);
+  const now = Date.now();
+  const publishStart = typeof source.publishStartAt === "string"
+    ? new Date(source.publishStartAt).getTime()
+    : null;
+  const publishEnd = typeof source.publishEndAt === "string"
+    ? new Date(source.publishEndAt).getTime()
+    : null;
 
   return {
     id: String(source.id),
@@ -213,9 +225,25 @@ function toDonationArea(document: Record<string, unknown>, locale: AppLocale, po
     donorCount,
     currency,
     reportingMode: source.reportingMode === "donation_based" ? "donation_based" : "pool",
-    isDonationOpen: isOpen(source.isDonationOpen),
-    suggestedAmounts: computeSuggestedAmounts(targetAmount, currency),
+    isDonationOpen:
+      source.status === "active" &&
+      source.isDonationOpen !== false &&
+      (publishStart === null || publishStart <= now) &&
+      (publishEnd === null || publishEnd > now),
+    suggestedAmounts:
+      pricingModel === "fixed" && unitPrice
+        ? [unitPrice]
+        : computeSuggestedAmounts(targetAmount, currency),
     progress,
+    pricingModel,
+    unitPrice,
+    unitLabel:
+      typeof source.unitLabel === "string" ? source.unitLabel : null,
+    totalStock,
+    availableStock:
+      totalStock === null ? null : Math.max(0, totalStock - unavailable),
+    videoDelivery: source.videoDelivery === "video" ? "video" : "none",
+    participantRequired: source.participantRequired === true,
   };
 }
 
@@ -223,28 +251,25 @@ export const getOpenDonationAreas = cache(async (locale: AppLocale = "tr"): Prom
   try {
     const payload = await getPayloadClient();
     const result = await payload.find({
-      collection: "campaign-funding-pools",
+      collection: "campaigns",
       depth: 2,
       fallbackLocale: false,
       limit: 100,
       pagination: false,
       locale,
       sort: "-updatedAt",
-      where: {
-        isDonationOpen: {
-          equals: true,
-        },
-      },
+      where: { status: { equals: "active" } },
     });
 
     return result.docs
-      .map((pool) => {
-        const poolRecord = pool as unknown as Record<string, unknown>;
-        if (!supportsLocale(poolRecord.availableLocales, locale)) return null;
-        const campaign = poolRecord.campaign && typeof poolRecord.campaign === "object" ? poolRecord.campaign as Record<string, unknown> : null;
-        return campaign ? toDonationArea(campaign, locale, poolRecord) : null;
-      })
-      .filter((item): item is DonationArea => Boolean(item));
+      .filter((campaign) => !String((campaign as { code?: unknown }).code || "").startsWith("ahmet-destek-"))
+      .map((campaign) =>
+        toDonationArea(
+          campaign as unknown as Record<string, unknown>,
+          locale,
+        ),
+      )
+      .filter((item): item is DonationArea => Boolean(item?.isDonationOpen));
   } catch (error) {
     console.warn("Bagis alanlari okunamadi.", error);
     return [];
@@ -258,33 +283,26 @@ export const getDonationAreaBySlug = cache(async (slug: string, locale: AppLocal
   try {
     const payload = await getPayloadClient();
     const result = await payload.find({
-      collection: "campaign-funding-pools",
+      collection: "campaigns",
       depth: 2,
       fallbackLocale: false,
-      limit: 100,
-      pagination: false,
+      limit: 1,
       locale,
       where: {
         and: [
-          {
-            isDonationOpen: {
-              equals: true,
-            },
-          },
+          { slug: { equals: normalizedSlug } },
+          { status: { equals: "active" } },
         ],
       },
     });
 
-    const pool = result.docs.find((item) => {
-      const poolRecord = item as unknown as Record<string, unknown>;
-      if (!supportsLocale(poolRecord.availableLocales, locale)) return false;
-      const campaign = poolRecord.campaign;
-      return campaign && typeof campaign === "object" && (campaign as Record<string, unknown>).slug === normalizedSlug;
-    });
-    if (!pool) return null;
-    const poolRecord = pool as unknown as Record<string, unknown>;
-    const campaign = poolRecord.campaign as Record<string, unknown>;
-    return toDonationArea(campaign, locale, poolRecord);
+    const campaign = result.docs[0];
+    return campaign
+      ? toDonationArea(
+          campaign as unknown as Record<string, unknown>,
+          locale,
+        )
+      : null;
   } catch (error) {
     console.warn("Bagis alani detayi okunamadi.", error);
     return null;
@@ -311,6 +329,12 @@ export function buildDonationAreaCategories(areas: DonationArea[], locale: AppLo
         icon: category.icon || "volunteer_activism",
       })),
   ];
+}
+
+export function isQurbaniDonationArea(area: DonationArea) {
+  const category = `${area.category?.slug || ""} ${area.category?.name || ""}`
+    .toLocaleLowerCase("tr-TR");
+  return category.includes("kurban");
 }
 
 export function getDonationAreaSummary(areas: DonationArea[]) {

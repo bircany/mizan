@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import type { UserRole } from "@/lib/auth/roles";
-import { canManageFinance, canReviewFieldWork, hasRole } from "@/lib/auth/roles";
+import { canManageFinance, hasRole } from "@/lib/auth/roles";
 import { getAdminSession } from "@/lib/auth/session";
 import { getPayloadClient } from "@/lib/payload";
 export { getQurbaniAdminSnapshot } from "@/lib/admin/qurbani-data";
@@ -13,7 +13,7 @@ export type AdminUser = {
   name?: string;
 };
 
-export async function requireAdminUser(allowedRoles?: readonly UserRole[]): Promise<AdminUser> {
+export async function requireAdminUser(allowedRoles?: readonly string[]): Promise<AdminUser> {
   const user = await getAdminSession();
   if (!user?.email || !user?.role) {
     redirect("/panel/giris");
@@ -29,8 +29,6 @@ export async function requireAdminUser(allowedRoles?: readonly UserRole[]): Prom
 export async function getManagementSnapshot(user: AdminUser) {
   const payload = await getPayloadClient();
   const hasFinanceAccess = canManageFinance(user.role);
-  const canReview = canReviewFieldWork(user.role);
-  const isFieldOperator = user.role === "field_operator";
 
   async function safeFind(collection: string, options: Record<string, unknown>, label: string) {
     try {
@@ -56,20 +54,6 @@ export async function getManagementSnapshot(user: AdminUser) {
   const refunds = hasFinanceAccess
     ? await safeFind("refund-requests", { limit: 5, sort: "-createdAt" }, "refund-requests ozeti")
     : undefined;
-  const fieldTasks = canReview || isFieldOperator
-    ? await safeFind(
-        "field-tasks",
-        {
-          limit: 5,
-          sort: "-updatedAt",
-          where: isFieldOperator ? { assignedTo: { equals: user.id } } : undefined,
-        },
-        "field-tasks ozeti",
-      )
-    : undefined;
-  const reports = canReview
-    ? await safeFind("donor-reports", { limit: 5, sort: "-updatedAt" }, "donor-reports ozeti")
-    : undefined;
   const paymentEvents = hasFinanceAccess
     ? await safeFind("payment-events", { limit: 10, sort: "-createdAt" }, "payment-events ozeti")
     : undefined;
@@ -77,8 +61,6 @@ export async function getManagementSnapshot(user: AdminUser) {
   const donationDocs = donations?.docs ?? [];
   const sessionDocs = sessions?.docs ?? [];
   const refundDocs = refunds?.docs ?? [];
-  const fieldTaskDocs = fieldTasks?.docs ?? [];
-  const reportDocs = reports?.docs ?? [];
   const paymentEventDocs = paymentEvents?.docs ?? [];
 
   const paidTotal = donationDocs
@@ -91,14 +73,14 @@ export async function getManagementSnapshot(user: AdminUser) {
       donations: donations?.totalDocs ?? 0,
       pendingReview: donationDocs.filter((item) => item.status === "pending_review").length,
       refundQueue: refundDocs.filter((item) => item.status !== "completed").length,
-      fieldQueue: fieldTaskDocs.filter((item) => item.status !== "approved").length,
-      reportsToApprove: reportDocs.filter((item) => item.status === "draft").length,
+      fieldQueue: 0,
+      reportsToApprove: 0,
     },
     donations: donationDocs,
     sessions: sessionDocs,
     refunds: refundDocs,
-    fieldTasks: fieldTaskDocs,
-    reports: reportDocs,
+    fieldTasks: [],
+    reports: [],
     paymentEvents: paymentEventDocs,
   };
 }

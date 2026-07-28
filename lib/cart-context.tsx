@@ -37,20 +37,36 @@ function saveCartToStorage(items: CartItem[]) {
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
+  const [storageLoaded, setStorageLoaded] = useState(false)
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setItems(loadCartFromStorage()), 0)
+    const timer = window.setTimeout(() => {
+      setItems(loadCartFromStorage())
+      setStorageLoaded(true)
+    }, 0)
     return () => window.clearTimeout(timer)
   }, [])
 
   useEffect(() => {
-    saveCartToStorage(items)
-  }, [items])
+    if (storageLoaded) saveCartToStorage(items)
+  }, [items, storageLoaded])
 
   const addItem = useCallback((newItem: CartItem) => {
     setItems((prev) => {
       const existing = prev.find((item) => item.campaignId === newItem.campaignId)
       if (existing) {
+        if (newItem.childDonationPackages) {
+          const packageKeys = ["food", "stationery", "toy", "clothing"] as const
+          const mergedPackages = Object.fromEntries(
+            packageKeys.map((key) => [key, Number(existing.childDonationPackages?.[key] || 0) + Number(newItem.childDonationPackages?.[key] || 0)])
+              .filter(([, quantity]) => Number(quantity) > 0),
+          )
+          return prev.map((item) =>
+            item.campaignId === newItem.campaignId
+              ? { ...newItem, amount: item.amount + newItem.amount, quantity: 1, childDonationPackages: mergedPackages }
+              : item,
+          )
+        }
         return prev.map((item) =>
           item.campaignId === newItem.campaignId
             ? { ...item, quantity: item.quantity + newItem.quantity }

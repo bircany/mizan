@@ -59,6 +59,13 @@ function idOf(value: unknown) {
   return "";
 }
 
+function relationshipId(value: string) {
+  const normalized = value.trim();
+  if (!normalized) throw new Error("Haber kategorisi zorunludur.");
+  const numeric = Number(normalized);
+  return Number.isSafeInteger(numeric) && String(numeric) === normalized ? numeric : normalized;
+}
+
 function localizedRelation(value: unknown, locale: Locale) {
   if (value && typeof value === "object" && locale in value) return idOf((value as Record<string, unknown>)[locale]);
   return idOf(value);
@@ -120,12 +127,8 @@ export async function deleteDonationCategoryWithTransfer(_: EditorialActionState
   if (!sourceId) return { success: false, message: "Silinecek kategori bulunamadi." };
   try {
     const payload = await getPayloadClient();
-    const [campaigns, pools] = await Promise.all([
-      payload.find({ collection: "campaigns", depth: 0, pagination: false, limit: 1000, where: { category: { equals: sourceId } } }),
-      payload.find({ collection: "campaign-funding-pools", locale: "all", fallbackLocale: false, depth: 0, pagination: false, limit: 2000 }),
-    ]);
-    const matchingPools = pools.docs.filter((item) => EDITORIAL_LOCALES.some((locale) => localizedRelation((item as Record<string, unknown>).category, locale) === sourceId));
-    const isUsed = campaigns.totalDocs > 0 || matchingPools.length > 0;
+    const campaigns = await payload.find({ collection: "campaigns", depth: 0, pagination: false, limit: 1000, where: { category: { equals: sourceId } } });
+    const isUsed = campaigns.totalDocs > 0;
     if (isUsed) {
       if (!targetId || targetId === sourceId) throw new Error("Bagli kayitlar icin farkli bir hedef kategori secin.");
       const target = await payload.findByID({ collection: "categories", id: targetId, depth: 0 });
@@ -135,12 +138,6 @@ export async function deleteDonationCategoryWithTransfer(_: EditorialActionState
     await initTransaction(req);
     try {
       for (const campaign of campaigns.docs) await payload.update({ collection: "campaigns", id: idOf(campaign), req, data: { category: targetId } });
-      for (const pool of matchingPools) {
-        const value = (pool as Record<string, unknown>).category;
-        for (const locale of EDITORIAL_LOCALES) {
-          if (localizedRelation(value, locale) === sourceId) await payload.update({ collection: "campaign-funding-pools", id: idOf(pool), locale, fallbackLocale: false, req, data: { category: targetId } });
-        }
-      }
       await payload.delete({ collection: "categories", id: sourceId, req });
       await commitTransaction(req);
     } catch (error) {
@@ -214,7 +211,8 @@ export async function saveNewsPost(_: EditorialActionState, formData: FormData):
     const primaryTitle = input.translations[primaryLocale]?.title?.trim() || "";
     if (!primaryTitle) throw new Error(`${primaryLocale.toUpperCase()} haber başlığı zorunludur.`);
     const payload = await getPayloadClient();
-    const category = await payload.findByID({ collection: "news-categories", id: input.categoryId, depth: 0 });
+    const categoryId = relationshipId(input.categoryId);
+    const category = await payload.findByID({ collection: "news-categories", id: categoryId, depth: 0 });
     if ((category as { isActive?: boolean }).isActive === false && input.status === "published") throw new Error("Yayindaki haber icin aktif bir kategori secin.");
     const normalized = {} as Record<Locale, LocalizedNewsInput & { searchText: string; readTimeMinutes: number }>;
     const blockCampaignIds = new Set<string>();
@@ -255,7 +253,7 @@ export async function saveNewsPost(_: EditorialActionState, formData: FormData):
     const req = await createLocalReq({ user: { ...user, collection: "users" } }, payload);
     await initTransaction(req);
     try {
-      const common = { slug, newsCategory: input.categoryId, availableLocales, status: input.status, featured: input.featured === true, sortOrder: Number(input.sortOrder) || 0, relatedCampaigns: relatedCampaignIds, publishedAt, coverImagePath: uploadedCover?.path || previousCoverPath || undefined };
+      const common = { slug, newsCategory: categoryId, availableLocales, status: input.status, featured: input.featured === true, sortOrder: Number(input.sortOrder) || 0, relatedCampaigns: relatedCampaignIds, publishedAt, coverImagePath: uploadedCover?.path || previousCoverPath || undefined };
       const localeData = (locale: Locale) => ({ title: normalized[locale].title || "Taslak", excerpt: normalized[locale].excerpt, coverImageAlt: normalized[locale].coverImageAlt, contentBlocks: normalized[locale].blocks, tags: normalized[locale].tags, searchText: normalized[locale].searchText, readTimeMinutes: normalized[locale].readTimeMinutes, meta: { title: normalized[locale].metaTitle?.trim() || normalized[locale].title, description: normalized[locale].metaDescription?.trim() || normalized[locale].excerpt } });
       const saved = input.id
         ? await payload.update({ collection: "news", id: input.id, locale: primaryLocale, fallbackLocale: false, req, data: { ...common, ...localeData(primaryLocale) } })

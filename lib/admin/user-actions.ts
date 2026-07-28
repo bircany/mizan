@@ -47,7 +47,7 @@ export async function savePanelUser(_: UserActionState, formData: FormData): Pro
     };
 
     if (id) {
-      if (String(actor.id) === id && (!isActive || nextRole !== "super_admin")) {
+      if (String(actor.id) === id && (!isActive || nextRole !== "admin")) {
         return { message: "Kendi hesabınızı pasifleştiremez veya süper yönetici rolünüzü kaldıramazsınız.", success: false };
       }
 

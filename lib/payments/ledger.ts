@@ -3,7 +3,7 @@ import { getSupabaseServiceClient } from "@/lib/supabase-server";
 type LedgerEntryInput = {
   donationId: number;
   campaignId: number;
-  fundingPoolId: number;
+  fundingPoolId?: number | null;
   refundRequestId?: number | null;
   entryType: "capture" | "refund" | "cancel";
   amount: number;
@@ -15,10 +15,10 @@ type LedgerEntryInput = {
 };
 
 export async function recordPaymentLedgerEntry(input: LedgerEntryInput) {
-  const { data, error } = await getSupabaseServiceClient().rpc("record_funding_pool_ledger_entry", {
+  const client = getSupabaseServiceClient();
+  const common = {
     p_donation_id: input.donationId,
     p_campaign_id: input.campaignId,
-    p_funding_pool_id: input.fundingPoolId,
     p_refund_request_id: input.refundRequestId ?? null,
     p_entry_type: input.entryType,
     p_amount: input.amount,
@@ -27,7 +27,13 @@ export async function recordPaymentLedgerEntry(input: LedgerEntryInput) {
     p_idempotency_key: input.idempotencyKey,
     p_remove_donor: input.removeDonor ?? false,
     p_metadata: input.metadata ?? {},
-  });
+  };
+  const { data, error } = input.fundingPoolId
+    ? await client.rpc("record_funding_pool_ledger_entry", {
+        ...common,
+        p_funding_pool_id: input.fundingPoolId,
+      })
+    : await client.rpc("record_payment_ledger_entry", common);
 
   if (error) {
     throw new Error(`Odeme defteri kaydi olusturulamadi: ${error.message}`);

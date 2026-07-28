@@ -20,6 +20,7 @@ export function DonationAreaDetail({ area, locale }: Props) {
   const { formatPrice } = useCurrency();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
+  const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,8 +34,11 @@ export function DonationAreaDetail({ area, locale }: Props) {
   }, [area.id, area.title, locale, updateTitles]);
 
   const donationAmount = useMemo(
-    () => selectedAmount ?? (customAmount ? Number(customAmount) : 0),
-    [customAmount, selectedAmount],
+    () =>
+      area.pricingModel === "fixed"
+        ? Number(area.unitPrice || 0) * quantity
+        : selectedAmount ?? (customAmount ? Number(customAmount) : 0),
+    [area.pricingModel, area.unitPrice, customAmount, quantity, selectedAmount],
   );
 
   function chooseAmount(amount: number) {
@@ -53,10 +57,17 @@ export function DonationAreaDetail({ area, locale }: Props) {
       campaignId: area.id,
       currency: area.currency,
       title: area.title,
-      amount: donationAmount,
-      quantity: 1,
+      amount:
+        area.pricingModel === "fixed"
+          ? Number(area.unitPrice || 0)
+          : donationAmount,
+      quantity: area.pricingModel === "fixed" ? quantity : 1,
       image: area.image?.src,
       isRecurring: false,
+      pricingModel: area.pricingModel,
+      unitLabel: area.unitLabel,
+      participantRequired: area.participantRequired,
+      videoDelivery: area.videoDelivery,
     });
   }
 
@@ -103,14 +114,14 @@ export function DonationAreaDetail({ area, locale }: Props) {
                 <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", area.isDonationOpen ? "bg-[rgb(166_215_178_/_90%)] text-[var(--admin-primary)]" : "bg-[rgb(245_185_66_/_90%)] text-[var(--admin-warning)]")}>
                   {area.isDonationOpen ? "Yayında" : "Kapalı"}
                 </span>
-                <span className="rounded-full bg-[var(--admin-surface-raised)] px-3 py-1 text-xs font-semibold text-[var(--admin-muted)]">
+                <span className="hidden rounded-full bg-[var(--admin-surface-raised)] px-3 py-1 text-xs font-semibold text-[var(--admin-muted)]">
                   %{area.progress} tamamlandı
                 </span>
               </div>
 
               <p className="mt-5 text-base leading-8 text-[var(--admin-muted)]">{area.description}</p>
 
-              <dl className="mt-6 grid gap-3 sm:grid-cols-3">
+              <dl className="hidden mt-6 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl bg-[var(--admin-surface-raised)] p-4">
                   <dt className="text-xs text-[var(--admin-muted)]">Toplanan</dt>
                   <dd className="mt-2 font-mono text-lg font-semibold text-[var(--admin-text)]">{formatCurrency(area.collectedAmount, area.currency)}</dd>
@@ -125,12 +136,41 @@ export function DonationAreaDetail({ area, locale }: Props) {
                 </div>
               </dl>
 
-              <div className="mt-6">
+              <div className="hidden mt-6">
                 <div className="h-3 overflow-hidden rounded-full bg-[var(--admin-border)]" aria-hidden="true">
                   <div className="h-full rounded-full bg-[var(--admin-primary)]" style={{ width: `${area.progress}%` }} />
                 </div>
               </div>
 
+              {area.pricingModel === "fixed" ? (
+                <div className="mt-6 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] p-4">
+                  <p className="text-sm font-semibold text-[var(--admin-text)]">
+                    {formatCurrency(Number(area.unitPrice), area.currency)} /{" "}
+                    {area.unitLabel || "adet"}
+                  </p>
+                  <label className="mt-3 block">
+                    <span className="mb-2 block text-sm text-[var(--admin-muted)]">
+                      Adet / hisse
+                    </span>
+                    <input
+                      className="admin-input"
+                      max={area.availableStock ?? 100}
+                      min={1}
+                      onChange={(event) =>
+                        setQuantity(Math.max(1, Number(event.target.value) || 1))
+                      }
+                      type="number"
+                      value={quantity}
+                    />
+                  </label>
+                  {area.availableStock !== null ? (
+                    <p className="mt-2 text-xs text-[var(--admin-muted)]">
+                      Kalan stok: {area.availableStock}
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 {area.suggestedAmounts.map((amount) => (
                   <button
@@ -164,6 +204,8 @@ export function DonationAreaDetail({ area, locale }: Props) {
                   value={customAmount}
                 />
               </label>
+                </>
+              )}
 
               {donationAmount > 0 ? (
                 <div className="mt-5 rounded-[24px] border border-dashed border-[var(--admin-primary)]/30 bg-[rgb(166_215_178_/_10%)] p-4">
@@ -175,17 +217,13 @@ export function DonationAreaDetail({ area, locale }: Props) {
               {notice ? <p className="mt-4 rounded-2xl bg-[rgb(166_215_178_/_18%)] px-4 py-3 text-sm text-[var(--admin-primary)]">{notice}</p> : null}
 
               <button
-                className="admin-action-button mt-6 w-full justify-center"
+                className="admin-action-button mt-5 w-full justify-center"
                 disabled={!donationAmount || !area.isDonationOpen}
                 onClick={addDonation}
                 type="button"
               >
                 {area.isDonationOpen ? "Sepete ekle" : "Bağış kapalı"}
               </button>
-
-              <p className="mt-4 text-sm leading-6 text-[var(--admin-muted)]">
-                Bağış sonrasında ödeme, dekont ve makbuz süreci iyzico callback ve webhook doğrulaması ile kayda alınır.
-              </p>
             </div>
           </div>
         </div>

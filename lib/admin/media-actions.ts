@@ -7,7 +7,11 @@ import { getMediaUsage } from "@/lib/admin/media-data";
 import { PANEL_ROUTE_ACCESS } from "@/lib/auth/panel-access";
 import { getPayloadClient } from "@/lib/payload";
 
-export type MediaActionState = { message: string | null; success: boolean };
+export type MediaActionState = {
+  message: string | null;
+  success: boolean;
+  media?: { label: string; value: string };
+};
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxBytes = 10 * 1024 * 1024;
 
@@ -25,9 +29,17 @@ export async function uploadMedia(_: MediaActionState, formData: FormData): Prom
   if (file.size > maxBytes) return { success: false, message: "Görsel en fazla 10 MB olabilir." };
   try {
     const payload = await getPayloadClient();
-    await payload.create({ collection: "media", data: { alt }, file: { data: Buffer.from(await file.arrayBuffer()), mimetype: file.type, name: file.name, size: file.size } });
+    const created = await payload.create({ collection: "media", data: { alt }, file: { data: Buffer.from(await file.arrayBuffer()), mimetype: file.type, name: file.name, size: file.size } });
     revalidatePath("/panel/icerik/medya");
-    return { success: true, message: "Görsel medya kütüphanesine eklendi." };
+    revalidatePath("/panel/bagis-yonetimi");
+    return {
+      success: true,
+      message: "Görsel medya kütüphanesine eklendi.",
+      media: {
+        label: created.alt || created.filename || `Görsel ${created.id}`,
+        value: String(created.id),
+      },
+    };
   } catch (error) { return { success: false, message: message(error, "Görsel yüklenemedi.") }; }
 }
 

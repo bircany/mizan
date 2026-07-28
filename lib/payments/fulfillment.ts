@@ -64,7 +64,7 @@ export async function fulfillPaidDonation(payload: Payload, donationId: number |
 
   const fulfillment = await getOrCreateFulfillment(payload, donation.id);
   let receiptStatus = (fulfillment.receiptStatus || "pending") as ReceiptStatus;
-  let reportStatus = (fulfillment.reportStatus || "pending") as ReportStatus;
+  const reportStatus = "created" as ReportStatus;
   let emailStatus = (fulfillment.emailStatus || "pending") as EmailStatus;
   let emailMessageId = fulfillment.emailMessageId || undefined;
   const errors: string[] = [];
@@ -116,6 +116,7 @@ export async function fulfillPaidDonation(payload: Payload, donationId: number |
     receiptStatus = "stored";
   }
 
+  /*
   try {
     const reports = await payload.find({
       collection: "donor-reports",
@@ -142,6 +143,7 @@ export async function fulfillPaidDonation(payload: Payload, donationId: number |
     errors.push(errorMessage(error));
   }
 
+  */
   if (donation.taxReceiptRequested && emailStatus !== "sent") {
     try {
       const result = await sendDonationReceipt(

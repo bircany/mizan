@@ -1,0 +1,11 @@
+.git
+.next
+node_modules
+*.tsbuildinfo
+*.docx
+.agents
+coverage
+deploy
+.env
+.env.*
+!.env.example

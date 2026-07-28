@@ -4,7 +4,7 @@ import { superAdminsOnly } from "@/payload/access";
 const fieldPackageRead: Access = ({ req }) => {
   const user = req.user as { id?: number | string; role?: string | null } | null;
   if (!user) return false;
-  if (user.role === "super_admin") return true;
+  if (user.role === "admin") return true;
   if (user.role !== "field_operator") return false;
   return { assignedTo: { equals: user.id } } as Where;
 };

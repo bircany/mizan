@@ -5,6 +5,11 @@ import { commitTransaction, createLocalReq, initTransaction, killTransaction } f
 
 import { requireAdminUser } from "@/lib/admin/data";
 import { PANEL_ROUTE_ACCESS } from "@/lib/auth/panel-access";
+import { validatePublishedEftGuidance } from "@/lib/eft-guidance";
+import {
+  validatePublishedContactPage,
+  validatePublishedStudentPage,
+} from "@/lib/inquiry-pages";
 import { getPayloadClient } from "@/lib/payload";
 import { PAGE_LOCALES, plainTextEditorState } from "@/lib/pages";
 import { isManagedSitePageSlug, managedSitePagePath } from "@/lib/site-pages";
@@ -40,6 +45,27 @@ function parseInput(formData: FormData): PageInput {
     for (const locale of PAGE_LOCALES) {
       if (!translations[locale].title || !translations[locale].content) throw new Error(`Yayınlamak için ${locale.toUpperCase()} başlık ve içerik zorunludur.`);
     }
+  }
+  if (published && slug === "eft-havale-bilgileri") {
+    const validationError = validatePublishedEftGuidance(
+      translations.tr.title,
+      translations.tr.content,
+    );
+    if (validationError) throw new Error(validationError);
+  }
+  if (published && slug === "iletisim") {
+    const validationError = validatePublishedContactPage(
+      translations.tr.title,
+      translations.tr.content,
+    );
+    if (validationError) throw new Error(validationError);
+  }
+  if (published && slug === "talebe-ol") {
+    const validationError = validatePublishedStudentPage(
+      translations.tr.title,
+      translations.tr.content,
+    );
+    if (validationError) throw new Error(validationError);
   }
   return { id: source.id ? String(source.id) : undefined, slug, published, translations };
 }

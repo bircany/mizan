@@ -1,7 +1,8 @@
 import { Resend as ResendClient } from "resend";
 
 const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@mizandernegi.org";
-const ADMIN_EMAIL = "info@mizandernegi.org";
+const ADMIN_EMAIL =
+  process.env.CONTACT_NOTIFICATION_EMAIL || "info@mizandernegi.org";
 
 function getClient() {
   const apiKey = process.env.RESEND_API_KEY;
@@ -106,32 +107,34 @@ export async function sendContactNotification(
   email: string,
   name: string,
   message: string,
+  subject = "İletişim Formu",
+  recipient = ADMIN_EMAIL,
 ) {
-  const resend = getClient();
-  if (!resend) {
-    console.warn("Resend API key not configured. Skipping email.");
-    return;
-  }
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email);
+  const safeMessage = escapeHtml(message).replace(/\r?\n/g, "<br />");
+  const safeSubject = subject.replace(/[\r\n]+/g, " ").trim().slice(0, 140);
 
-  return resend.emails.send({
+  return sendEmail({
     from: FROM_EMAIL,
-    to: ADMIN_EMAIL,
-    subject: `İletişim Formu - ${name}`,
+    to: recipient,
+    replyTo: email,
+    subject: `${safeSubject || "İletişim Formu"} - ${name.replace(/[\r\n]+/g, " ")}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Yeni İletişim Mesajı</h2>
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
           <tr>
             <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Ad Soyad:</strong></td>
-            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${name}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${safeName}</td>
           </tr>
           <tr>
             <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>E-Posta:</strong></td>
-            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${email}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${safeEmail}</td>
           </tr>
           <tr>
             <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Mesaj:</strong></td>
-            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${message}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${safeMessage}</td>
           </tr>
         </table>
       </div>

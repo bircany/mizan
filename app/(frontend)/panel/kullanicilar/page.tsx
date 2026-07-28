@@ -10,9 +10,7 @@ import { getPayloadClient } from "@/lib/payload";
 export const dynamic = "force-dynamic";
 
 const roleLabels: Record<string, string> = {
-  super_admin: "Süper yönetici",
-  finance: "Finans",
-  approver: "Onaylayıcı",
+  admin: "Yönetici",
   field_operator: "Saha operasyon",
 };
 

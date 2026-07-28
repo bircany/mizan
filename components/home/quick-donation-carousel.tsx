@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 
 interface Category {
@@ -26,12 +26,9 @@ export default function QuickDonationCarousel({
     dragFree: false,
   });
 
-  const [selectedIndex, setSelectedIndex] = useState(activeIndex);
-
   const onEmblaSelect = useCallback(() => {
     if (!emblaApi) return;
     const idx = emblaApi.selectedScrollSnap();
-    setSelectedIndex(idx);
     onSelect(idx);
   }, [emblaApi, onSelect]);
 
@@ -56,10 +53,39 @@ export default function QuickDonationCarousel({
   );
 
   return (
-    <div className="overflow-hidden" ref={emblaRef}>
-      <div className="flex">
+    <>
+      <div className="grid grid-cols-2 gap-3 sm:hidden">
+        {categories.map((category, index) => {
+          const isActive = index === activeIndex;
+          return (
+            <button
+              aria-pressed={isActive}
+              className={`flex min-h-28 flex-col items-center justify-center gap-2 rounded-2xl border p-3 text-center transition-all duration-300 ${
+                isActive
+                  ? "border-primary bg-primary text-white shadow-[0_14px_28px_rgba(14,90,58,0.22)]"
+                  : "border-[#e7ebe6] bg-white text-on-surface-variant shadow-sm active:scale-[0.98]"
+              }`}
+              key={category.label}
+              onClick={() => onSelect(index)}
+              type="button"
+            >
+              <span
+                className={`grid size-11 place-items-center rounded-xl ${
+                  isActive ? "bg-white/15 text-white" : "bg-primary/5 text-primary"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[23px]">{category.icon}</span>
+              </span>
+              <span className="text-sm font-semibold leading-tight">{category.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="hidden overflow-hidden sm:block" ref={emblaRef}>
+        <div className="flex">
         {categories.map((cat, i) => {
-          const isActive = i === selectedIndex;
+          const isActive = i === activeIndex;
           return (
             <div
               key={cat.label}
@@ -67,6 +93,7 @@ export default function QuickDonationCarousel({
               style={{ width: "calc(100% / 5)" }}
             >
               <button
+                aria-pressed={isActive}
                 onClick={() => handleCardClick(i)}
                 className={`w-full flex flex-col items-center gap-3 p-5 rounded-3xl cursor-pointer transition-all duration-500 ease-out ${
                   isActive
@@ -90,7 +117,8 @@ export default function QuickDonationCarousel({
             </div>
           );
         })}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

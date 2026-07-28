@@ -26,7 +26,7 @@ export function DashboardQuickAccess({ items }: { items: PanelQuickAccessItem[] 
 export function QuickAccessSettings({ selectedKeys, role }: { selectedKeys: string[]; role: UserRole }) {
   const [open, setOpen] = useState(false);
   const [state, action] = useActionState(savePanelQuickLinks, initialState);
-  if (role !== "super_admin") return null;
+  if (role !== "admin") return null;
   return <div className="relative">
     <button className="admin-icon-button" aria-expanded={open} aria-label="Hızlı erişimi düzenle" onClick={() => setOpen((value) => !value)} type="button"><Settings2 className="size-4" /></button>
     {open ? <div className="absolute right-0 z-30 mt-2 w-[min(24rem,calc(100vw-2rem))] rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] p-4 shadow-xl">

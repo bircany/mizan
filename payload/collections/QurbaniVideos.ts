@@ -8,19 +8,19 @@ const relationId = (value: unknown) => typeof value === "object" && value && "id
 const assignedVideoAccess: Access = ({ req }) => {
   const user = req.user as User | null;
   if (!user) return false;
-  if (user.role === "super_admin") return true;
+  if (user.role === "admin") return true;
   if (user.role !== "field_operator") return false;
   return { fieldTask: { assignedTo: { equals: user.id } } } as Where;
 };
 
 const canCreateVideo: Access = ({ req }) => {
   const user = req.user as User | null;
-  return user?.role === "super_admin" || user?.role === "field_operator";
+  return user?.role === "admin" || user?.role === "field_operator";
 };
 
 const assertAssignedVideo: CollectionBeforeChangeHook = async ({ data, originalDoc, req }) => {
   const user = req.user as User | null;
-  if (!user || user.role === "super_admin") return data;
+  if (!user || user.role === "admin") return data;
   if (user.role !== "field_operator") throw new Error("Kurban videosu yukleme yetkiniz yok.");
   const taskId = relationId(data.fieldTask ?? originalDoc?.fieldTask);
   if (!taskId) throw new Error("Atanmis saha gorevi zorunludur.");

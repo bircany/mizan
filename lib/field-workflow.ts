@@ -49,7 +49,7 @@ export async function startFieldTask(
   taskId: number | string,
   ipAddress?: string | null,
 ) {
-  if (!hasRole(actor.role, ["super_admin", "field_operator"])) {
+  if (!hasRole(actor.role, ["admin", "field_operator"])) {
     throw new Error("Bu gorevi baslatma yetkiniz yok.");
   }
 
@@ -89,7 +89,7 @@ export async function createFieldSubmission(
   },
   ipAddress?: string | null,
 ) {
-  if (!hasRole(actor.role, ["super_admin", "field_operator"])) {
+  if (!hasRole(actor.role, ["admin", "field_operator"])) {
     throw new Error("Kanit gonderimi olusturma yetkiniz yok.");
   }
 
@@ -163,7 +163,7 @@ export async function transitionProofSubmission(
   if (!taskId) throw new Error("Kanit gonderiminin saha gorevi bulunamadi.");
 
   const task = await getAssignedFieldTask(payload, actor, taskId);
-  const isReviewer = hasRole(actor.role, ["super_admin", "approver"]);
+  const isReviewer = hasRole(actor.role, ["admin"]);
   const isOwnerOperator = actor.role === "field_operator";
 
   let nextStatus: "external_pending" | "review_pending" | "approved" | "rejected";
@@ -171,7 +171,7 @@ export async function transitionProofSubmission(
   const data: Record<string, unknown> = {};
 
   if (transition === "submit") {
-    if (!isOwnerOperator && actor.role !== "super_admin") {
+    if (!isOwnerOperator && actor.role !== "admin") {
       throw new Error("Kanit gonderme yetkiniz yok.");
     }
     if (submission.status !== "draft" && submission.status !== "rejected") {
@@ -182,7 +182,7 @@ export async function transitionProofSubmission(
     data.externalApprovalCode = input.externalApprovalCode?.trim() || undefined;
     data.externalReferenceId = input.externalReferenceId?.trim() || undefined;
   } else if (transition === "mark_ready_for_review") {
-    if (!isOwnerOperator && actor.role !== "super_admin") {
+    if (!isOwnerOperator && actor.role !== "admin") {
       throw new Error("Incelemeye gonderme yetkiniz yok.");
     }
     if (submission.status !== "external_pending") {

@@ -33,6 +33,10 @@ export const Users: CollectionConfig = {
       required: true,
     },
     {
+      name: "phone",
+      type: "text",
+    },
+    {
       name: "role",
       type: "select",
       required: true,
@@ -43,9 +47,9 @@ export const Users: CollectionConfig = {
         value: role,
       })),
       access: {
-        create: ({ req }) => Boolean(req.user?.role === "super_admin"),
+        create: ({ req }) => Boolean(req.user?.role === "admin"),
         read: ({ req }) => Boolean(req.user),
-        update: ({ req }) => Boolean(req.user?.role === "super_admin"),
+        update: ({ req }) => Boolean(req.user?.role === "admin"),
       },
     },
     {
@@ -53,8 +57,8 @@ export const Users: CollectionConfig = {
       type: "checkbox",
       defaultValue: true,
       access: {
-        create: ({ req }) => Boolean(req.user?.role === "super_admin"),
-        update: ({ req }) => Boolean(req.user?.role === "super_admin"),
+        create: ({ req }) => Boolean(req.user?.role === "admin"),
+        update: ({ req }) => Boolean(req.user?.role === "admin"),
       },
     },
     {

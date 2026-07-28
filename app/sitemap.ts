@@ -14,6 +14,7 @@ const staticRoutes = [
   { url: "/hakkimizda", changefreq: "monthly" as const, priority: 0.7 },
   { url: "/kurban", changefreq: "yearly" as const, priority: 0.9 },
   { url: "/iletisim", changefreq: "monthly" as const, priority: 0.6 },
+  { url: "/talebe-ol", changefreq: "monthly" as const, priority: 0.6 },
   { url: "/kvkk-aydinlatma-metni", changefreq: "yearly" as const, priority: 0.3 },
   { url: "/cerez-politikasi", changefreq: "yearly" as const, priority: 0.3 },
   { url: "/gizlilik-politikasi", changefreq: "yearly" as const, priority: 0.3 },

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
@@ -39,6 +40,8 @@ import {
   approveQurbaniVideoRecord,
   assignQurbaniPool,
   disconnectQurbaniWhatsApp,
+  deleteQurbaniProduct,
+  deleteQurbaniSeason,
   markPowerOfAttorneyConfirmed,
   prepareQurbaniMessages,
   saveQurbaniProduct,
@@ -74,6 +77,7 @@ const legacyTabs = [
 ] as const;
 const tabs = [
   ["sales", "Satış ve stok"],
+  ["stock", "Stok"],
   ["orders", "Siparişler"],
   ["field", "Saha"],
   ["delivery", "Teslimat"],
@@ -150,6 +154,78 @@ function ActionForm({
       <ActionMessage state={state} />
     </form>
   );
+}
+
+function SeasonDeleteForm({
+  id,
+  onClose,
+}: {
+  id: string;
+  onClose(): void;
+}) {
+  const router = useRouter();
+  const [state, action] = useActionState(deleteQurbaniSeason, initialState);
+  useEffect(() => {
+    if (!state.success) return;
+    onClose();
+    router.refresh();
+  }, [onClose, router, state.success]);
+  return (
+    <form action={action} className="flex flex-wrap items-center gap-2">
+      <input name="id" type="hidden" value={id} />
+      <SubmitButton danger>Sezonu sil</SubmitButton>
+      <ActionMessage state={state} />
+    </form>
+  );
+}
+
+function ProductDeleteForm({
+  id,
+  onClose,
+}: {
+  id: string;
+  onClose(): void;
+}) {
+  const router = useRouter();
+  const [state, action] = useActionState(deleteQurbaniProduct, initialState);
+  useEffect(() => {
+    if (!state.success) return;
+    onClose();
+    router.refresh();
+  }, [onClose, router, state.success]);
+  return (
+    <form action={action} className="flex flex-wrap items-center gap-2">
+      <input name="id" type="hidden" value={id} />
+      <SubmitButton danger>Kurbanlığı sil</SubmitButton>
+      <ActionMessage state={state} />
+    </form>
+  );
+}
+
+/** The server action is deliberately not invoked until this local grace period ends. */
+function DispatchCountdownForm({ messageIds }: { messageIds: string }) {
+  const [state, formAction] = useActionState(sendQurbaniMessages, initialState);
+  const [remaining, setRemaining] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (remaining === null) return;
+    const timer = window.setTimeout(() => {
+      if (remaining <= 1) {
+        setRemaining(null);
+        const data = new FormData();
+        data.set("messageIds", messageIds);
+        formAction(data);
+      } else {
+        setRemaining((current) => current === null ? null : current - 1);
+      }
+    }, 1000);
+    return () => window.clearTimeout(timer);
+  }, [formAction, messageIds, remaining]);
+
+  return <div className="flex flex-wrap items-center gap-2">
+    {remaining === null ? <button className="admin-action-button" onClick={() => setRemaining(5)} type="button"><Send className="size-4" />Mesajları gönder</button> : <><span className="text-xs text-[var(--admin-muted)]">Gönderim {remaining} sn. sonra başlayacak.</span><button className="admin-secondary-button" onClick={() => setRemaining(null)} type="button">İptal</button></>}
+    <ActionMessage state={state} />
+  </div>;
 }
 
 function Modal({
@@ -351,7 +427,7 @@ function SeasonForm({
           />
         </label>
         <div className="flex flex-wrap items-center justify-end gap-3 sm:col-span-2">
-          <ActionMessage state={state} />
+          {record ? <SeasonDeleteForm id={record.id} onClose={onClose} /> : null}
           <button
             className="admin-secondary-button"
             onClick={onClose}
@@ -360,6 +436,9 @@ function SeasonForm({
             Vazgeç
           </button>
           <SubmitButton>Sezonu kaydet</SubmitButton>
+        </div>
+        <div className="sm:col-span-2">
+          <ActionMessage state={state} />
         </div>
       </form>
     </Modal>
@@ -556,7 +635,7 @@ function ProductForm({
           Satışa açık
         </label>
         <div className="flex flex-wrap items-center justify-end gap-3 sm:col-span-2">
-          <ActionMessage state={state} />
+          {record ? <ProductDeleteForm id={record.id} onClose={onClose} /> : null}
           <button
             className="admin-secondary-button"
             onClick={onClose}
@@ -565,6 +644,9 @@ function ProductForm({
             Vazgeç
           </button>
           <SubmitButton>Kurbanlık seçeneğini kaydet</SubmitButton>
+        </div>
+        <div className="sm:col-span-2">
+          <ActionMessage state={state} />
         </div>
       </form>
     </Modal>
@@ -756,17 +838,18 @@ export function QurbaniManager({
   canManage,
   initialSection,
   openQuickStock = false,
+  showNavigation = true,
   snapshot,
   whatsapp,
 }: {
   canManage: boolean;
   initialSection?: Tab;
   openQuickStock?: boolean;
+  showNavigation?: boolean;
   snapshot: QurbaniAdminSnapshot;
   whatsapp: QurbaniWhatsAppStatus;
 }) {
-  const router = useRouter();
-  const [tab, setTab] = useState<Tab>(canManage ? initialSection || "sales" : "field");
+  const tab = canManage ? initialSection || "sales" : "field";
   const [query, setQuery] = useState("");
   const [seasonModal, setSeasonModal] = useState(false);
   const [productModal, setProductModal] = useState(false);
@@ -799,37 +882,34 @@ export function QurbaniManager({
 
   return (
     <div className="space-y-5">
-      <div className="overflow-x-auto">
+      {showNavigation ? <div className="overflow-x-auto">
         <div className="flex min-w-max gap-2" role="tablist">
           {visibleTabs.map(([id, label]) => (
-            <button
+            <Link
               aria-selected={tab === id}
               className={
                 tab === id ? "admin-tab admin-tab-active" : "admin-tab"
               }
               key={id}
-              onClick={() => {
-                setTab(id);
-                router.replace(`/panel/kurban?section=${id}`, { scroll: false });
-              }}
+              href={id === "sales" ? "/panel/kurban/satis" : `/panel/kurban/${id === "orders" ? "siparisler" : id === "field" ? "saha" : id === "delivery" ? "teslimat" : id === "settings" ? "ayarlar" : id}`}
               role="tab"
-              type="button"
             >
               {label}
-            </button>
+            </Link>
           ))}
         </div>
-      </div>
+      </div> : null}
       {tab === "sales" ? <Overview snapshot={snapshot} /> : null}
       {(
         [
-          "sales",
+          "sales", "stock",
         ] as const
       ).includes(tab as never) ? (
         <QurbaniStockManager
           mode={
             tab as
               | "sales"
+              | "stock"
           }
           openQuickStock={openQuickStock}
           snapshot={snapshot}
@@ -1248,7 +1328,7 @@ export function QurbaniManager({
             );
           })}
           {snapshot.messages.some((message) =>
-            ["pending", "queued", "failed"].includes(message.status),
+            ["draft", "pending", "queued", "failed"].includes(message.status),
           ) ? (
             <section className="admin-card">
               <p className="admin-eyebrow">Toplu gönderim</p>
@@ -1256,20 +1336,7 @@ export function QurbaniManager({
                 Aynı telefona ait hazır kurbanlar tek WhatsApp mesajında birleştirilir.
               </p>
               <div className="mt-3">
-                <ActionForm
-                  action={sendQurbaniMessages}
-                  fields={{
-                    messageIds: snapshot.messages
-                      .filter((message) =>
-                        ["pending", "queued", "failed"].includes(message.status),
-                      )
-                      .map((message) => message.id)
-                      .join(","),
-                  }}
-                >
-                  <Send className="size-4" />
-                  Hazır tüm gönderilmemiş mesajları kuyruğa al
-                </ActionForm>
+                <DispatchCountdownForm messageIds={snapshot.messages.filter((message) => ["draft", "pending", "queued", "failed"].includes(message.status)).map((message) => message.id).join(",")} />
               </div>
             </section>
           ) : null}
@@ -1297,14 +1364,8 @@ export function QurbaniManager({
                   </p>
                 ) : null}
               </div>
-              {["pending", "queued", "failed"].includes(message.status) ? (
-                <ActionForm
-                  action={sendQurbaniMessages}
-                  fields={{ messageIds: message.id }}
-                >
-                  <Send className="size-4" />
-                  Gönder
-                </ActionForm>
+              {["draft", "pending", "queued", "failed"].includes(message.status) ? (
+                <DispatchCountdownForm messageIds={message.id} />
               ) : null}
               {message.accessLinkId && !message.accessRevoked ? (
                 <ActionForm

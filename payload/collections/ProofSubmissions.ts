@@ -9,13 +9,13 @@ import {
 
 const isSuperAdmin = ({ req }: { req: { user: unknown } }) => {
   if (!req.user || typeof req.user !== "object") return false;
-  return (req.user as { role?: string | null }).role === "super_admin";
+  return (req.user as { role?: string | null }).role === "admin";
 };
 
 const canReviewSubmission = ({ req }: { req: { user: unknown } }) => {
   if (!req.user || typeof req.user !== "object") return false;
   const role = (req.user as { role?: string | null }).role;
-  return role === "super_admin" || role === "approver";
+  return role === "admin";
 };
 
 const getRelationId = (value: unknown) =>

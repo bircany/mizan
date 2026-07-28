@@ -1,0 +1,202 @@
+name: mizan-video
+
+x-node-service: &node-service
+  build:
+    context: ../..
+    dockerfile: services/video-platform/Dockerfile
+  image: mizan-video-platform:${VIDEO_PLATFORM_IMAGE_TAG:-local}
+  env_file:
+    - path: .env
+      required: false
+  restart: unless-stopped
+  init: true
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  read_only: true
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,nodev,size=64m,uid=1000,gid=1000
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "5"
+
+services:
+  video-api:
+    <<: *node-service
+    command: ["node", "src/video-api.js"]
+    environment:
+      SERVICE_NAME: video-api
+      HEALTH_FILE: /tmp/mizan-video-api.health
+    volumes:
+      - video_uploads:/var/lib/mizan/uploads:ro
+      - video_ready:/var/lib/mizan/ready:ro
+    networks:
+      - video_internal
+      - video_egress
+      - proxy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:8080/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "${COOLIFY_PROXY_NETWORK:-coolify}"
+      traefik.http.routers.mizan-video-api.rule: "Host(`video.softartdevstudios.cloud`)"
+      traefik.http.routers.mizan-video-api.entrypoints: "https"
+      traefik.http.routers.mizan-video-api.tls: "true"
+      traefik.http.routers.mizan-video-api.tls.certresolver: "${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
+      traefik.http.services.mizan-video-api.loadbalancer.server.port: "8080"
+
+  tusd:
+    image: tusproject/tusd:v2.8.0
+    restart: unless-stopped
+    user: "1000:1000"
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    command:
+      - -host=0.0.0.0
+      - -port=8080
+      - -base-path=/files/
+      - -upload-dir=/srv/uploads
+      - -max-size=2147483648
+      - -behind-proxy
+      - -disable-download
+      - -hooks-http=http://video-api:8080/internal/tusd/hooks?secret=${HOOK_SHARED_SECRET}
+      - -hooks-enabled-events=pre-create,post-finish
+      - -cors-allow-origin=${TUSD_CORS_ALLOW_ORIGIN}
+      - -cors-allow-credentials=false
+    volumes:
+      - video_uploads:/srv/uploads
+    networks:
+      - video_internal
+      - proxy
+    depends_on:
+      video-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "test -r /proc/1/cmdline && grep -aq tusd /proc/1/cmdline"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "${COOLIFY_PROXY_NETWORK:-coolify}"
+      traefik.http.routers.mizan-video-upload.rule: "Host(`upload.video.softartdevstudios.cloud`)"
+      traefik.http.routers.mizan-video-upload.entrypoints: "https"
+      traefik.http.routers.mizan-video-upload.tls: "true"
+      traefik.http.routers.mizan-video-upload.tls.certresolver: "${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
+      traefik.http.services.mizan-video-upload.loadbalancer.server.port: "8080"
+
+  video-worker:
+    <<: *node-service
+    command: ["node", "src/video-worker.js"]
+    environment:
+      SERVICE_NAME: video-worker
+      WORKER_ID: "${VIDEO_WORKER_ID:-video-worker-1}"
+      HEALTH_FILE: /tmp/mizan-video-worker.health
+    volumes:
+      - video_uploads:/var/lib/mizan/uploads
+      - video_raw:/var/lib/mizan/raw
+      - video_processing:/var/lib/mizan/processing
+      - video_ready:/var/lib/mizan/ready
+      - video_replaced:/var/lib/mizan/replaced
+      - video_quarantine:/var/lib/mizan/quarantine
+    networks:
+      - video_internal
+      - video_egress
+    healthcheck:
+      test: ["CMD", "node", "src/heartbeat.js", "/tmp/mizan-video-worker.health", "3600"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "${VIDEO_WORKER_CPU_LIMIT:-2.0}"
+          memory: "${VIDEO_WORKER_MEMORY_LIMIT:-3G}"
+
+  message-worker:
+    <<: *node-service
+    command: ["node", "src/message-worker.js"]
+    environment:
+      SERVICE_NAME: message-worker
+      WORKER_ID: "${MESSAGE_WORKER_ID:-message-worker-1}"
+      HEALTH_FILE: /tmp/mizan-message-worker.health
+    networks:
+      - video_internal
+      - video_egress
+      - evolution
+    healthcheck:
+      test: ["CMD", "node", "src/heartbeat.js", "/tmp/mizan-message-worker.health", "360"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "${MESSAGE_WORKER_CPU_LIMIT:-0.5}"
+          memory: "${MESSAGE_WORKER_MEMORY_LIMIT:-512M}"
+
+  retention-worker:
+    <<: *node-service
+    command: ["node", "src/retention-worker.js"]
+    environment:
+      SERVICE_NAME: retention-worker
+      HEALTH_FILE: /tmp/mizan-retention-worker.health
+    volumes:
+      - video_uploads:/var/lib/mizan/uploads
+      - video_raw:/var/lib/mizan/raw
+      - video_processing:/var/lib/mizan/processing
+      - video_ready:/var/lib/mizan/ready
+      - video_replaced:/var/lib/mizan/replaced
+      - video_quarantine:/var/lib/mizan/quarantine
+    networks:
+      - video_internal
+      - video_egress
+    healthcheck:
+      test: ["CMD", "node", "src/heartbeat.js", "/tmp/mizan-retention-worker.health", "7500"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "${RETENTION_WORKER_CPU_LIMIT:-0.25}"
+          memory: "${RETENTION_WORKER_MEMORY_LIMIT:-256M}"
+
+volumes:
+  video_uploads:
+  video_raw:
+  video_processing:
+  video_ready:
+  video_replaced:
+  video_quarantine:
+
+networks:
+  video_internal:
+    internal: true
+  video_egress:
+    driver: bridge
+  proxy:
+    external: true
+    name: "${COOLIFY_PROXY_NETWORK:-coolify}"
+  evolution:
+    external: true
+    name: "${EVOLUTION_DOCKER_NETWORK}"

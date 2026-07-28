@@ -17,7 +17,7 @@ export const anyone: Access = () => true;
 export const authenticated: Access = ({ req }) => Boolean(getUser(req.user));
 
 export const superAdminsOnly: Access = ({ req }) =>
-  hasRole(getUser(req.user)?.role, ["super_admin"]);
+  hasRole(getUser(req.user)?.role, ["admin"]);
 
 export const financeOnly: Access = ({ req }) =>
   canManageFinance(getUser(req.user)?.role);
@@ -26,23 +26,21 @@ export const approverOrAdmin: Access = ({ req }) =>
   canReviewFieldWork(getUser(req.user)?.role);
 
 export const fieldOperatorOrAdmin: Access = ({ req }) =>
-  hasRole(getUser(req.user)?.role, ["super_admin", "field_operator", "approver"]);
+  hasRole(getUser(req.user)?.role, ["admin", "field_operator"]);
 
 export const fieldOperatorsOnly: Access = ({ req }) =>
-  hasRole(getUser(req.user)?.role, ["super_admin", "field_operator"]);
+  hasRole(getUser(req.user)?.role, ["admin", "field_operator"]);
 
 export const internalTeam: Access = ({ req }) =>
   hasRole(getUser(req.user)?.role, [
-    "super_admin",
-    "finance",
+    "admin",
     "field_operator",
-    "approver",
   ]);
 
 export const usersReadAccess: Access = ({ req }) => {
   const user = getUser(req.user);
   if (!user) return false;
-  if (hasRole(user.role, ["super_admin"])) return true;
+  if (hasRole(user.role, ["admin"])) return true;
 
   return {
     id: {
@@ -54,7 +52,7 @@ export const usersReadAccess: Access = ({ req }) => {
 export const usersUpdateAccess: Access = ({ req }) => {
   const user = getUser(req.user);
   if (!user) return false;
-  if (hasRole(user.role, ["super_admin"])) return true;
+  if (hasRole(user.role, ["admin"])) return true;
 
   return {
     id: {
@@ -66,7 +64,7 @@ export const usersUpdateAccess: Access = ({ req }) => {
 export const fieldTaskReadAccess: Access = ({ req }) => {
   const user = getUser(req.user);
   if (!user) return false;
-  if (hasRole(user.role, ["super_admin", "approver"])) return true;
+  if (hasRole(user.role, ["admin"])) return true;
 
   return {
     assignedTo: {
@@ -78,7 +76,7 @@ export const fieldTaskReadAccess: Access = ({ req }) => {
 export const fieldTaskUpdateAccess: Access = ({ req }) => {
   const user = getUser(req.user);
   if (!user) return false;
-  if (hasRole(user.role, ["super_admin", "approver"])) return true;
+  if (hasRole(user.role, ["admin"])) return true;
 
   return {
     assignedTo: {
@@ -90,7 +88,7 @@ export const fieldTaskUpdateAccess: Access = ({ req }) => {
 export const proofSubmissionReadAccess: Access = ({ req }) => {
   const user = getUser(req.user);
   if (!user) return false;
-  if (hasRole(user.role, ["super_admin", "approver"])) return true;
+  if (hasRole(user.role, ["admin"])) return true;
 
   return {
     fieldTask: {
@@ -104,7 +102,7 @@ export const proofSubmissionReadAccess: Access = ({ req }) => {
 export const proofAssetReadAccess: Access = ({ req }) => {
   const user = getUser(req.user);
   if (!user) return false;
-  if (hasRole(user.role, ["super_admin", "approver"])) return true;
+  if (hasRole(user.role, ["admin"])) return true;
 
   return {
     submission: {
@@ -120,7 +118,7 @@ export const proofAssetReadAccess: Access = ({ req }) => {
 export const proofAssetUpdateAccess: Access = ({ req }) => {
   const user = getUser(req.user);
   if (!user) return false;
-  if (hasRole(user.role, ["super_admin", "approver"])) return true;
+  if (hasRole(user.role, ["admin"])) return true;
 
   return {
     submission: {
@@ -136,7 +134,7 @@ export const proofAssetUpdateAccess: Access = ({ req }) => {
 export const proofSubmissionUpdateAccess: Access = ({ req }) => {
   const user = getUser(req.user);
   if (!user) return false;
-  if (hasRole(user.role, ["super_admin", "approver"])) return true;
+  if (hasRole(user.role, ["admin"])) return true;
 
   return {
     fieldTask: {

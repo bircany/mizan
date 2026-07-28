@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getPayloadClient } from "@/lib/payload";
-import { processWebhookNotification } from "@/lib/payments/service";
+import { processWebhookNotification } from "@/lib/payments/confirmation";
 
 export async function POST(request: Request) {
   try {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 
 interface GalleryTab {
@@ -15,51 +15,60 @@ interface InteractiveGalleryProps {
 
 export default function InteractiveGallery({ tabs }: InteractiveGalleryProps) {
   const [activeId, setActiveId] = useState(tabs[0]?.id ?? "");
+  const tabsRef = useRef(tabs);
+
+  useEffect(() => {
+    tabsRef.current = tabs;
+  }, [tabs]);
 
   const handleHover = useCallback((id: string) => {
     setActiveId(id);
   }, []);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveId((currentId) => {
+        const currentTabs = tabsRef.current;
+        const currentIndex = currentTabs.findIndex((tab) => tab.id === currentId);
+        return currentTabs[(currentIndex + 1) % currentTabs.length]?.id || currentTabs[0]?.id || "";
+      });
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   if (!tabs.length) return null;
 
   return (
-    <section className="relative w-full h-[650px] md:h-[700px] bg-surface-container-high">
+    <section className="relative h-[230px] w-full overflow-hidden bg-[#173525] sm:h-[420px] lg:h-[560px]">
       {tabs.map((tab) => (
         <Image
           key={tab.id}
           src={tab.image}
-          alt=""
+          alt={tab.id === activeId ? tab.label : ""}
           fill
           sizes="100vw"
-          className="object-cover transition-opacity duration-[400ms] ease-in-out"
+          className="object-contain transition-opacity duration-[400ms] ease-in-out"
           style={{ opacity: tab.id === activeId ? 1 : 0 }}
         />
       ))}
 
-      <div className="absolute inset-0 bg-black/20" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/10" />
 
-      <div className="absolute inset-0 flex">
-        {tabs.map((tab, i) => (
-          <div
+      <div className="absolute inset-x-0 top-0 grid grid-cols-4 border-b border-white/15 bg-[#173525]/45 backdrop-blur-[2px]">
+        {tabs.map((tab) => (
+          <button
+            aria-pressed={activeId === tab.id}
             key={tab.id}
+            onClick={() => handleHover(tab.id)}
+            onFocus={() => handleHover(tab.id)}
             onMouseEnter={() => handleHover(tab.id)}
-            className="flex-1 cursor-pointer"
-          />
-        ))}
-      </div>
-
-      <div className="absolute top-0 left-0 right-0 flex h-[72px] pointer-events-none">
-        {tabs.map((tab, i) => (
-          <div
-            key={tab.id}
-            className={`relative flex-1 flex items-center justify-center text-sm font-semibold transition-colors duration-300 ${
-              activeId === tab.id
-                ? "bg-[rgba(120,100,80,.75)] text-white"
-                : "text-white"
-            } ${i < tabs.length - 1 ? "border-r border-white/20" : ""}`}
+            className={`min-h-14 border-r border-white/10 px-2 text-center text-[11px] font-bold leading-tight text-white transition-colors last:border-r-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white sm:min-h-[72px] sm:px-4 sm:text-sm ${
+              activeId === tab.id ? "bg-white/20" : "hover:bg-white/10"
+            }`}
+            type="button"
           >
             {tab.label}
-          </div>
+          </button>
         ))}
       </div>
     </section>

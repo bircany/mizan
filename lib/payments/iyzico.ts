@@ -1,10 +1,21 @@
 import crypto from "crypto";
 
+import {
+  isIyzicoAmountAllowed,
+  resolveIyzicoMaxPaymentAmount,
+} from "@/lib/payments/limits";
+
 const IYZICO_BASE_URL =
   process.env.IYZICO_BASE_URL || "https://sandbox-api.iyzipay.com";
 
 export function isIyzicoSandbox() {
   return IYZICO_BASE_URL.includes("sandbox");
+}
+
+export function getIyzicoMaxPaymentAmount() {
+  return resolveIyzicoMaxPaymentAmount(
+    process.env.IYZICO_MAX_PAYMENT_AMOUNT,
+  );
 }
 
 type IyzicoRequestOptions = {
@@ -133,6 +144,13 @@ function createResponseSignature(parts: string[]) {
 }
 
 export async function initializeCheckoutForm(input: InitializeCheckoutInput) {
+  const maximum = getIyzicoMaxPaymentAmount();
+  if (!isIyzicoAmountAllowed(input.amount, maximum)) {
+    throw new Error(
+      `iyzico kart ödeme tutarı ${maximum} değerinden küçük olmalıdır.`,
+    );
+  }
+
   return callIyzico<IyzicoCheckoutResponse>({
     path: "/payment/iyzipos/checkoutform/initialize/auth/ecom",
     body: {

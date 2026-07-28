@@ -70,43 +70,24 @@ export interface Config {
     users: User;
     media: Media;
     categories: Category;
+    'contact-messages': ContactMessage;
+    'child-donation-settings': ChildDonationSetting;
     campaigns: Campaign;
-    'campaign-funding-pools': CampaignFundingPool;
     'news-categories': NewsCategory;
     news: News;
     pages: Page;
-    'qurbani-seasons': QurbaniSeason;
-    'qurbani-countries': QurbaniCountry;
-    'qurbani-regions': QurbaniRegion;
-    'qurbani-products': QurbaniProduct;
-    'qurbani-stock-batches': QurbaniStockBatch;
-    'qurbani-stock-batch-lines': QurbaniStockBatchLine;
-    'qurbani-price-revisions': QurbaniPriceRevision;
-    'qurbani-pools': QurbaniPool;
-    'qurbani-checkouts': QurbaniCheckout;
-    'qurbani-checkout-lines': QurbaniCheckoutLine;
-    'qurbani-inventory-holds': QurbaniInventoryHold;
-    'qurbani-orders': QurbaniOrder;
-    'qurbani-shares': QurbaniShare;
-    'qurbani-allocations': QurbaniAllocation;
-    'qurbani-field-packages': QurbaniFieldPackage;
-    'qurbani-field-package-items': QurbaniFieldPackageItem;
-    'qurbani-documents': QurbaniDocument;
-    'qurbani-videos': QurbaniVideo;
-    'qurbani-access-links': QurbaniAccessLink;
-    'qurbani-messages': QurbaniMessage;
-    'qurbani-jobs': QurbaniJob;
-    'donation-intents': DonationIntent;
-    'payment-sessions': PaymentSession;
     'panel-settings': PanelSetting;
+    'donation-intents': DonationIntent;
+    'donation-participants': DonationParticipant;
+    'payment-sessions': PaymentSession;
     'payment-events': PaymentEvent;
     donations: Donation;
+    'operation-groups': OperationGroup;
+    'operation-group-members': OperationGroupMember;
+    'operation-videos': OperationVideo;
+    'delivery-messages': DeliveryMessage;
     'donation-fulfillments': DonationFulfillment;
     'refund-requests': RefundRequest;
-    'field-tasks': FieldTask;
-    'proof-submissions': ProofSubmission;
-    'proof-assets': ProofAsset;
-    'donor-reports': DonorReport;
     'audit-logs': AuditLog;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -118,43 +99,24 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    'contact-messages': ContactMessagesSelect<false> | ContactMessagesSelect<true>;
+    'child-donation-settings': ChildDonationSettingsSelect<false> | ChildDonationSettingsSelect<true>;
     campaigns: CampaignsSelect<false> | CampaignsSelect<true>;
-    'campaign-funding-pools': CampaignFundingPoolsSelect<false> | CampaignFundingPoolsSelect<true>;
     'news-categories': NewsCategoriesSelect<false> | NewsCategoriesSelect<true>;
     news: NewsSelect<false> | NewsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
-    'qurbani-seasons': QurbaniSeasonsSelect<false> | QurbaniSeasonsSelect<true>;
-    'qurbani-countries': QurbaniCountriesSelect<false> | QurbaniCountriesSelect<true>;
-    'qurbani-regions': QurbaniRegionsSelect<false> | QurbaniRegionsSelect<true>;
-    'qurbani-products': QurbaniProductsSelect<false> | QurbaniProductsSelect<true>;
-    'qurbani-stock-batches': QurbaniStockBatchesSelect<false> | QurbaniStockBatchesSelect<true>;
-    'qurbani-stock-batch-lines': QurbaniStockBatchLinesSelect<false> | QurbaniStockBatchLinesSelect<true>;
-    'qurbani-price-revisions': QurbaniPriceRevisionsSelect<false> | QurbaniPriceRevisionsSelect<true>;
-    'qurbani-pools': QurbaniPoolsSelect<false> | QurbaniPoolsSelect<true>;
-    'qurbani-checkouts': QurbaniCheckoutsSelect<false> | QurbaniCheckoutsSelect<true>;
-    'qurbani-checkout-lines': QurbaniCheckoutLinesSelect<false> | QurbaniCheckoutLinesSelect<true>;
-    'qurbani-inventory-holds': QurbaniInventoryHoldsSelect<false> | QurbaniInventoryHoldsSelect<true>;
-    'qurbani-orders': QurbaniOrdersSelect<false> | QurbaniOrdersSelect<true>;
-    'qurbani-shares': QurbaniSharesSelect<false> | QurbaniSharesSelect<true>;
-    'qurbani-allocations': QurbaniAllocationsSelect<false> | QurbaniAllocationsSelect<true>;
-    'qurbani-field-packages': QurbaniFieldPackagesSelect<false> | QurbaniFieldPackagesSelect<true>;
-    'qurbani-field-package-items': QurbaniFieldPackageItemsSelect<false> | QurbaniFieldPackageItemsSelect<true>;
-    'qurbani-documents': QurbaniDocumentsSelect<false> | QurbaniDocumentsSelect<true>;
-    'qurbani-videos': QurbaniVideosSelect<false> | QurbaniVideosSelect<true>;
-    'qurbani-access-links': QurbaniAccessLinksSelect<false> | QurbaniAccessLinksSelect<true>;
-    'qurbani-messages': QurbaniMessagesSelect<false> | QurbaniMessagesSelect<true>;
-    'qurbani-jobs': QurbaniJobsSelect<false> | QurbaniJobsSelect<true>;
-    'donation-intents': DonationIntentsSelect<false> | DonationIntentsSelect<true>;
-    'payment-sessions': PaymentSessionsSelect<false> | PaymentSessionsSelect<true>;
     'panel-settings': PanelSettingsSelect<false> | PanelSettingsSelect<true>;
+    'donation-intents': DonationIntentsSelect<false> | DonationIntentsSelect<true>;
+    'donation-participants': DonationParticipantsSelect<false> | DonationParticipantsSelect<true>;
+    'payment-sessions': PaymentSessionsSelect<false> | PaymentSessionsSelect<true>;
     'payment-events': PaymentEventsSelect<false> | PaymentEventsSelect<true>;
     donations: DonationsSelect<false> | DonationsSelect<true>;
+    'operation-groups': OperationGroupsSelect<false> | OperationGroupsSelect<true>;
+    'operation-group-members': OperationGroupMembersSelect<false> | OperationGroupMembersSelect<true>;
+    'operation-videos': OperationVideosSelect<false> | OperationVideosSelect<true>;
+    'delivery-messages': DeliveryMessagesSelect<false> | DeliveryMessagesSelect<true>;
     'donation-fulfillments': DonationFulfillmentsSelect<false> | DonationFulfillmentsSelect<true>;
     'refund-requests': RefundRequestsSelect<false> | RefundRequestsSelect<true>;
-    'field-tasks': FieldTasksSelect<false> | FieldTasksSelect<true>;
-    'proof-submissions': ProofSubmissionsSelect<false> | ProofSubmissionsSelect<true>;
-    'proof-assets': ProofAssetsSelect<false> | ProofAssetsSelect<true>;
-    'donor-reports': DonorReportsSelect<false> | DonorReportsSelect<true>;
     'audit-logs': AuditLogsSelect<false> | AuditLogsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -202,7 +164,8 @@ export interface UserAuthOperations {
 export interface User {
   id: number;
   name: string;
-  role: 'super_admin' | 'finance' | 'field_operator' | 'approver';
+  phone?: string | null;
+  role: 'admin' | 'field_operator';
   isActive?: boolean | null;
   lastLoginAt?: string | null;
   updatedAt: string;
@@ -277,6 +240,51 @@ export interface Category {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contact-messages".
+ */
+export interface ContactMessage {
+  id: number;
+  type: 'contact' | 'student';
+  name: string;
+  email: string;
+  phone?: string | null;
+  subject?: string | null;
+  program?: string | null;
+  message?: string | null;
+  privacyConsent: boolean;
+  status: 'unread' | 'read' | 'archived';
+  readAt?: string | null;
+  readBy?: (number | null) | User;
+  emailNotificationStatus?: ('sent' | 'failed' | 'skipped') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "child-donation-settings".
+ */
+export interface ChildDonationSetting {
+  id: number;
+  campaign: number | Campaign;
+  usdCampaign: number | Campaign;
+  eurCampaign: number | Campaign;
+  foodPrice: number;
+  stationeryPrice: number;
+  toyPrice: number;
+  clothingPrice: number;
+  foodUsdPrice: number;
+  stationeryUsdPrice: number;
+  toyUsdPrice: number;
+  clothingUsdPrice: number;
+  foodEurPrice: number;
+  stationeryEurPrice: number;
+  toyEurPrice: number;
+  clothingEurPrice: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "campaigns".
  */
 export interface Campaign {
@@ -297,7 +305,39 @@ export interface Campaign {
     };
     [k: string]: unknown;
   } | null;
-  targetAmount: number;
+  targetAmount?: number | null;
+  pricingModel: 'free' | 'fixed';
+  unitPrice?: number | null;
+  unitLabel?: string | null;
+  totalStock?: number | null;
+  reservedUnits: number;
+  confirmedUnits: number;
+  videoDelivery: 'none' | 'video';
+  /**
+   * Videolu kampanyalarda kategori adından türetilmez; açıkça seçilmelidir.
+   */
+  operationType?: ('standard_video' | 'slaughter_video') | null;
+  groupCapacity?: number | null;
+  participantRequired: boolean;
+  publishStartAt?: string | null;
+  publishEndAt?: string | null;
+  messageTemplate?: string | null;
+  /**
+   * Kesim öncesi okunacak metin. Değişiklikler yeni videoları etkiler; eski videolar snapshot taşır.
+   */
+  slaughterScript?: string | null;
+  slaughterScriptVersion?: number | null;
+  /**
+   * Hissedar adı okuma ve üçüncü kişi onay metinleri canlı öncesi hukuk/KVKK kontrolü gerektirir.
+   */
+  consentLegalReviewRequired: boolean;
+  status: 'draft' | 'active' | 'paused' | 'closed' | 'archived';
+  pauseReason?: string | null;
+  pausedAt?: string | null;
+  pausedBy?: (number | null) | User;
+  closeReason?: string | null;
+  closedAt?: string | null;
+  closedBy?: (number | null) | User;
   collectedAmount?: number | null;
   coverImagePath?: string | null;
   coverImageAlt?: string | null;
@@ -317,50 +357,6 @@ export interface Campaign {
      */
     image?: (number | null) | Media;
   };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "campaign-funding-pools".
- */
-export interface CampaignFundingPool {
-  id: number;
-  campaign: number | Campaign;
-  internalLabel: string;
-  currency: 'TRY' | 'USD' | 'EUR' | 'GBP';
-  targetAmount: number;
-  collectedAmount?: number | null;
-  donorCount?: number | null;
-  reportingMode?: ('pool' | 'donation_based') | null;
-  isDonationOpen?: boolean | null;
-  availableLocales:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  title: string;
-  description?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  category?: (number | null) | Category;
-  coverImageAlt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -491,17 +487,11 @@ export interface Page {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-seasons".
+ * via the `definition` "panel-settings".
  */
-export interface QurbaniSeason {
+export interface PanelSetting {
   id: number;
-  year: number;
-  status: 'draft' | 'active' | 'sales_closed' | 'completed' | 'archived';
-  salesStartAt: string;
-  salesEndAt: string;
-  eidAt: string;
-  codeCounter: number;
-  availableLocales:
+  quickLinks:
     | {
         [k: string]: unknown;
       }
@@ -510,244 +500,6 @@ export interface QurbaniSeason {
     | number
     | boolean
     | null;
-  heroTitle: string;
-  heroDescription?: string | null;
-  pageContent?: string | null;
-  processSteps?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  heroImage?: (number | null) | Media;
-  bankName?: string | null;
-  accountHolder?: string | null;
-  iban?: string | null;
-  bankBranch?: string | null;
-  eftDescription?: string | null;
-  proxyTextVersion: string;
-  proxyText: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-countries".
- */
-export interface QurbaniCountry {
-  id: number;
-  isoCode: string;
-  slug: string;
-  name: string;
-  description?: string | null;
-  image?: (number | null) | Media;
-  isActive: boolean;
-  sortOrder: number;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-regions".
- */
-export interface QurbaniRegion {
-  id: number;
-  season: number | QurbaniSeason;
-  country: number | QurbaniCountry;
-  slug: string;
-  name: string;
-  description?: string | null;
-  publicContent?: string | null;
-  image?: (number | null) | Media;
-  salesStartAt: string;
-  salesEndAt: string;
-  fieldPreparationAt?: string | null;
-  countdownAt?: string | null;
-  codeCounter: number;
-  isActive: boolean;
-  sortOrder: number;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-products".
- */
-export interface QurbaniProduct {
-  id: number;
-  season: number | QurbaniSeason;
-  country?: (number | null) | QurbaniCountry;
-  regionRef?: (number | null) | QurbaniRegion;
-  campaign: number | Campaign;
-  fundingPool: number | CampaignFundingPool;
-  title: string;
-  description?: string | null;
-  region: string;
-  image?: (number | null) | Media;
-  kind: 'cattle' | 'small_livestock';
-  price: number;
-  currency: 'TRY' | 'USD' | 'EUR' | 'GBP';
-  capacity: number;
-  salesStartAt?: string | null;
-  salesEndAt?: string | null;
-  sortOrder: number;
-  isActive: boolean;
-  currentPriceRevision?: (number | null) | QurbaniPriceRevision;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-price-revisions".
- */
-export interface QurbaniPriceRevision {
-  id: number;
-  product: number | QurbaniProduct;
-  batchLine?: (number | null) | QurbaniStockBatchLine;
-  revision: number;
-  unitPrice: number;
-  currency: 'TRY' | 'USD' | 'EUR' | 'GBP';
-  status: 'scheduled' | 'active' | 'retired';
-  effectiveFrom: string;
-  effectiveTo?: string | null;
-  createdBy?: (number | null) | User;
-  reason?: string | null;
-  isLegacy: boolean;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-stock-batch-lines".
- */
-export interface QurbaniStockBatchLine {
-  id: number;
-  batch: number | QurbaniStockBatch;
-  product: number | QurbaniProduct;
-  kind: 'cattle' | 'small_livestock';
-  animalCount: number;
-  capacity: number;
-  totalQuantity: number;
-  priceRevision?: (number | null) | QurbaniPriceRevision;
-  status: 'draft' | 'active' | 'depleted' | 'closed' | 'cancelled';
-  salesStartAt?: string | null;
-  salesEndAt?: string | null;
-  sortOrder: number;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-stock-batches".
- */
-export interface QurbaniStockBatch {
-  id: number;
-  season: number | QurbaniSeason;
-  country: number | QurbaniCountry;
-  region?: (number | null) | QurbaniRegion;
-  code: string;
-  name: string;
-  nature: 'planned' | 'secured';
-  status: 'draft' | 'active' | 'paused' | 'preparing' | 'transferred' | 'completed' | 'archived';
-  idempotencyKey: string;
-  animalCount: number;
-  totalCapacity: number;
-  availableCapacity: number;
-  salesStartAt?: string | null;
-  salesEndAt?: string | null;
-  createdBy?: (number | null) | User;
-  notes?: string | null;
-  isLegacy: boolean;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-pools".
- */
-export interface QurbaniPool {
-  id: number;
-  season: number | QurbaniSeason;
-  product: number | QurbaniProduct;
-  country?: (number | null) | QurbaniCountry;
-  stockBatchLine?: (number | null) | QurbaniStockBatchLine;
-  priceRevision?: (number | null) | QurbaniPriceRevision;
-  ordinal?: number | null;
-  code?: string | null;
-  capacity: number;
-  reservedCount: number;
-  confirmedCount: number;
-  status:
-    'open' | 'full' | 'assigned' | 'in_progress' | 'video_processing' | 'ready' | 'notified' | 'closed' | 'withdrawn';
-  fieldTask?: (number | null) | FieldTask;
-  fullAt?: string | null;
-  lockedAt?: string | null;
-  actionRequired: boolean;
-  operationNotes?: string | null;
-  isLegacy: boolean;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "field-tasks".
- */
-export interface FieldTask {
-  id: number;
-  campaign: number | Campaign;
-  /**
-   * Bu görev bir kurban havuzuna bağlıysa seçilir.
-   */
-  qurbaniPool?: (number | null) | QurbaniPool;
-  title: string;
-  location: string;
-  assignedTo: number | User;
-  dueAt?: string | null;
-  status?: ('todo' | 'in_progress' | 'submitted' | 'approved' | 'needs_revision') | null;
-  notes?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-checkouts".
- */
-export interface QurbaniCheckout {
-  id: number;
-  publicId: string;
-  buyerMask?: string | null;
-  buyerHash?: string | null;
-  encryptedPayload?: string | null;
-  encryptionIv?: string | null;
-  encryptionTag?: string | null;
-  encryptionKeyVersion?: string | null;
-  campaign: number | Campaign;
-  fundingPool: number | CampaignFundingPool;
-  totalAmount: number;
-  currency: 'TRY' | 'USD' | 'EUR' | 'GBP';
-  status:
-    | 'created'
-    | 'held'
-    | 'payment_initialized'
-    | 'payment_received_processing'
-    | 'succeeded'
-    | 'failed'
-    | 'expired'
-    | 'cancelled';
-  source: 'website' | 'manual';
-  providerConversationId?: string | null;
-  providerPaymentId?: string | null;
-  donationIntent?: (number | null) | DonationIntent;
-  donation?: (number | null) | Donation;
-  expiresAt: string;
-  finalizedAt?: string | null;
-  ipAddress?: string | null;
-  failureCode?: string | null;
-  piiPurgeAt: string;
-  piiPurgedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -761,13 +513,30 @@ export interface DonationIntent {
   donorName: string;
   email: string;
   phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  countryCode?: string | null;
   campaign: number | Campaign;
-  fundingPool?: (number | null) | CampaignFundingPool;
-  qurbaniOrder?: (number | null) | QurbaniOrder;
-  qurbaniCheckout?: (number | null) | QurbaniCheckout;
+  quantity: number;
+  unitPriceSnapshot?: number | null;
   amount: number;
   currency: 'TRY' | 'USD' | 'EUR' | 'GBP';
-  status?: ('draft' | 'payment_initialized' | 'callback_received' | 'completed' | 'failed') | null;
+  status?:
+    | (
+        | 'draft'
+        | 'reserved'
+        | 'payment_initialized'
+        | 'awaiting_bank_transfer'
+        | 'bank_transfer_submitted'
+        | 'callback_received'
+        | 'completed'
+        | 'failed'
+        | 'expired'
+        | 'cancelled'
+      )
+    | null;
+  paymentMethod: 'card' | 'bank_transfer';
+  reservationExpiresAt?: string | null;
   note?: string | null;
   taxReceiptRequested?: boolean | null;
   kvkkAcceptedAt?: string | null;
@@ -778,99 +547,35 @@ export interface DonationIntent {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-orders".
+ * via the `definition` "donation-participants".
  */
-export interface QurbaniOrder {
+export interface DonationParticipant {
   id: number;
-  orderNumber: string;
-  season: number | QurbaniSeason;
-  product: number | QurbaniProduct;
-  pool?: (number | null) | QurbaniPool;
-  checkout?: (number | null) | QurbaniCheckout;
-  checkoutLine?: (number | null) | QurbaniCheckoutLine;
-  priceRevision?: (number | null) | QurbaniPriceRevision;
-  donationIntent?: (number | null) | DonationIntent;
+  donationIntent: number | DonationIntent;
   donation?: (number | null) | Donation;
-  buyerName: string;
-  buyerEmail: string;
-  buyerPhone: string;
-  countryCode: string;
-  identityType?: ('tc_identity' | 'passport' | 'national_identity') | null;
-  identityNumber?: string | null;
-  addressSnapshot?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  productSnapshot:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  unitPrice: number;
-  shareCount: number;
-  totalAmount: number;
-  currency: 'TRY' | 'USD' | 'EUR' | 'GBP';
-  paymentMethod: 'iyzico' | 'eft';
-  reservationKind: 'iyzico' | 'eft';
-  status:
-    | 'reserved'
-    | 'pending_payment'
-    | 'pending_eft_review'
-    | 'paid'
-    | 'failed'
-    | 'expired'
-    | 'cancelled'
-    | 'action_required'
-    | 'refunded';
-  reservedUntil: string;
-  providerPaymentId?: string | null;
-  providerReference?: string | null;
-  eftProofBucket?: string | null;
-  eftProofPath?: string | null;
-  eftProofMimeType?: string | null;
-  eftReviewedAt?: string | null;
-  eftReviewedBy?: (number | null) | User;
-  proxyTextVersion: string;
-  proxyAcceptedAt: string;
-  proxyAcceptedIp: string;
-  phoneProxyConfirmedAt?: string | null;
-  phoneProxyConfirmedBy?: (number | null) | User;
-  kvkkAcceptedAt: string;
-  termsAcceptedAt: string;
-  thirdPartyContactConsentAt?: string | null;
-  paidAt?: string | null;
-  failureReason?: string | null;
-  isLegacy: boolean;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-checkout-lines".
- */
-export interface QurbaniCheckoutLine {
-  id: number;
-  checkout: number | QurbaniCheckout;
-  product: number | QurbaniProduct;
-  stockBatchLine: number | QurbaniStockBatchLine;
-  priceRevision: number | QurbaniPriceRevision;
-  quantity: number;
-  participantCount: number;
-  encryptedItemIndex: number;
-  unitPrice: number;
-  totalAmount: number;
-  currency: 'TRY' | 'USD' | 'EUR' | 'GBP';
-  status: 'held' | 'finalized' | 'released' | 'expired';
-  order?: (number | null) | QurbaniOrder;
+  orderIndex: number;
+  name: string;
+  phone?: string | null;
+  effectivePhone: string;
+  isPayer: boolean;
+  contactConsent: boolean;
+  proxyConsent: boolean;
+  /**
+   * Hissedar adının aynı gruba gönderilen kesim videosunda duyulmasına ilişkin ayrı açık onay.
+   */
+  nameReadingConsent: boolean;
+  nameReadingConsentTextVersion?: string | null;
+  nameReadingConsentTextSnapshot?: string | null;
+  nameReadingConsentAcceptedAt?: string | null;
+  nameReadingConsentIp?: string | null;
+  /**
+   * Katılımcının üçüncü kişi bilgilerini paylaşmaya yetkili olduğuna ilişkin ayrı onay.
+   */
+  thirdPartyDataAuthorityConsent: boolean;
+  thirdPartyDataAuthorityTextVersion?: string | null;
+  thirdPartyDataAuthorityTextSnapshot?: string | null;
+  thirdPartyDataAuthorityAcceptedAt?: string | null;
+  thirdPartyDataAuthorityIp?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -884,9 +589,9 @@ export interface Donation {
   email: string;
   phone?: string | null;
   campaign: number | Campaign;
-  fundingPool?: (number | null) | CampaignFundingPool;
-  qurbaniOrder?: (number | null) | QurbaniOrder;
-  qurbaniCheckout?: (number | null) | QurbaniCheckout;
+  donationIntent: number | DonationIntent;
+  quantity: number;
+  unitPriceSnapshot?: number | null;
   grossAmount: number;
   netConfirmedAmount: number;
   currency: 'TRY' | 'USD' | 'EUR' | 'GBP';
@@ -894,6 +599,8 @@ export interface Donation {
   paymentId: string;
   receiptNumber: string;
   paymentSession: number | PaymentSession;
+  paymentMethod: 'card' | 'bank_transfer';
+  confirmedAt?: string | null;
   taxReceiptRequested?: boolean | null;
   donationNote?: string | null;
   receiptPath?: string | null;
@@ -908,6 +615,8 @@ export interface PaymentSession {
   id: number;
   donationIntent: number | DonationIntent;
   conversationId: string;
+  paymentMethod: 'card' | 'bank_transfer';
+  reservationExpiresAt?: string | null;
   checkoutToken?: string | null;
   checkoutFormContent?: string | null;
   paymentPageUrl?: string | null;
@@ -916,271 +625,12 @@ export interface PaymentSession {
   paymentId?: string | null;
   lastFourDigits?: string | null;
   cardAssociation?: string | null;
+  eftProofBucket?: string | null;
+  eftProofPath?: string | null;
+  eftReviewStatus?: ('pending' | 'approved' | 'rejected') | null;
+  eftReviewedAt?: string | null;
+  eftReviewedBy?: (number | null) | User;
   rawResponse?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-inventory-holds".
- */
-export interface QurbaniInventoryHold {
-  id: number;
-  checkout: number | QurbaniCheckout;
-  checkoutLine: number | QurbaniCheckoutLine;
-  pool: number | QurbaniPool;
-  priceRevision: number | QurbaniPriceRevision;
-  quantity: number;
-  status: 'active' | 'consumed' | 'released' | 'expired';
-  expiresAt: string;
-  consumedAt?: string | null;
-  releasedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-shares".
- */
-export interface QurbaniShare {
-  id: number;
-  order: number | QurbaniOrder;
-  pool: number | QurbaniPool;
-  ownerName: string;
-  ownerPhone?: string | null;
-  effectivePhone: string;
-  sequence: number;
-  status: 'reserved' | 'confirmed' | 'cancelled' | 'action_required';
-  confirmedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-allocations".
- */
-export interface QurbaniAllocation {
-  id: number;
-  checkout: number | QurbaniCheckout;
-  checkoutLine: number | QurbaniCheckoutLine;
-  order: number | QurbaniOrder;
-  pool: number | QurbaniPool;
-  hold: number | QurbaniInventoryHold;
-  priceRevision: number | QurbaniPriceRevision;
-  quantity: number;
-  status: 'confirmed' | 'released' | 'action_required';
-  providerPaymentId: string;
-  idempotencyKey: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-field-packages".
- */
-export interface QurbaniFieldPackage {
-  id: number;
-  season: number | QurbaniSeason;
-  country: number | QurbaniCountry;
-  region?: (number | null) | QurbaniRegion;
-  code: string;
-  name: string;
-  idempotencyKey: string;
-  status: 'draft' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
-  assignedTo?: (number | null) | User;
-  dueAt?: string | null;
-  startedAt?: string | null;
-  completedAt?: string | null;
-  notes?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-field-package-items".
- */
-export interface QurbaniFieldPackageItem {
-  id: number;
-  fieldPackage: number | QurbaniFieldPackage;
-  pool: number | QurbaniPool;
-  ordinal: number;
-  status: 'planned' | 'in_progress' | 'completed' | 'failed';
-  fieldTask?: (number | null) | FieldTask;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-documents".
- */
-export interface QurbaniDocument {
-  id: number;
-  stockBatch: number | QurbaniStockBatch;
-  kind: 'invoice' | 'veterinary' | 'contract' | 'slaughterhouse' | 'ear_tag_list' | 'transport' | 'other';
-  title: string;
-  storageKey: string;
-  fileName: string;
-  mimeType: 'application/pdf' | 'image/jpeg' | 'image/png';
-  sizeBytes: number;
-  isPublic: boolean;
-  status: 'active' | 'archived';
-  archivedBy?: (number | null) | User;
-  archivedAt?: string | null;
-  archiveReason?: string | null;
-  notes?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-videos".
- */
-export interface QurbaniVideo {
-  id: number;
-  pool: number | QurbaniPool;
-  fieldTask: number | FieldTask;
-  uploadedBy: number | User;
-  uploadId: string;
-  rawStorageKey: string;
-  processedStorageKey?: string | null;
-  thumbnailStorageKey?: string | null;
-  originalFilename: string;
-  mimeType: string;
-  sizeBytes: number;
-  durationSeconds?: number | null;
-  status:
-    | 'uploading'
-    | 'uploaded'
-    | 'processing'
-    | 'ready_to_send'
-    | 'ready_for_review'
-    | 'approved'
-    | 'superseded'
-    | 'rejected'
-    | 'failed';
-  version: number;
-  replacesVideo?: (number | null) | QurbaniVideo;
-  readyAt?: string | null;
-  correctionRequired: boolean;
-  attemptCount: number;
-  lastError?: string | null;
-  approvedAt?: string | null;
-  approvedBy?: (number | null) | User;
-  rawDeleteAfter?: string | null;
-  processedDeleteAfter?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-access-links".
- */
-export interface QurbaniAccessLink {
-  id: number;
-  pool: number | QurbaniPool;
-  order: number | QurbaniOrder;
-  video: number | QurbaniVideo;
-  tokenDigest: string;
-  recipientPhone: string;
-  recipientPhoneHash: string;
-  shareIds:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  shares: (number | QurbaniShare)[];
-  expiresAt: string;
-  revokedAt?: string | null;
-  lastAccessedAt?: string | null;
-  accessCount: number;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-messages".
- */
-export interface QurbaniMessage {
-  id: number;
-  pool: number | QurbaniPool;
-  accessLink: number | QurbaniAccessLink;
-  channel: 'whatsapp' | 'sms';
-  recipientPhone: string;
-  recipientPhoneHash: string;
-  shareSummary:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  body: string;
-  idempotencyKey: string;
-  status: 'queued' | 'paused' | 'sending' | 'sent' | 'delivered' | 'read' | 'failed' | 'cancelled';
-  dispatchBatchId?: string | null;
-  scheduledAt?: string | null;
-  providerMessageId?: string | null;
-  attemptCount: number;
-  lastError?: string | null;
-  sentAt?: string | null;
-  deliveredAt?: string | null;
-  readAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-jobs".
- */
-export interface QurbaniJob {
-  id: number;
-  type: 'expire_reservations' | 'process_video' | 'purge_storage' | 'send_whatsapp';
-  status: 'queued' | 'paused' | 'processing' | 'completed' | 'failed' | 'dead' | 'cancelled';
-  order?: (number | null) | QurbaniOrder;
-  pool?: (number | null) | QurbaniPool;
-  video?: (number | null) | QurbaniVideo;
-  message?: (number | null) | QurbaniMessage;
-  payload?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  idempotencyKey?: string | null;
-  runAt: string;
-  lockedAt?: string | null;
-  lockedBy?: string | null;
-  attemptCount: number;
-  maxAttempts: number;
-  lastError?: string | null;
-  completedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "panel-settings".
- */
-export interface PanelSetting {
-  id: number;
-  quickLinks:
     | {
         [k: string]: unknown;
       }
@@ -1226,6 +676,316 @@ export interface PaymentEvent {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "operation-groups".
+ */
+export interface OperationGroup {
+  id: number;
+  campaign: number | Campaign;
+  code: string;
+  operationType?: ('standard_video' | 'slaughter_video') | null;
+  year: number;
+  ordinal: number;
+  capacity?: number | null;
+  reservedCount: number;
+  confirmedCount: number;
+  status:
+    | 'collecting'
+    | 'full'
+    | 'ready_for_slaughter'
+    | 'scheduled'
+    | 'slaughtered'
+    | 'video_pending'
+    | 'video_ready'
+    | 'delivery_started'
+    | 'completed'
+    | 'open'
+    | 'notified'
+    | 'closed'
+    | 'action_required';
+  capacityOverrideOriginal?: number | null;
+  capacityOverrideReason?: string | null;
+  capacityOverrideCoveredByAssociation?: boolean | null;
+  capacityOverriddenAt?: string | null;
+  capacityOverriddenBy?: (number | null) | User;
+  slaughterScheduledAt?: string | null;
+  slaughterOrder?: number | null;
+  slaughterPlace?: string | null;
+  assignedOperator?: (number | null) | User;
+  fieldNotes?: string | null;
+  slaughteredAt?: string | null;
+  slaughteredBy?: (number | null) | User;
+  slaughterRevertedAt?: string | null;
+  slaughterRevertedBy?: (number | null) | User;
+  slaughterRevertReason?: string | null;
+  slaughterScriptSnapshot?: string | null;
+  groupCodeConfirmationFailures: number;
+  groupCodeLockedUntil?: string | null;
+  activeVideo?: (number | null) | OperationVideo;
+  publicLinkTokenHash?: string | null;
+  accessCodeHash?: string | null;
+  accessCodeCiphertext?: string | null;
+  accessCodeRotatedAt?: string | null;
+  accessCodeRotatedBy?: (number | null) | User;
+  accessCodeRotationCount: number;
+  expiresAt?: string | null;
+  extensionUsed: boolean;
+  extendedAt?: string | null;
+  extendedBy?: (number | null) | User;
+  testMessageVideo?: (number | null) | OperationVideo;
+  testMessageFingerprint?: string | null;
+  testMessagePassedAt?: string | null;
+  testMessagePassedBy?: (number | null) | User;
+  testMessageInvalidatedAt?: string | null;
+  messageTemplate: string;
+  dispatchState: 'idle' | 'countdown' | 'queued' | 'sending' | 'paused' | 'completed' | 'cancelled' | 'failed';
+  dispatchLockedAt?: string | null;
+  dispatchLockedBy?: string | null;
+  dispatchPauseReason?: string | null;
+  providerHealthySince?: string | null;
+  providerHealthCheckCount: number;
+  consecutiveSystemFailures: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "operation-videos".
+ */
+export interface OperationVideo {
+  id: number;
+  group: number | OperationGroup;
+  uploadedBy: number | User;
+  uploadId: string;
+  rawStorageKey: string;
+  processedStorageKey?: string | null;
+  thumbnailStorageKey?: string | null;
+  originalFilename: string;
+  mimeType: string;
+  sizeBytes: number;
+  durationSeconds?: number | null;
+  status:
+    | 'uploading'
+    | 'uploaded'
+    | 'processing'
+    | 'review_pending'
+    | 'ready'
+    | 'superseded'
+    | 'rejected'
+    | 'failed'
+    | 'processing_failed'
+    | 'quarantined'
+    | 'expired'
+    | 'deleted';
+  version: number;
+  replacesVideo?: (number | null) | OperationVideo;
+  versionKind: 'initial' | 'replacement' | 'correction';
+  isActive: boolean;
+  uploadTokenJti?: string | null;
+  uploadNonceHash?: string | null;
+  uploadTokenExpiresAt?: string | null;
+  uploadTokenConsumedAt?: string | null;
+  uploadMaxBytes: number;
+  detectedMimeType?: string | null;
+  containerFormat?: string | null;
+  videoCodec?: string | null;
+  audioCodec?: string | null;
+  width?: number | null;
+  height?: number | null;
+  rawSha256?: string | null;
+  processedSha256?: string | null;
+  technicalMetadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  processingSettingsSnapshot?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  watermarkSnapshot?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  closingCardSnapshot?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  slaughterScriptSnapshot?: string | null;
+  /**
+   * Saha görevlisinin içerik kontrol beyanlarıdır; otomatik içerik doğrulaması değildir.
+   */
+  fieldChecklist:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  fieldCheckedAt?: string | null;
+  fieldCheckedBy?: (number | null) | User;
+  /**
+   * İşlenmiş video için insan tarafından tamamlanan son kontrol listesi.
+   */
+  reviewChecklist:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  reviewedAt?: string | null;
+  reviewedBy?: (number | null) | User;
+  contentReviewStatus: 'pending' | 'approved' | 'rejected';
+  readyAt?: string | null;
+  attemptCount: number;
+  lastError?: string | null;
+  lastErrorCode?: string | null;
+  ffmpegLog?: string | null;
+  processingStartedAt?: string | null;
+  processingFailedAt?: string | null;
+  retryAfter?: string | null;
+  quarantineUntil?: string | null;
+  rawDeleteAfter: string;
+  processedDeleteAfter: string;
+  expiresAt?: string | null;
+  expiredAt?: string | null;
+  physicalDeletedAt?: string | null;
+  extensionUsed: boolean;
+  extendedAt?: string | null;
+  extendedBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "operation-group-members".
+ */
+export interface OperationGroupMember {
+  id: number;
+  group: number | OperationGroup;
+  donationIntent: number | DonationIntent;
+  donation?: (number | null) | Donation;
+  participant?: (number | null) | DonationParticipant;
+  memberKey: string;
+  unitIndex: number;
+  status: 'reserved' | 'confirmed' | 'released' | 'refunded' | 'action_required';
+  reservationExpiresAt: string;
+  confirmedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "delivery-messages".
+ */
+export interface DeliveryMessage {
+  id: number;
+  group: number | OperationGroup;
+  video: number | OperationVideo;
+  donation?: (number | null) | Donation;
+  participant?: (number | null) | DonationParticipant;
+  member?: (number | null) | OperationGroupMember;
+  messageType: 'normal' | 'correction' | 'code_renewal' | 'test';
+  recipientRole?: ('payer' | 'participant' | 'test') | null;
+  recipientPhone?: string | null;
+  normalizedPhone?: string | null;
+  recipientPhoneHash: string;
+  body?: string | null;
+  bodySnapshot?: string | null;
+  messageSnapshot?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  systemPayloadSnapshot?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  idempotencyKey: string;
+  status:
+    | 'draft'
+    | 'countdown'
+    | 'queued'
+    | 'paused'
+    | 'sending'
+    | 'sent'
+    | 'delivered'
+    | 'read'
+    | 'failed'
+    | 'cancelled'
+    | 'manual_sent';
+  dispatchBatchId?: string | null;
+  scheduledAt?: string | null;
+  lockedAt?: string | null;
+  lockedBy?: string | null;
+  providerMessageId?: string | null;
+  providerStatus?: string | null;
+  providerPayload?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  attemptCount: number;
+  lastError?: string | null;
+  lastErrorCode?: string | null;
+  retryClass: 'none' | 'transient' | 'permanent' | 'ambiguous';
+  nextRetryAt?: string | null;
+  lastAttemptAt?: string | null;
+  providerLookupAt?: string | null;
+  accessTokenDigest: string;
+  expiresAt: string;
+  sentAt?: string | null;
+  deliveredAt?: string | null;
+  readAt?: string | null;
+  failedAt?: string | null;
+  manualSentAt?: string | null;
+  manualSentBy?: (number | null) | User;
+  manualSentReason?: string | null;
+  isTest: boolean;
+  testNumberKey?: string | null;
+  testFingerprint?: string | null;
+  redactedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "donation-fulfillments".
  */
 export interface DonationFulfillment {
@@ -1250,8 +1010,12 @@ export interface RefundRequest {
   id: number;
   donation: number | Donation;
   type: 'cancel' | 'refund_full' | 'refund_partial';
-  reason: string;
-  description?: string | null;
+  reason: 'technical_error' | 'wrong_transaction' | 'legal_obligation';
+  description: string;
+  evidenceBucket: string;
+  evidencePath: string;
+  evidenceMimeType: string;
+  manualReviewRequired?: boolean | null;
   amount?: number | null;
   providerReference?: string | null;
   providerResponse?:
@@ -1265,59 +1029,6 @@ export interface RefundRequest {
     | null;
   status?: ('pending' | 'completed' | 'failed') | null;
   requestedBy: number | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "proof-submissions".
- */
-export interface ProofSubmission {
-  id: number;
-  title: string;
-  fieldTask: number | FieldTask;
-  donation?: (number | null) | Donation;
-  campaign?: (number | null) | Campaign;
-  summary?: string | null;
-  externalApprovalCode?: string | null;
-  externalReferenceId?: string | null;
-  reviewNotes?: string | null;
-  status?: ('draft' | 'submitted' | 'external_pending' | 'review_pending' | 'approved' | 'rejected') | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "proof-assets".
- */
-export interface ProofAsset {
-  id: number;
-  submission: number | ProofSubmission;
-  kind: 'document' | 'photo' | 'video';
-  storagePath: string;
-  fileName: string;
-  mimeType: string;
-  size?: number | null;
-  caption?: string | null;
-  isDonorVisible?: boolean | null;
-  uploadedBy?: (number | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "donor-reports".
- */
-export interface DonorReport {
-  id: number;
-  title: string;
-  donation: number | Donation;
-  proofSubmissions?: (number | ProofSubmission)[] | null;
-  summaryForDonor?: string | null;
-  status?: ('draft' | 'approved' | 'sent' | 'stopped') | null;
-  approvedBy?: (number | null) | User;
-  sentAt?: string | null;
-  sentEmailTo?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1381,12 +1092,16 @@ export interface PayloadLockedDocument {
         value: number | Category;
       } | null)
     | ({
-        relationTo: 'campaigns';
-        value: number | Campaign;
+        relationTo: 'contact-messages';
+        value: number | ContactMessage;
       } | null)
     | ({
-        relationTo: 'campaign-funding-pools';
-        value: number | CampaignFundingPool;
+        relationTo: 'child-donation-settings';
+        value: number | ChildDonationSetting;
+      } | null)
+    | ({
+        relationTo: 'campaigns';
+        value: number | Campaign;
       } | null)
     | ({
         relationTo: 'news-categories';
@@ -1401,100 +1116,20 @@ export interface PayloadLockedDocument {
         value: number | Page;
       } | null)
     | ({
-        relationTo: 'qurbani-seasons';
-        value: number | QurbaniSeason;
-      } | null)
-    | ({
-        relationTo: 'qurbani-countries';
-        value: number | QurbaniCountry;
-      } | null)
-    | ({
-        relationTo: 'qurbani-regions';
-        value: number | QurbaniRegion;
-      } | null)
-    | ({
-        relationTo: 'qurbani-products';
-        value: number | QurbaniProduct;
-      } | null)
-    | ({
-        relationTo: 'qurbani-stock-batches';
-        value: number | QurbaniStockBatch;
-      } | null)
-    | ({
-        relationTo: 'qurbani-stock-batch-lines';
-        value: number | QurbaniStockBatchLine;
-      } | null)
-    | ({
-        relationTo: 'qurbani-price-revisions';
-        value: number | QurbaniPriceRevision;
-      } | null)
-    | ({
-        relationTo: 'qurbani-pools';
-        value: number | QurbaniPool;
-      } | null)
-    | ({
-        relationTo: 'qurbani-checkouts';
-        value: number | QurbaniCheckout;
-      } | null)
-    | ({
-        relationTo: 'qurbani-checkout-lines';
-        value: number | QurbaniCheckoutLine;
-      } | null)
-    | ({
-        relationTo: 'qurbani-inventory-holds';
-        value: number | QurbaniInventoryHold;
-      } | null)
-    | ({
-        relationTo: 'qurbani-orders';
-        value: number | QurbaniOrder;
-      } | null)
-    | ({
-        relationTo: 'qurbani-shares';
-        value: number | QurbaniShare;
-      } | null)
-    | ({
-        relationTo: 'qurbani-allocations';
-        value: number | QurbaniAllocation;
-      } | null)
-    | ({
-        relationTo: 'qurbani-field-packages';
-        value: number | QurbaniFieldPackage;
-      } | null)
-    | ({
-        relationTo: 'qurbani-field-package-items';
-        value: number | QurbaniFieldPackageItem;
-      } | null)
-    | ({
-        relationTo: 'qurbani-documents';
-        value: number | QurbaniDocument;
-      } | null)
-    | ({
-        relationTo: 'qurbani-videos';
-        value: number | QurbaniVideo;
-      } | null)
-    | ({
-        relationTo: 'qurbani-access-links';
-        value: number | QurbaniAccessLink;
-      } | null)
-    | ({
-        relationTo: 'qurbani-messages';
-        value: number | QurbaniMessage;
-      } | null)
-    | ({
-        relationTo: 'qurbani-jobs';
-        value: number | QurbaniJob;
+        relationTo: 'panel-settings';
+        value: number | PanelSetting;
       } | null)
     | ({
         relationTo: 'donation-intents';
         value: number | DonationIntent;
       } | null)
     | ({
-        relationTo: 'payment-sessions';
-        value: number | PaymentSession;
+        relationTo: 'donation-participants';
+        value: number | DonationParticipant;
       } | null)
     | ({
-        relationTo: 'panel-settings';
-        value: number | PanelSetting;
+        relationTo: 'payment-sessions';
+        value: number | PaymentSession;
       } | null)
     | ({
         relationTo: 'payment-events';
@@ -1505,28 +1140,28 @@ export interface PayloadLockedDocument {
         value: number | Donation;
       } | null)
     | ({
+        relationTo: 'operation-groups';
+        value: number | OperationGroup;
+      } | null)
+    | ({
+        relationTo: 'operation-group-members';
+        value: number | OperationGroupMember;
+      } | null)
+    | ({
+        relationTo: 'operation-videos';
+        value: number | OperationVideo;
+      } | null)
+    | ({
+        relationTo: 'delivery-messages';
+        value: number | DeliveryMessage;
+      } | null)
+    | ({
         relationTo: 'donation-fulfillments';
         value: number | DonationFulfillment;
       } | null)
     | ({
         relationTo: 'refund-requests';
         value: number | RefundRequest;
-      } | null)
-    | ({
-        relationTo: 'field-tasks';
-        value: number | FieldTask;
-      } | null)
-    | ({
-        relationTo: 'proof-submissions';
-        value: number | ProofSubmission;
-      } | null)
-    | ({
-        relationTo: 'proof-assets';
-        value: number | ProofAsset;
-      } | null)
-    | ({
-        relationTo: 'donor-reports';
-        value: number | DonorReport;
       } | null)
     | ({
         relationTo: 'audit-logs';
@@ -1580,6 +1215,7 @@ export interface PayloadMigration {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  phone?: T;
   role?: T;
   isActive?: T;
   lastLoginAt?: T;
@@ -1649,12 +1285,78 @@ export interface CategoriesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contact-messages_select".
+ */
+export interface ContactMessagesSelect<T extends boolean = true> {
+  type?: T;
+  name?: T;
+  email?: T;
+  phone?: T;
+  subject?: T;
+  program?: T;
+  message?: T;
+  privacyConsent?: T;
+  status?: T;
+  readAt?: T;
+  readBy?: T;
+  emailNotificationStatus?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "child-donation-settings_select".
+ */
+export interface ChildDonationSettingsSelect<T extends boolean = true> {
+  campaign?: T;
+  usdCampaign?: T;
+  eurCampaign?: T;
+  foodPrice?: T;
+  stationeryPrice?: T;
+  toyPrice?: T;
+  clothingPrice?: T;
+  foodUsdPrice?: T;
+  stationeryUsdPrice?: T;
+  toyUsdPrice?: T;
+  clothingUsdPrice?: T;
+  foodEurPrice?: T;
+  stationeryEurPrice?: T;
+  toyEurPrice?: T;
+  clothingEurPrice?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "campaigns_select".
  */
 export interface CampaignsSelect<T extends boolean = true> {
   title?: T;
   description?: T;
   targetAmount?: T;
+  pricingModel?: T;
+  unitPrice?: T;
+  unitLabel?: T;
+  totalStock?: T;
+  reservedUnits?: T;
+  confirmedUnits?: T;
+  videoDelivery?: T;
+  operationType?: T;
+  groupCapacity?: T;
+  participantRequired?: T;
+  publishStartAt?: T;
+  publishEndAt?: T;
+  messageTemplate?: T;
+  slaughterScript?: T;
+  slaughterScriptVersion?: T;
+  consentLegalReviewRequired?: T;
+  status?: T;
+  pauseReason?: T;
+  pausedAt?: T;
+  pausedBy?: T;
+  closeReason?: T;
+  closedAt?: T;
+  closedBy?: T;
   collectedAmount?: T;
   coverImagePath?: T;
   coverImageAlt?: T;
@@ -1673,27 +1375,6 @@ export interface CampaignsSelect<T extends boolean = true> {
         description?: T;
         image?: T;
       };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "campaign-funding-pools_select".
- */
-export interface CampaignFundingPoolsSelect<T extends boolean = true> {
-  campaign?: T;
-  internalLabel?: T;
-  currency?: T;
-  targetAmount?: T;
-  collectedAmount?: T;
-  donorCount?: T;
-  reportingMode?: T;
-  isDonationOpen?: T;
-  availableLocales?: T;
-  title?: T;
-  description?: T;
-  category?: T;
-  coverImageAlt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1767,483 +1448,10 @@ export interface PagesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-seasons_select".
+ * via the `definition` "panel-settings_select".
  */
-export interface QurbaniSeasonsSelect<T extends boolean = true> {
-  year?: T;
-  status?: T;
-  salesStartAt?: T;
-  salesEndAt?: T;
-  eidAt?: T;
-  codeCounter?: T;
-  availableLocales?: T;
-  heroTitle?: T;
-  heroDescription?: T;
-  pageContent?: T;
-  processSteps?: T;
-  heroImage?: T;
-  bankName?: T;
-  accountHolder?: T;
-  iban?: T;
-  bankBranch?: T;
-  eftDescription?: T;
-  proxyTextVersion?: T;
-  proxyText?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-countries_select".
- */
-export interface QurbaniCountriesSelect<T extends boolean = true> {
-  isoCode?: T;
-  slug?: T;
-  name?: T;
-  description?: T;
-  image?: T;
-  isActive?: T;
-  sortOrder?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-regions_select".
- */
-export interface QurbaniRegionsSelect<T extends boolean = true> {
-  season?: T;
-  country?: T;
-  slug?: T;
-  name?: T;
-  description?: T;
-  publicContent?: T;
-  image?: T;
-  salesStartAt?: T;
-  salesEndAt?: T;
-  fieldPreparationAt?: T;
-  countdownAt?: T;
-  codeCounter?: T;
-  isActive?: T;
-  sortOrder?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-products_select".
- */
-export interface QurbaniProductsSelect<T extends boolean = true> {
-  season?: T;
-  country?: T;
-  regionRef?: T;
-  campaign?: T;
-  fundingPool?: T;
-  title?: T;
-  description?: T;
-  region?: T;
-  image?: T;
-  kind?: T;
-  price?: T;
-  currency?: T;
-  capacity?: T;
-  salesStartAt?: T;
-  salesEndAt?: T;
-  sortOrder?: T;
-  isActive?: T;
-  currentPriceRevision?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-stock-batches_select".
- */
-export interface QurbaniStockBatchesSelect<T extends boolean = true> {
-  season?: T;
-  country?: T;
-  region?: T;
-  code?: T;
-  name?: T;
-  nature?: T;
-  status?: T;
-  idempotencyKey?: T;
-  animalCount?: T;
-  totalCapacity?: T;
-  availableCapacity?: T;
-  salesStartAt?: T;
-  salesEndAt?: T;
-  createdBy?: T;
-  notes?: T;
-  isLegacy?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-stock-batch-lines_select".
- */
-export interface QurbaniStockBatchLinesSelect<T extends boolean = true> {
-  batch?: T;
-  product?: T;
-  kind?: T;
-  animalCount?: T;
-  capacity?: T;
-  totalQuantity?: T;
-  priceRevision?: T;
-  status?: T;
-  salesStartAt?: T;
-  salesEndAt?: T;
-  sortOrder?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-price-revisions_select".
- */
-export interface QurbaniPriceRevisionsSelect<T extends boolean = true> {
-  product?: T;
-  batchLine?: T;
-  revision?: T;
-  unitPrice?: T;
-  currency?: T;
-  status?: T;
-  effectiveFrom?: T;
-  effectiveTo?: T;
-  createdBy?: T;
-  reason?: T;
-  isLegacy?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-pools_select".
- */
-export interface QurbaniPoolsSelect<T extends boolean = true> {
-  season?: T;
-  product?: T;
-  country?: T;
-  stockBatchLine?: T;
-  priceRevision?: T;
-  ordinal?: T;
-  code?: T;
-  capacity?: T;
-  reservedCount?: T;
-  confirmedCount?: T;
-  status?: T;
-  fieldTask?: T;
-  fullAt?: T;
-  lockedAt?: T;
-  actionRequired?: T;
-  operationNotes?: T;
-  isLegacy?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-checkouts_select".
- */
-export interface QurbaniCheckoutsSelect<T extends boolean = true> {
-  publicId?: T;
-  buyerMask?: T;
-  buyerHash?: T;
-  encryptedPayload?: T;
-  encryptionIv?: T;
-  encryptionTag?: T;
-  encryptionKeyVersion?: T;
-  campaign?: T;
-  fundingPool?: T;
-  totalAmount?: T;
-  currency?: T;
-  status?: T;
-  source?: T;
-  providerConversationId?: T;
-  providerPaymentId?: T;
-  donationIntent?: T;
-  donation?: T;
-  expiresAt?: T;
-  finalizedAt?: T;
-  ipAddress?: T;
-  failureCode?: T;
-  piiPurgeAt?: T;
-  piiPurgedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-checkout-lines_select".
- */
-export interface QurbaniCheckoutLinesSelect<T extends boolean = true> {
-  checkout?: T;
-  product?: T;
-  stockBatchLine?: T;
-  priceRevision?: T;
-  quantity?: T;
-  participantCount?: T;
-  encryptedItemIndex?: T;
-  unitPrice?: T;
-  totalAmount?: T;
-  currency?: T;
-  status?: T;
-  order?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-inventory-holds_select".
- */
-export interface QurbaniInventoryHoldsSelect<T extends boolean = true> {
-  checkout?: T;
-  checkoutLine?: T;
-  pool?: T;
-  priceRevision?: T;
-  quantity?: T;
-  status?: T;
-  expiresAt?: T;
-  consumedAt?: T;
-  releasedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-orders_select".
- */
-export interface QurbaniOrdersSelect<T extends boolean = true> {
-  orderNumber?: T;
-  season?: T;
-  product?: T;
-  pool?: T;
-  checkout?: T;
-  checkoutLine?: T;
-  priceRevision?: T;
-  donationIntent?: T;
-  donation?: T;
-  buyerName?: T;
-  buyerEmail?: T;
-  buyerPhone?: T;
-  countryCode?: T;
-  identityType?: T;
-  identityNumber?: T;
-  addressSnapshot?: T;
-  productSnapshot?: T;
-  unitPrice?: T;
-  shareCount?: T;
-  totalAmount?: T;
-  currency?: T;
-  paymentMethod?: T;
-  reservationKind?: T;
-  status?: T;
-  reservedUntil?: T;
-  providerPaymentId?: T;
-  providerReference?: T;
-  eftProofBucket?: T;
-  eftProofPath?: T;
-  eftProofMimeType?: T;
-  eftReviewedAt?: T;
-  eftReviewedBy?: T;
-  proxyTextVersion?: T;
-  proxyAcceptedAt?: T;
-  proxyAcceptedIp?: T;
-  phoneProxyConfirmedAt?: T;
-  phoneProxyConfirmedBy?: T;
-  kvkkAcceptedAt?: T;
-  termsAcceptedAt?: T;
-  thirdPartyContactConsentAt?: T;
-  paidAt?: T;
-  failureReason?: T;
-  isLegacy?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-shares_select".
- */
-export interface QurbaniSharesSelect<T extends boolean = true> {
-  order?: T;
-  pool?: T;
-  ownerName?: T;
-  ownerPhone?: T;
-  effectivePhone?: T;
-  sequence?: T;
-  status?: T;
-  confirmedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-allocations_select".
- */
-export interface QurbaniAllocationsSelect<T extends boolean = true> {
-  checkout?: T;
-  checkoutLine?: T;
-  order?: T;
-  pool?: T;
-  hold?: T;
-  priceRevision?: T;
-  quantity?: T;
-  status?: T;
-  providerPaymentId?: T;
-  idempotencyKey?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-field-packages_select".
- */
-export interface QurbaniFieldPackagesSelect<T extends boolean = true> {
-  season?: T;
-  country?: T;
-  region?: T;
-  code?: T;
-  name?: T;
-  idempotencyKey?: T;
-  status?: T;
-  assignedTo?: T;
-  dueAt?: T;
-  startedAt?: T;
-  completedAt?: T;
-  notes?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-field-package-items_select".
- */
-export interface QurbaniFieldPackageItemsSelect<T extends boolean = true> {
-  fieldPackage?: T;
-  pool?: T;
-  ordinal?: T;
-  status?: T;
-  fieldTask?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-documents_select".
- */
-export interface QurbaniDocumentsSelect<T extends boolean = true> {
-  stockBatch?: T;
-  kind?: T;
-  title?: T;
-  storageKey?: T;
-  fileName?: T;
-  mimeType?: T;
-  sizeBytes?: T;
-  isPublic?: T;
-  status?: T;
-  archivedBy?: T;
-  archivedAt?: T;
-  archiveReason?: T;
-  notes?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-videos_select".
- */
-export interface QurbaniVideosSelect<T extends boolean = true> {
-  pool?: T;
-  fieldTask?: T;
-  uploadedBy?: T;
-  uploadId?: T;
-  rawStorageKey?: T;
-  processedStorageKey?: T;
-  thumbnailStorageKey?: T;
-  originalFilename?: T;
-  mimeType?: T;
-  sizeBytes?: T;
-  durationSeconds?: T;
-  status?: T;
-  version?: T;
-  replacesVideo?: T;
-  readyAt?: T;
-  correctionRequired?: T;
-  attemptCount?: T;
-  lastError?: T;
-  approvedAt?: T;
-  approvedBy?: T;
-  rawDeleteAfter?: T;
-  processedDeleteAfter?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-access-links_select".
- */
-export interface QurbaniAccessLinksSelect<T extends boolean = true> {
-  pool?: T;
-  order?: T;
-  video?: T;
-  tokenDigest?: T;
-  recipientPhone?: T;
-  recipientPhoneHash?: T;
-  shareIds?: T;
-  shares?: T;
-  expiresAt?: T;
-  revokedAt?: T;
-  lastAccessedAt?: T;
-  accessCount?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-messages_select".
- */
-export interface QurbaniMessagesSelect<T extends boolean = true> {
-  pool?: T;
-  accessLink?: T;
-  channel?: T;
-  recipientPhone?: T;
-  recipientPhoneHash?: T;
-  shareSummary?: T;
-  body?: T;
-  idempotencyKey?: T;
-  status?: T;
-  dispatchBatchId?: T;
-  scheduledAt?: T;
-  providerMessageId?: T;
-  attemptCount?: T;
-  lastError?: T;
-  sentAt?: T;
-  deliveredAt?: T;
-  readAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "qurbani-jobs_select".
- */
-export interface QurbaniJobsSelect<T extends boolean = true> {
-  type?: T;
-  status?: T;
-  order?: T;
-  pool?: T;
-  video?: T;
-  message?: T;
-  payload?: T;
-  idempotencyKey?: T;
-  runAt?: T;
-  lockedAt?: T;
-  lockedBy?: T;
-  attemptCount?: T;
-  maxAttempts?: T;
-  lastError?: T;
-  completedAt?: T;
+export interface PanelSettingsSelect<T extends boolean = true> {
+  quickLinks?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2256,13 +1464,17 @@ export interface DonationIntentsSelect<T extends boolean = true> {
   donorName?: T;
   email?: T;
   phone?: T;
+  address?: T;
+  city?: T;
+  countryCode?: T;
   campaign?: T;
-  fundingPool?: T;
-  qurbaniOrder?: T;
-  qurbaniCheckout?: T;
+  quantity?: T;
+  unitPriceSnapshot?: T;
   amount?: T;
   currency?: T;
   status?: T;
+  paymentMethod?: T;
+  reservationExpiresAt?: T;
   note?: T;
   taxReceiptRequested?: T;
   kvkkAcceptedAt?: T;
@@ -2273,11 +1485,40 @@ export interface DonationIntentsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "donation-participants_select".
+ */
+export interface DonationParticipantsSelect<T extends boolean = true> {
+  donationIntent?: T;
+  donation?: T;
+  orderIndex?: T;
+  name?: T;
+  phone?: T;
+  effectivePhone?: T;
+  isPayer?: T;
+  contactConsent?: T;
+  proxyConsent?: T;
+  nameReadingConsent?: T;
+  nameReadingConsentTextVersion?: T;
+  nameReadingConsentTextSnapshot?: T;
+  nameReadingConsentAcceptedAt?: T;
+  nameReadingConsentIp?: T;
+  thirdPartyDataAuthorityConsent?: T;
+  thirdPartyDataAuthorityTextVersion?: T;
+  thirdPartyDataAuthorityTextSnapshot?: T;
+  thirdPartyDataAuthorityAcceptedAt?: T;
+  thirdPartyDataAuthorityIp?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payment-sessions_select".
  */
 export interface PaymentSessionsSelect<T extends boolean = true> {
   donationIntent?: T;
   conversationId?: T;
+  paymentMethod?: T;
+  reservationExpiresAt?: T;
   checkoutToken?: T;
   checkoutFormContent?: T;
   paymentPageUrl?: T;
@@ -2286,16 +1527,12 @@ export interface PaymentSessionsSelect<T extends boolean = true> {
   paymentId?: T;
   lastFourDigits?: T;
   cardAssociation?: T;
+  eftProofBucket?: T;
+  eftProofPath?: T;
+  eftReviewStatus?: T;
+  eftReviewedAt?: T;
+  eftReviewedBy?: T;
   rawResponse?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "panel-settings_select".
- */
-export interface PanelSettingsSelect<T extends boolean = true> {
-  quickLinks?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2323,9 +1560,9 @@ export interface DonationsSelect<T extends boolean = true> {
   email?: T;
   phone?: T;
   campaign?: T;
-  fundingPool?: T;
-  qurbaniOrder?: T;
-  qurbaniCheckout?: T;
+  donationIntent?: T;
+  quantity?: T;
+  unitPriceSnapshot?: T;
   grossAmount?: T;
   netConfirmedAmount?: T;
   currency?: T;
@@ -2333,9 +1570,203 @@ export interface DonationsSelect<T extends boolean = true> {
   paymentId?: T;
   receiptNumber?: T;
   paymentSession?: T;
+  paymentMethod?: T;
+  confirmedAt?: T;
   taxReceiptRequested?: T;
   donationNote?: T;
   receiptPath?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "operation-groups_select".
+ */
+export interface OperationGroupsSelect<T extends boolean = true> {
+  campaign?: T;
+  code?: T;
+  operationType?: T;
+  year?: T;
+  ordinal?: T;
+  capacity?: T;
+  reservedCount?: T;
+  confirmedCount?: T;
+  status?: T;
+  capacityOverrideOriginal?: T;
+  capacityOverrideReason?: T;
+  capacityOverrideCoveredByAssociation?: T;
+  capacityOverriddenAt?: T;
+  capacityOverriddenBy?: T;
+  slaughterScheduledAt?: T;
+  slaughterOrder?: T;
+  slaughterPlace?: T;
+  assignedOperator?: T;
+  fieldNotes?: T;
+  slaughteredAt?: T;
+  slaughteredBy?: T;
+  slaughterRevertedAt?: T;
+  slaughterRevertedBy?: T;
+  slaughterRevertReason?: T;
+  slaughterScriptSnapshot?: T;
+  groupCodeConfirmationFailures?: T;
+  groupCodeLockedUntil?: T;
+  activeVideo?: T;
+  publicLinkTokenHash?: T;
+  accessCodeHash?: T;
+  accessCodeCiphertext?: T;
+  accessCodeRotatedAt?: T;
+  accessCodeRotatedBy?: T;
+  accessCodeRotationCount?: T;
+  expiresAt?: T;
+  extensionUsed?: T;
+  extendedAt?: T;
+  extendedBy?: T;
+  testMessageVideo?: T;
+  testMessageFingerprint?: T;
+  testMessagePassedAt?: T;
+  testMessagePassedBy?: T;
+  testMessageInvalidatedAt?: T;
+  messageTemplate?: T;
+  dispatchState?: T;
+  dispatchLockedAt?: T;
+  dispatchLockedBy?: T;
+  dispatchPauseReason?: T;
+  providerHealthySince?: T;
+  providerHealthCheckCount?: T;
+  consecutiveSystemFailures?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "operation-group-members_select".
+ */
+export interface OperationGroupMembersSelect<T extends boolean = true> {
+  group?: T;
+  donationIntent?: T;
+  donation?: T;
+  participant?: T;
+  memberKey?: T;
+  unitIndex?: T;
+  status?: T;
+  reservationExpiresAt?: T;
+  confirmedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "operation-videos_select".
+ */
+export interface OperationVideosSelect<T extends boolean = true> {
+  group?: T;
+  uploadedBy?: T;
+  uploadId?: T;
+  rawStorageKey?: T;
+  processedStorageKey?: T;
+  thumbnailStorageKey?: T;
+  originalFilename?: T;
+  mimeType?: T;
+  sizeBytes?: T;
+  durationSeconds?: T;
+  status?: T;
+  version?: T;
+  replacesVideo?: T;
+  versionKind?: T;
+  isActive?: T;
+  uploadTokenJti?: T;
+  uploadNonceHash?: T;
+  uploadTokenExpiresAt?: T;
+  uploadTokenConsumedAt?: T;
+  uploadMaxBytes?: T;
+  detectedMimeType?: T;
+  containerFormat?: T;
+  videoCodec?: T;
+  audioCodec?: T;
+  width?: T;
+  height?: T;
+  rawSha256?: T;
+  processedSha256?: T;
+  technicalMetadata?: T;
+  processingSettingsSnapshot?: T;
+  watermarkSnapshot?: T;
+  closingCardSnapshot?: T;
+  slaughterScriptSnapshot?: T;
+  fieldChecklist?: T;
+  fieldCheckedAt?: T;
+  fieldCheckedBy?: T;
+  reviewChecklist?: T;
+  reviewedAt?: T;
+  reviewedBy?: T;
+  contentReviewStatus?: T;
+  readyAt?: T;
+  attemptCount?: T;
+  lastError?: T;
+  lastErrorCode?: T;
+  ffmpegLog?: T;
+  processingStartedAt?: T;
+  processingFailedAt?: T;
+  retryAfter?: T;
+  quarantineUntil?: T;
+  rawDeleteAfter?: T;
+  processedDeleteAfter?: T;
+  expiresAt?: T;
+  expiredAt?: T;
+  physicalDeletedAt?: T;
+  extensionUsed?: T;
+  extendedAt?: T;
+  extendedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "delivery-messages_select".
+ */
+export interface DeliveryMessagesSelect<T extends boolean = true> {
+  group?: T;
+  video?: T;
+  donation?: T;
+  participant?: T;
+  member?: T;
+  messageType?: T;
+  recipientRole?: T;
+  recipientPhone?: T;
+  normalizedPhone?: T;
+  recipientPhoneHash?: T;
+  body?: T;
+  bodySnapshot?: T;
+  messageSnapshot?: T;
+  systemPayloadSnapshot?: T;
+  idempotencyKey?: T;
+  status?: T;
+  dispatchBatchId?: T;
+  scheduledAt?: T;
+  lockedAt?: T;
+  lockedBy?: T;
+  providerMessageId?: T;
+  providerStatus?: T;
+  providerPayload?: T;
+  attemptCount?: T;
+  lastError?: T;
+  lastErrorCode?: T;
+  retryClass?: T;
+  nextRetryAt?: T;
+  lastAttemptAt?: T;
+  providerLookupAt?: T;
+  accessTokenDigest?: T;
+  expiresAt?: T;
+  sentAt?: T;
+  deliveredAt?: T;
+  readAt?: T;
+  failedAt?: T;
+  manualSentAt?: T;
+  manualSentBy?: T;
+  manualSentReason?: T;
+  isTest?: T;
+  testNumberKey?: T;
+  testFingerprint?: T;
+  redactedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2365,77 +1796,15 @@ export interface RefundRequestsSelect<T extends boolean = true> {
   type?: T;
   reason?: T;
   description?: T;
+  evidenceBucket?: T;
+  evidencePath?: T;
+  evidenceMimeType?: T;
+  manualReviewRequired?: T;
   amount?: T;
   providerReference?: T;
   providerResponse?: T;
   status?: T;
   requestedBy?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "field-tasks_select".
- */
-export interface FieldTasksSelect<T extends boolean = true> {
-  campaign?: T;
-  qurbaniPool?: T;
-  title?: T;
-  location?: T;
-  assignedTo?: T;
-  dueAt?: T;
-  status?: T;
-  notes?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "proof-submissions_select".
- */
-export interface ProofSubmissionsSelect<T extends boolean = true> {
-  title?: T;
-  fieldTask?: T;
-  donation?: T;
-  campaign?: T;
-  summary?: T;
-  externalApprovalCode?: T;
-  externalReferenceId?: T;
-  reviewNotes?: T;
-  status?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "proof-assets_select".
- */
-export interface ProofAssetsSelect<T extends boolean = true> {
-  submission?: T;
-  kind?: T;
-  storagePath?: T;
-  fileName?: T;
-  mimeType?: T;
-  size?: T;
-  caption?: T;
-  isDonorVisible?: T;
-  uploadedBy?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "donor-reports_select".
- */
-export interface DonorReportsSelect<T extends boolean = true> {
-  title?: T;
-  donation?: T;
-  proofSubmissions?: T;
-  summaryForDonor?: T;
-  status?: T;
-  approvedBy?: T;
-  sentAt?: T;
-  sentEmailTo?: T;
   updatedAt?: T;
   createdAt?: T;
 }
