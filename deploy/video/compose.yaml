@@ -2,7 +2,8 @@ name: mizan-video
 
 x-node-service: &node-service
   build:
-    context: ../..
+    # Coolify invokes Compose with the repository root as --project-directory.
+    context: .
     dockerfile: services/video-platform/Dockerfile
   image: mizan-video-platform:${VIDEO_PLATFORM_IMAGE_TAG:-local}
   env_file:
