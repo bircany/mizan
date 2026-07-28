@@ -6,11 +6,32 @@ import { logger } from "./logger.js";
 const { Pool } = pg;
 let pool;
 
+const connectionStringSslParameters = [
+  "sslmode",
+  "sslcert",
+  "sslkey",
+  "sslrootcert",
+];
+
+export function withoutConnectionStringSslOptions(connectionString) {
+  try {
+    const url = new URL(connectionString);
+    for (const parameter of connectionStringSslParameters) {
+      url.searchParams.delete(parameter);
+    }
+    return url.toString();
+  } catch {
+    return connectionString;
+  }
+}
+
 export function getPool() {
   if (pool) return pool;
   const config = databaseConfig();
   pool = new Pool({
-    connectionString: config.connectionString,
+    // node-postgres lets SSL query parameters replace the explicit `ssl`
+    // object. Keep TLS policy controlled by DATABASE_SSL_MODE instead.
+    connectionString: withoutConnectionStringSslOptions(config.connectionString),
     max: config.max,
     idleTimeoutMillis: config.idleTimeoutMillis,
     connectionTimeoutMillis: config.connectionTimeoutMillis,

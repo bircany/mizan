@@ -85,5 +85,7 @@ test("access code hashing and VDS-only encryption round-trip", async () => {
   const encrypted = encryptAccessCode("ABCD2345", key);
   assert.notEqual(encrypted.includes("ABCD2345"), true);
   assert.equal(decryptAccessCode(encrypted, key), "ABCD2345");
-  assert.throws(() => decryptAccessCode(`${encrypted.slice(0, -1)}A`, key));
+  const parts = encrypted.split(".");
+  parts[2] = `${parts[2][0] === "A" ? "B" : "A"}${parts[2].slice(1)}`;
+  assert.throws(() => decryptAccessCode(parts.join("."), key));
 });
