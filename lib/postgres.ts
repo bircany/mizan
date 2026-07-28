@@ -19,20 +19,13 @@ export function buildPostgresPoolConfig(databaseUrl: string): PoolConfig {
     connectionUrl.searchParams.delete("sslmode");
   }
 
-  // Supabase session mode is capped by the database pool size. Vercel
-  // functions must use the transaction pooler to avoid exhausting sessions.
-  if (
-    isVercel &&
-    connectionUrl.hostname.endsWith(".pooler.supabase.com") &&
-    connectionUrl.port === "5432"
-  ) {
-    connectionUrl.port = "6543";
-  }
-
   return {
     connectionString: connectionUrl.toString(),
     max: configuredPoolMaximum(isVercel),
-    idleTimeoutMillis: isVercel ? 5_000 : 30_000,
+    // Payload's runtime uses the connection mode explicitly configured in the
+    // environment. Keep serverless session pools short-lived so old function
+    // instances cannot reserve scarce Supavisor sessions.
+    idleTimeoutMillis: isVercel ? 1_000 : 30_000,
     connectionTimeoutMillis: 10_000,
     allowExitOnIdle: isVercel,
     ssl:
