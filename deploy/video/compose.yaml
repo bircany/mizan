@@ -50,11 +50,11 @@ services:
       start_period: 20s
     labels:
       traefik.enable: "true"
-      traefik.docker.network: "${COOLIFY_PROXY_NETWORK:-coolify}"
+      traefik.docker.network: "coolify"
       traefik.http.routers.mizan-video-api.rule: "Host(`video.softartdevstudios.cloud`)"
       traefik.http.routers.mizan-video-api.entrypoints: "https"
       traefik.http.routers.mizan-video-api.tls: "true"
-      traefik.http.routers.mizan-video-api.tls.certresolver: "${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
+      traefik.http.routers.mizan-video-api.tls.certresolver: "letsencrypt"
       traefik.http.services.mizan-video-api.loadbalancer.server.port: "8080"
 
   tusd:
@@ -95,11 +95,11 @@ services:
       start_period: 10s
     labels:
       traefik.enable: "true"
-      traefik.docker.network: "${COOLIFY_PROXY_NETWORK:-coolify}"
+      traefik.docker.network: "coolify"
       traefik.http.routers.mizan-video-upload.rule: "Host(`upload.video.softartdevstudios.cloud`)"
       traefik.http.routers.mizan-video-upload.entrypoints: "https"
       traefik.http.routers.mizan-video-upload.tls: "true"
-      traefik.http.routers.mizan-video-upload.tls.certresolver: "${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
+      traefik.http.routers.mizan-video-upload.tls.certresolver: "letsencrypt"
       traefik.http.services.mizan-video-upload.loadbalancer.server.port: "8080"
 
   video-worker:
