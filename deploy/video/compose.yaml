@@ -31,6 +31,7 @@ services:
     environment:
       SERVICE_NAME: video-api
       HEALTH_FILE: /tmp/mizan-video-api.health
+      DATABASE_POOL_MAX: "1"
     volumes:
       - video_uploads:/var/lib/mizan/uploads:ro
       - video_ready:/var/lib/mizan/ready:ro
@@ -109,6 +110,7 @@ services:
       SERVICE_NAME: video-worker
       WORKER_ID: "${VIDEO_WORKER_ID:-video-worker-1}"
       HEALTH_FILE: /tmp/mizan-video-worker.health
+      DATABASE_POOL_MAX: "1"
     volumes:
       - video_uploads:/var/lib/mizan/uploads
       - video_raw:/var/lib/mizan/raw
@@ -138,6 +140,7 @@ services:
       SERVICE_NAME: message-worker
       WORKER_ID: "${MESSAGE_WORKER_ID:-message-worker-1}"
       HEALTH_FILE: /tmp/mizan-message-worker.health
+      DATABASE_POOL_MAX: "1"
     networks:
       - video_internal
       - video_egress
@@ -160,6 +163,7 @@ services:
     environment:
       SERVICE_NAME: retention-worker
       HEALTH_FILE: /tmp/mizan-retention-worker.health
+      DATABASE_POOL_MAX: "1"
     volumes:
       - video_uploads:/var/lib/mizan/uploads
       - video_raw:/var/lib/mizan/raw
