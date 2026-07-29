@@ -29,7 +29,10 @@ import { PaymentSessions } from "./payload/collections/PaymentSessions";
 import { RefundRequests } from "./payload/collections/RefundRequests";
 import { Users } from "./payload/collections/Users";
 import { ensureLocalEnvLoaded } from "./lib/env";
-import { buildPostgresPoolConfig } from "./lib/postgres";
+import {
+  buildPostgresPoolConfig,
+  managedPostgres,
+} from "./lib/postgres";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -70,6 +73,7 @@ export default buildConfig({
     AuditLogs,
   ],
   db: postgresAdapter({
+    pg: managedPostgres,
     pool: buildPostgresPoolConfig(databaseUrl),
     // Supabase schema changes are deployed only through reviewed SQL migrations.
     push: false,

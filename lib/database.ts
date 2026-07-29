@@ -1,13 +1,16 @@
-import { Pool, type PoolClient, type QueryResultRow } from "pg";
+import type { PoolClient, QueryResultRow } from "pg";
 
 import { ensureLocalEnvLoaded, requiredEnv } from "@/lib/env";
-import { buildPostgresPoolConfig } from "@/lib/postgres";
+import {
+  buildPostgresPoolConfig,
+  ManagedPostgresPool,
+} from "@/lib/postgres";
 
-let applicationPool: Pool | null = null;
+let applicationPool: ManagedPostgresPool | null = null;
 
 export function getDatabasePool() {
   ensureLocalEnvLoaded();
-  applicationPool ??= new Pool(
+  applicationPool ??= new ManagedPostgresPool(
     buildPostgresPoolConfig(
       process.env.PAYLOAD_DATABASE_URI || requiredEnv("DATABASE_URL"),
     ),

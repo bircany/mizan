@@ -29,6 +29,7 @@
     "@payloadcms/plugin-seo": "^3.85.2",
     "@payloadcms/richtext-lexical": "^3.85.2",
     "@supabase/supabase-js": "2.108.1",
+    "@vercel/functions": "3.7.6",
     "clsx": "^2.1.0",
     "date-fns": "^3.6.0",
     "dejavu-fonts-ttf": "2.37.3",
