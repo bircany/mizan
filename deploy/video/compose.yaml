@@ -10,7 +10,6 @@ x-node-service: &node-service
     - path: .env
       required: false
   restart: unless-stopped
-  init: true
   security_opt:
     - no-new-privileges:true
   cap_drop:
@@ -78,7 +77,9 @@ services:
       - -disable-download
       - -hooks-http=http://video-api:8080/internal/tusd/hooks?secret=${HOOK_SHARED_SECRET}
       - -hooks-enabled-events=pre-create,post-finish
-      - -cors-allow-origin=${TUSD_CORS_ALLOW_ORIGIN}
+      # Keep this regex free of backslashes: Coolify's literal environment
+      # values can double-escape them and make every browser origin fail.
+      - "-cors-allow-origin=https://(www[.])?mizander[.]com[.]tr"
       - -cors-allow-credentials=false
     volumes:
       - video_uploads:/srv/uploads

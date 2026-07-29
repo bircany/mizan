@@ -10,6 +10,11 @@ message worker joins its existing Docker network by the exact
 `EVOLUTION_DOCKER_NETWORK` name. `video_internal` is an internal-only network,
 while a separate egress bridge permits PostgreSQL connections.
 
+The tusd browser-origin regular expression is intentionally pinned in
+`compose.yaml` and uses `[.]` instead of backslash escapes. Do not move it to a
+Coolify literal environment variable: double escaping there makes valid browser
+preflight requests fail with `ERR_ORIGIN_NOT_ALLOWED`.
+
 Before any deploy:
 
 1. Apply and verify the additive Supabase migration.
