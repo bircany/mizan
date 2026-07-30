@@ -64,22 +64,46 @@ async function completePaidDonation(
     source: "callback" | "webhook";
   },
 ) {
-  await confirmReservation({
-    intentId: input.intentId,
-    donationId: Number(input.donation.id),
-    actor: `iyzico:${input.source}`,
-  });
-  await recordPaymentLedgerEntry({
-    donationId: Number(input.donation.id),
-    campaignId: input.campaignId,
-    entryType: "capture",
-    amount: Number(input.donation.netConfirmedAmount),
-    currency: input.donation.currency,
-    providerReference: input.donation.paymentId,
-    idempotencyKey: `capture:${input.donation.paymentId}`,
-  });
-  await closeCampaignAtTarget(input.campaignId);
-  await fulfillPaidDonation(payload, input.donation.id);
+  try {
+    await confirmReservation({
+      intentId: input.intentId,
+      donationId: Number(input.donation.id),
+      actor: `iyzico:${input.source}`,
+    });
+    await recordPaymentLedgerEntry({
+      donationId: Number(input.donation.id),
+      campaignId: input.campaignId,
+      entryType: "capture",
+      amount: Number(input.donation.netConfirmedAmount),
+      currency: input.donation.currency,
+      providerReference: input.donation.paymentId,
+      idempotencyKey: `capture:${input.donation.paymentId}`,
+    });
+    await closeCampaignAtTarget(input.campaignId);
+    await fulfillPaidDonation(payload, input.donation.id);
+    return true;
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Bilinmeyen ödeme kesinleştirme hatası";
+    console.error("Başarılı ödeme operasyon kayıtlarına yansıtılamadı.", {
+      donationId: input.donation.id,
+      intentId: input.intentId,
+      message,
+    });
+    await logAuditEvent(payload, {
+      action: "payment.reconciliation_required",
+      actorEmail: `iyzico:${input.source}`,
+      targetCollection: "donations",
+      targetId: input.donation.id,
+      details: {
+        campaignId: input.campaignId,
+        intentId: input.intentId,
+        paymentId: input.donation.paymentId,
+        error: message.slice(0, 1000),
+      },
+    }).catch(() => undefined);
+    return false;
+  }
 }
 
 export async function confirmCheckoutToken(
@@ -193,30 +217,27 @@ export async function confirmCheckoutToken(
   });
   if (existing.docs[0]) {
     const donation = existing.docs[0];
-    if (
+    const isPaid =
       !reservationExpired &&
       (donation.status === "paid" ||
-        donation.status === "partially_refunded")
-    ) {
-      await completePaidDonation(payload, {
-        intentId,
-        campaignId,
-        source,
-        donation: {
-          id: donation.id,
-          netConfirmedAmount: donation.netConfirmedAmount,
-          currency: donation.currency,
-          paymentId: donation.paymentId,
-        },
-      });
-    }
+        donation.status === "partially_refunded");
+    const reconciliationCompleted = isPaid
+      ? await completePaidDonation(payload, {
+          intentId,
+          campaignId,
+          source,
+          donation: {
+            id: donation.id,
+            netConfirmedAmount: donation.netConfirmedAmount,
+            currency: donation.currency,
+            paymentId: donation.paymentId,
+          },
+        })
+      : false;
     return {
-      state:
-        !reservationExpired &&
-        (donation.status === "paid" ||
-          donation.status === "partially_refunded")
-          ? ("paid" as const)
-          : ("pending_review" as const),
+      state: isPaid && reconciliationCompleted
+        ? ("paid" as const)
+        : ("pending_review" as const),
       donation,
     };
   }
@@ -265,22 +286,26 @@ export async function confirmCheckoutToken(
     },
   });
 
-  if (donationStatus === "paid") {
-    await completePaidDonation(payload, {
-      intentId,
-      campaignId,
-      source,
-      donation: {
-        id: donation.id,
-        netConfirmedAmount: donation.netConfirmedAmount,
-        currency: donation.currency,
-        paymentId: donation.paymentId,
-      },
-    });
-  }
+  const reconciliationCompleted =
+    donationStatus === "paid"
+      ? await completePaidDonation(payload, {
+          intentId,
+          campaignId,
+          source,
+          donation: {
+            id: donation.id,
+            netConfirmedAmount: donation.netConfirmedAmount,
+            currency: donation.currency,
+            paymentId: donation.paymentId,
+          },
+        })
+      : false;
 
   return {
-    state: donationStatus,
+    state:
+      donationStatus === "paid" && !reconciliationCompleted
+        ? ("pending_review" as const)
+        : donationStatus,
     donation,
   };
 }

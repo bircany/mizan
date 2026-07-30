@@ -272,6 +272,7 @@ export function UnifiedCampaignEditor({
   const [videoDelivery, setVideoDelivery] = useState(record?.videoDelivery || "");
   const [operationType, setOperationType] = useState(record?.operationType || "");
   const [status, setStatus] = useState(record?.status || "draft");
+  const [closeReason, setCloseReason] = useState(record?.closeReason || "");
   const [messageBody, setMessageBody] = useState(() =>
     extractEditableDeliveryMessage(record?.messageTemplate),
   );
@@ -292,6 +293,7 @@ export function UnifiedCampaignEditor({
     setVideoDelivery(record?.videoDelivery || "");
     setOperationType(record?.operationType || "");
     setStatus(record?.status || "draft");
+    setCloseReason(record?.closeReason || "");
     setMessageBody(extractEditableDeliveryMessage(record?.messageTemplate));
     setCoverPickerKey((current) => current + 1);
     dialogRef.current?.showModal();
@@ -357,6 +359,16 @@ export function UnifiedCampaignEditor({
               </dd>
             </div>
           </dl>
+          {record.status === "closed" && record.closeReason ? (
+            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800">
+                Kapatma nedeni
+              </p>
+              <p className="mt-1 whitespace-pre-wrap text-sm leading-5 text-amber-950">
+                {record.closeReason}
+              </p>
+            </div>
+          ) : null}
           <button className="admin-action-button mt-5 w-full justify-center" onClick={openDialog} type="button">
             <Pencil className="size-4" />
             Kampanyayı düzenle
@@ -681,17 +693,32 @@ export function UnifiedCampaignEditor({
                     <option value="archived">Arşiv</option>
                   </select>
                 </Field>
-                {status === "closed" ? (
-                  <Field label="Kapatma nedeni *">
+                <div
+                  className={`mt-4 rounded-xl border p-4 ${
+                    status === "closed"
+                      ? "border-amber-300 bg-amber-50/70"
+                      : "border-[var(--admin-border)] bg-[var(--admin-surface-raised)]"
+                  }`}
+                >
+                  <Field label={`Kapatma nedeni${status === "closed" ? " *" : ""}`}>
                     <textarea
-                      className="admin-input min-h-24"
-                      defaultValue={record?.closeReason || ""}
+                      className="admin-input min-h-24 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={status !== "closed"}
                       name="closeReason"
-                      placeholder="Kampanyanın neden kapatıldığını yazın."
-                      required
+                      onChange={(event) => setCloseReason(event.target.value)}
+                      placeholder={
+                        status === "closed"
+                          ? "Kampanyanın neden kapatıldığını yazın."
+                          : "Kapatma nedeni yazmak için kampanya durumunu Kapalı seçin."
+                      }
+                      required={status === "closed"}
+                      value={closeReason}
                     />
                   </Field>
-                ) : null}
+                  <p className="mt-2 text-xs leading-5 text-[var(--admin-muted)]">
+                    Kampanya kapatıldığında bu açıklama tarih ve işlemi yapan yöneticiyle birlikte kaydedilir.
+                  </p>
+                </div>
               </div>
               {state.message && !state.success ? (
                 <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{state.message}</p>
