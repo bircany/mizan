@@ -99,6 +99,7 @@ export async function saveUnifiedCampaign(
     const currency = text(formData, "currency") || "TRY";
     const pricingModel = text(formData, "pricingModel");
     const videoDelivery = text(formData, "videoDelivery");
+    const operationType = text(formData, "operationType");
     const status = text(formData, "status") || "draft";
     const image = text(formData, "image") || undefined;
     if (!title || !category) {
@@ -109,6 +110,12 @@ export async function saveUnifiedCampaign(
     }
     if (!["none", "video"].includes(videoDelivery)) {
       throw new Error("Videolu veya videosuz seçimi zorunludur.");
+    }
+    if (
+      videoDelivery === "video" &&
+      !["standard_video", "slaughter_video"].includes(operationType)
+    ) {
+      throw new Error("Videolu kampanyalarda operasyon tipi zorunludur.");
     }
     if (!["draft", "active", "closed", "archived"].includes(status)) {
       throw new Error("Kampanya durumu geçersiz.");
@@ -154,6 +161,28 @@ export async function saveUnifiedCampaign(
           overrideAccess: true,
         })
       : null;
+    const slaughterScript =
+      operationType === "slaughter_video"
+        ? text(formData, "slaughterScript")
+        : "";
+    if (operationType === "slaughter_video" && !slaughterScript) {
+      throw new Error("Kesim videosu kampanyasında okunacak metin zorunludur.");
+    }
+    const previousSlaughterScript =
+      typeof existing?.slaughterScript === "string"
+        ? existing.slaughterScript.trim()
+        : "";
+    const previousSlaughterScriptVersion = Number(
+      existing?.slaughterScriptVersion || 0,
+    );
+    const slaughterScriptVersion =
+      operationType === "slaughter_video"
+        ? slaughterScript === previousSlaughterScript &&
+          Number.isSafeInteger(previousSlaughterScriptVersion) &&
+          previousSlaughterScriptVersion > 0
+          ? previousSlaughterScriptVersion
+          : Math.max(1, previousSlaughterScriptVersion + 1)
+        : null;
     const slug = existing?.slug || (await uniqueSlug(title, id));
     const data = {
       title,
@@ -171,7 +200,9 @@ export async function saveUnifiedCampaign(
           : undefined,
       totalStock,
       videoDelivery,
-      groupCapacity,
+      operationType:
+        videoDelivery === "video" ? operationType : null,
+      groupCapacity: groupCapacity ?? null,
       participantRequired:
         formData.get("participantRequired") === "on",
       publishStartAt: publishStartAt
@@ -183,7 +214,10 @@ export async function saveUnifiedCampaign(
       messageTemplate:
         videoDelivery === "video"
           ? buildProtectedDeliveryTemplate(text(formData, "messageBody"))
-          : undefined,
+          : null,
+      slaughterScript:
+        operationType === "slaughter_video" ? slaughterScript : null,
+      slaughterScriptVersion,
       status,
       isDonationOpen: status === "active",
       reportingMode: "pool",

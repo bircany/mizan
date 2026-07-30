@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useActionState, useEffect, useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -39,11 +38,14 @@ export type CampaignEditorRecord = {
   unitLabel: string;
   totalStock: number | null;
   videoDelivery: string;
+  operationType: string;
   groupCapacity: number | null;
   participantRequired: boolean;
   publishStartAt: string;
   publishEndAt: string;
   messageTemplate: string;
+  slaughterScript: string;
+  slaughterScriptVersion: number | null;
   status: string;
   image: string;
 };
@@ -61,22 +63,6 @@ const steps = [
   { title: "Teslimat", short: "Teslimat" },
   { title: "Yayınlama", short: "Yayın" },
 ] as const;
-
-function SubmitButton({ editing }: { editing: boolean }) {
-  const { pending } = useFormStatus();
-  return (
-    <button className="admin-action-button" disabled={pending} type="submit">
-      {pending ? (
-        <LoaderCircle className="size-4 animate-spin" />
-      ) : editing ? (
-        <Pencil className="size-4" />
-      ) : (
-        <Plus className="size-4" />
-      )}
-      {pending ? "Kaydediliyor" : editing ? "Değişiklikleri kaydet" : "Kampanyayı oluştur"}
-    </button>
-  );
-}
 
 function DeleteForm({ id }: { id: string }) {
   const [state, action] = useActionState(deleteUnifiedCampaign, initialState);
@@ -283,9 +269,11 @@ export function UnifiedCampaignEditor({
   const [step, setStep] = useState(0);
   const [pricingModel, setPricingModel] = useState(record?.pricingModel || "");
   const [videoDelivery, setVideoDelivery] = useState(record?.videoDelivery || "");
+  const [operationType, setOperationType] = useState(record?.operationType || "");
   const [messageBody, setMessageBody] = useState(() =>
     extractEditableDeliveryMessage(record?.messageTemplate),
   );
+  const [isPending, startTransition] = useTransition();
   const [coverPickerKey, setCoverPickerKey] = useState(0);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -300,6 +288,7 @@ export function UnifiedCampaignEditor({
     setStep(0);
     setPricingModel(record?.pricingModel || "");
     setVideoDelivery(record?.videoDelivery || "");
+    setOperationType(record?.operationType || "");
     setMessageBody(extractEditableDeliveryMessage(record?.messageTemplate));
     setCoverPickerKey((current) => current + 1);
     dialogRef.current?.showModal();
@@ -419,13 +408,16 @@ export function UnifiedCampaignEditor({
         </div>
 
         <form
-          action={action}
           className="flex max-h-[calc(92vh-10rem)] flex-col"
           onSubmit={(event) => {
+            event.preventDefault();
             if (step < steps.length - 1) {
-              event.preventDefault();
               nextStep();
+              return;
             }
+            if (!validateCurrentStep() || !formRef.current) return;
+            const formData = new FormData(formRef.current);
+            startTransition(() => action(formData));
           }}
           ref={formRef}
         >
@@ -536,7 +528,10 @@ export function UnifiedCampaignEditor({
                   description="Ödeme sonrası düzenlenebilir teşekkür içeriği gösterilir."
                   label="Videosuz"
                   name="videoDelivery"
-                  onChange={() => setVideoDelivery("none")}
+                  onChange={() => {
+                    setVideoDelivery("none");
+                    setOperationType("");
+                  }}
                   value="none"
                 />
                 <ChoiceCard
@@ -554,44 +549,80 @@ export function UnifiedCampaignEditor({
                 </p>
               ) : null}
               {videoDelivery === "video" ? (
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  {pricingModel === "fixed" ? (
-                    <Field label="Video grup kapasitesi *">
-                      <input className="admin-input" defaultValue={record?.groupCapacity ?? ""} min="1" name="groupCapacity" required step="1" type="number" />
+                <div className="mt-5 space-y-5">
+                  <div>
+                    <p className="mb-3 text-xs font-semibold text-[var(--admin-muted)]">Operasyon tipi *</p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <ChoiceCard
+                        checked={operationType === "standard_video"}
+                        description="Kesim adımı olmadan standart bağış videosu hazırlanır."
+                        label="Standart video"
+                        name="operationType"
+                        onChange={() => setOperationType("standard_video")}
+                        value="standard_video"
+                      />
+                      <ChoiceCard
+                        checked={operationType === "slaughter_video"}
+                        description="Grup dolumu, kesim planı ve grup kodu doğrulaması uygulanır."
+                        label="Kesim videosu"
+                        name="operationType"
+                        onChange={() => setOperationType("slaughter_video")}
+                        value="slaughter_video"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {pricingModel === "fixed" ? (
+                      <Field label="Video grup kapasitesi *">
+                        <input className="admin-input" defaultValue={record?.groupCapacity ?? ""} min="1" name="groupCapacity" required step="1" type="number" />
+                      </Field>
+                    ) : null}
+                    <Field full label="WhatsApp mesaj şablonu">
+                      <textarea
+                        className="admin-input min-h-28"
+                        maxLength={600}
+                        name="messageBody"
+                        onChange={(event) =>
+                          setMessageBody(
+                            sanitizeEditableDeliveryMessage(event.target.value),
+                          )
+                        }
+                        value={messageBody}
+                      />
+                      <span className="mt-2 flex items-center justify-between gap-3 text-[11px] text-[var(--admin-muted)]">
+                        <span>Yalnız mesaj metnini düzenleyebilirsiniz.</span>
+                        <span>{messageBody.length} / 600</span>
+                      </span>
+                      <span className="mt-3 block rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] p-3">
+                        <span className="block text-[11px] font-semibold text-[var(--admin-muted)]">
+                          Sistem tarafından korunan alanlar
+                        </span>
+                        <span className="mt-2 flex flex-wrap gap-2">
+                          {DELIVERY_TEMPLATE_TOKENS.map((token) => (
+                            <span
+                              className="rounded-md bg-[var(--admin-surface-raised)] px-2 py-1 font-mono text-[11px] font-semibold text-[var(--admin-primary)]"
+                              key={token}
+                            >
+                              {token}
+                            </span>
+                          ))}
+                        </span>
+                      </span>
+                    </Field>
+                  </div>
+                  {operationType === "slaughter_video" ? (
+                    <Field full label="Kesim sırasında okunacak metin *">
+                      <textarea
+                        className="admin-input min-h-28"
+                        defaultValue={record?.slaughterScript}
+                        name="slaughterScript"
+                        required
+                      />
+                      <span className="mt-2 block text-[11px] leading-5 text-[var(--admin-muted)]">
+                        Bu metin kesim kaydı sırasında sürümlenerek operasyon grubuna sabitlenir.
+                      </span>
                     </Field>
                   ) : null}
-                  <Field full label="WhatsApp mesaj şablonu">
-                    <textarea
-                      className="admin-input min-h-28"
-                      maxLength={600}
-                      name="messageBody"
-                      onChange={(event) =>
-                        setMessageBody(
-                          sanitizeEditableDeliveryMessage(event.target.value),
-                        )
-                      }
-                      value={messageBody}
-                    />
-                    <span className="mt-2 flex items-center justify-between gap-3 text-[11px] text-[var(--admin-muted)]">
-                      <span>Yalnız mesaj metnini düzenleyebilirsiniz.</span>
-                      <span>{messageBody.length} / 600</span>
-                    </span>
-                    <span className="mt-3 block rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] p-3">
-                      <span className="block text-[11px] font-semibold text-[var(--admin-muted)]">
-                        Sistem tarafından korunan alanlar
-                      </span>
-                      <span className="mt-2 flex flex-wrap gap-2">
-                        {DELIVERY_TEMPLATE_TOKENS.map((token) => (
-                          <span
-                            className="rounded-md bg-[var(--admin-surface-raised)] px-2 py-1 font-mono text-[11px] font-semibold text-[var(--admin-primary)]"
-                            key={token}
-                          >
-                            {token}
-                          </span>
-                        ))}
-                      </span>
-                    </span>
-                  </Field>
                 </div>
               ) : null}
               {pricingModel === "fixed" ? (
@@ -622,6 +653,14 @@ export function UnifiedCampaignEditor({
                     <dt className="text-xs text-[var(--admin-muted)]">Teslimat</dt>
                     <dd className="mt-1 font-semibold">{videoDelivery === "video" ? "Videolu" : "Videosuz"}</dd>
                   </div>
+                  {videoDelivery === "video" ? (
+                    <div>
+                      <dt className="text-xs text-[var(--admin-muted)]">Operasyon tipi</dt>
+                      <dd className="mt-1 font-semibold">
+                        {operationType === "slaughter_video" ? "Kesim videosu" : "Standart video"}
+                      </dd>
+                    </div>
+                  ) : null}
                 </dl>
               </div>
               <div className="mt-5">
@@ -659,7 +698,16 @@ export function UnifiedCampaignEditor({
                 <ChevronRight className="size-4" />
               </button>
             ) : (
-              <SubmitButton editing={Boolean(record)} />
+              <button className="admin-action-button" disabled={isPending} type="submit">
+                {isPending ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : record ? (
+                  <Pencil className="size-4" />
+                ) : (
+                  <Plus className="size-4" />
+                )}
+                {isPending ? "Kaydediliyor" : record ? "Değişiklikleri kaydet" : "Kampanyayı oluştur"}
+              </button>
             )}
           </div>
         </form>
