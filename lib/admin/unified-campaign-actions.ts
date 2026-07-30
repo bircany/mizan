@@ -88,7 +88,7 @@ export async function saveUnifiedCampaign(
   _: CampaignActionState,
   formData: FormData,
 ): Promise<CampaignActionState> {
-  await requireAdminUser(PANEL_ROUTE_ACCESS.donationManagement);
+  const admin = await requireAdminUser(PANEL_ROUTE_ACCESS.donationManagement);
 
   try {
     const payload = await getPayloadClient();
@@ -101,6 +101,7 @@ export async function saveUnifiedCampaign(
     const videoDelivery = text(formData, "videoDelivery");
     const operationType = text(formData, "operationType");
     const status = text(formData, "status") || "draft";
+    const closeReason = text(formData, "closeReason");
     const image = text(formData, "image") || undefined;
     if (!title || !category) {
       throw new Error("Başlık ve kategori zorunludur.");
@@ -119,6 +120,9 @@ export async function saveUnifiedCampaign(
     }
     if (!["draft", "active", "closed", "archived"].includes(status)) {
       throw new Error("Kampanya durumu geçersiz.");
+    }
+    if (status === "closed" && !closeReason) {
+      throw new Error("Kampanya kapatılırken kapatma nedeni zorunludur.");
     }
 
     const targetAmount =
@@ -184,6 +188,21 @@ export async function saveUnifiedCampaign(
           : Math.max(1, previousSlaughterScriptVersion + 1)
         : null;
     const slug = existing?.slug || (await uniqueSlug(title, id));
+    const wasClosed = existing?.status === "closed";
+    const closedAt =
+      status === "closed"
+        ? wasClosed && existing?.closedAt
+          ? existing.closedAt
+          : new Date().toISOString()
+        : null;
+    const closedBy =
+      status === "closed"
+        ? wasClosed && existing?.closedBy
+          ? typeof existing.closedBy === "object"
+            ? existing.closedBy.id
+            : existing.closedBy
+          : admin.id
+        : null;
     const data = {
       title,
       description: description
@@ -219,6 +238,9 @@ export async function saveUnifiedCampaign(
         operationType === "slaughter_video" ? slaughterScript : null,
       slaughterScriptVersion,
       status,
+      closeReason: status === "closed" ? closeReason : null,
+      closedAt,
+      closedBy,
       isDonationOpen: status === "active",
       reportingMode: "pool",
       image: image ? Number(image) : undefined,

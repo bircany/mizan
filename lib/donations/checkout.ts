@@ -15,6 +15,7 @@ import {
   getMaximumCardQuantity,
   isIyzicoAmountAllowed,
 } from "@/lib/payments/limits";
+import { resolveCardReservationMinutes } from "@/lib/payments/reservation-expiry";
 
 type CampaignRecord = {
   id: string | number;
@@ -263,7 +264,12 @@ export async function createUnifiedDonationCheckout(
 
   const currency = String(campaign.currency || "TRY");
   const conversationId = generateConversationId();
-  const expiresInMinutes = input.paymentMethod === "card" ? 30 : 24 * 60;
+  const expiresInMinutes =
+    input.paymentMethod === "card"
+      ? resolveCardReservationMinutes(
+          process.env.PAYMENT_CARD_RESERVATION_MINUTES,
+        )
+      : 24 * 60;
   const reservationExpiresAt = new Date(
     now.getTime() + expiresInMinutes * 60_000,
   ).toISOString();

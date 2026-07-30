@@ -78,6 +78,7 @@ export async function getCampaignEditorData() {
     slaughterScript: campaign.slaughterScript || "",
     slaughterScriptVersion: campaign.slaughterScriptVersion ?? null,
     status: campaign.status,
+    closeReason: campaign.closeReason || "",
     image: relationId(campaign.image),
   }));
 

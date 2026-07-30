@@ -10,6 +10,7 @@ import {
 } from "@/lib/payments/iyzico";
 import { fulfillPaidDonation } from "@/lib/payments/fulfillment";
 import { recordPaymentLedgerEntry } from "@/lib/payments/ledger";
+import { isPaymentReservationExpired } from "@/lib/payments/reservation-expiry";
 
 function getReceiptNumber() {
   return `MIZ-${Date.now().toString(36).toUpperCase()}-${Math.random()
@@ -162,12 +163,26 @@ export async function confirmCheckoutToken(
     };
   }
 
-  await payload.update({
-    collection: "donation-intents",
-    id: intent.id,
-    overrideAccess: true,
-    data: { status: "callback_received" },
+  const reservationExpired = isPaymentReservationExpired({
+    status: intent.status,
+    reservationExpiresAt: intent.reservationExpiresAt,
   });
+  if (reservationExpired) {
+    await releaseReservation(intentId, "expired");
+    await payload.update({
+      collection: "payment-sessions",
+      id: session.id,
+      overrideAccess: true,
+      data: { providerStatus: "LATE_SUCCESS_REVIEW_REQUIRED" },
+    });
+  } else {
+    await payload.update({
+      collection: "donation-intents",
+      id: intent.id,
+      overrideAccess: true,
+      data: { status: "callback_received" },
+    });
+  }
 
   const existing = await payload.find({
     collection: "donations",
@@ -179,8 +194,9 @@ export async function confirmCheckoutToken(
   if (existing.docs[0]) {
     const donation = existing.docs[0];
     if (
-      donation.status === "paid" ||
-      donation.status === "partially_refunded"
+      !reservationExpired &&
+      (donation.status === "paid" ||
+        donation.status === "partially_refunded")
     ) {
       await completePaidDonation(payload, {
         intentId,
@@ -196,8 +212,9 @@ export async function confirmCheckoutToken(
     }
     return {
       state:
-        donation.status === "paid" ||
-        donation.status === "partially_refunded"
+        !reservationExpired &&
+        (donation.status === "paid" ||
+          donation.status === "partially_refunded")
           ? ("paid" as const)
           : ("pending_review" as const),
       donation,
@@ -205,7 +222,8 @@ export async function confirmCheckoutToken(
   }
 
   const fraudStatus = Number(paymentResult.fraudStatus ?? 0);
-  const donationStatus = fraudStatus === 1 ? "paid" : "pending_review";
+  const donationStatus =
+    !reservationExpired && fraudStatus === 1 ? "paid" : "pending_review";
   const donation = await payload.create({
     collection: "donations",
     overrideAccess: true,
@@ -243,6 +261,7 @@ export async function confirmCheckoutToken(
       status: donation.status,
       fraudStatus,
       source,
+      reservationExpired,
     },
   });
 

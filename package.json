@@ -15,6 +15,7 @@
     "test:delivery": "node --conditions=react-server --import tsx scripts/check-delivery.ts",
     "test:delivery:webhook": "node --conditions=react-server --import tsx scripts/check-delivery-webhook.ts",
     "test:payments": "tsx scripts/check-payment-limits.ts",
+    "test:payment-expiry": "tsx scripts/check-payment-expiry.ts",
     "test:eft-guidance": "tsx scripts/check-eft-guidance.ts",
     "test:inquiry-pages": "tsx scripts/check-inquiry-pages.ts",
     "delivery:worker": "node -e \"console.error('Legacy delivery worker is disabled; use services/video-platform.'); process.exit(1)\"",

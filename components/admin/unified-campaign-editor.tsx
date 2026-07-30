@@ -47,6 +47,7 @@ export type CampaignEditorRecord = {
   slaughterScript: string;
   slaughterScriptVersion: number | null;
   status: string;
+  closeReason: string;
   image: string;
 };
 
@@ -270,6 +271,7 @@ export function UnifiedCampaignEditor({
   const [pricingModel, setPricingModel] = useState(record?.pricingModel || "");
   const [videoDelivery, setVideoDelivery] = useState(record?.videoDelivery || "");
   const [operationType, setOperationType] = useState(record?.operationType || "");
+  const [status, setStatus] = useState(record?.status || "draft");
   const [messageBody, setMessageBody] = useState(() =>
     extractEditableDeliveryMessage(record?.messageTemplate),
   );
@@ -289,6 +291,7 @@ export function UnifiedCampaignEditor({
     setPricingModel(record?.pricingModel || "");
     setVideoDelivery(record?.videoDelivery || "");
     setOperationType(record?.operationType || "");
+    setStatus(record?.status || "draft");
     setMessageBody(extractEditableDeliveryMessage(record?.messageTemplate));
     setCoverPickerKey((current) => current + 1);
     dialogRef.current?.showModal();
@@ -665,13 +668,30 @@ export function UnifiedCampaignEditor({
               </div>
               <div className="mt-5">
                 <Field label="Kampanya durumu *">
-                  <select className="admin-input" defaultValue={record?.status || "draft"} name="status" required>
+                  <select
+                    className="admin-input"
+                    name="status"
+                    onChange={(event) => setStatus(event.target.value)}
+                    required
+                    value={status}
+                  >
                     <option value="draft">Taslak olarak kaydet</option>
                     <option value="active">Aktif — bağışa aç</option>
                     <option value="closed">Kapalı</option>
                     <option value="archived">Arşiv</option>
                   </select>
                 </Field>
+                {status === "closed" ? (
+                  <Field label="Kapatma nedeni *">
+                    <textarea
+                      className="admin-input min-h-24"
+                      defaultValue={record?.closeReason || ""}
+                      name="closeReason"
+                      placeholder="Kampanyanın neden kapatıldığını yazın."
+                      required
+                    />
+                  </Field>
+                ) : null}
               </div>
               {state.message && !state.success ? (
                 <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{state.message}</p>
