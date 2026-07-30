@@ -20,6 +20,7 @@ type GroupRow = QueryResultRow & {
   operationType: string | null;
   assignedOperatorId: string | null;
   slaughteredAt: Date | string | null;
+  slaughterScript: string | null;
   codeFailures: number;
   codeLockedUntil: Date | string | null;
 };
@@ -95,7 +96,16 @@ async function appendAudit(
   );
 }
 
-function validateGroupGate(group: GroupRow) {
+type UploadGateGroup = Pick<
+  GroupRow,
+  | "operationType"
+  | "dispatchState"
+  | "capacity"
+  | "confirmedCount"
+  | "status"
+>;
+
+export function validateGroupGate(group: UploadGateGroup) {
   if (!["standard_video", "slaughter_video"].includes(String(group.operationType))) {
     return "Bu kampanya için açıkça tanımlanmış bir video operasyon tipi yok.";
   }
@@ -105,18 +115,6 @@ function validateGroupGate(group: GroupRow) {
   if (group.operationType === "slaughter_video") {
     if (!group.capacity || group.confirmedCount < group.capacity) {
       return "Sabit hisseli grup tamamen dolmadan video yüklenemez.";
-    }
-    if (
-      !group.slaughteredAt ||
-      ![
-        "slaughtered",
-        "video_pending",
-        "video_ready",
-        "delivery_started",
-        "completed",
-      ].includes(group.status)
-    ) {
-      return "Kesim tamamlanmadan video yüklenemez.";
     }
     return null;
   }
@@ -148,6 +146,7 @@ export async function reserveDeliveryUploadSession(
          coalesce(g.operation_type::text, c.operation_type::text) as "operationType",
          g.assigned_operator_id::text as "assignedOperatorId",
          g.slaughtered_at as "slaughteredAt",
+         c.slaughter_script as "slaughterScript",
          coalesce(g.group_code_confirmation_failures, 0) as "codeFailures",
          g.group_code_locked_until as "codeLockedUntil"
        from public.operation_groups g
@@ -326,14 +325,48 @@ export async function reserveDeliveryUploadSession(
     );
     const videoId = inserted.rows[0]?.id;
     if (!videoId) throw new Error("Video upload kaydı oluşturulamadı.");
+    const slaughterAutoMarked =
+      group.operationType === "slaughter_video" && !group.slaughteredAt;
     await client.query(
       `update public.operation_groups
        set status = 'video_pending',
+           slaughtered_at = case
+             when $2::boolean then coalesce(slaughtered_at, now())
+             else slaughtered_at
+           end,
+           slaughtered_by_id = case
+             when $2::boolean then coalesce(slaughtered_by_id, $3::integer)
+             else slaughtered_by_id
+           end,
+           slaughter_script_snapshot = case
+             when $2::boolean then coalesce(slaughter_script_snapshot, $4)
+             else slaughter_script_snapshot
+           end,
            test_message_invalidated_at = now(),
            updated_at = now()
        where id = $1`,
-      [input.groupId],
+      [
+        input.groupId,
+        slaughterAutoMarked,
+        input.user.id,
+        group.slaughterScript || "",
+      ],
     );
+    if (slaughterAutoMarked) {
+      await appendAudit(client, {
+        action: "delivery.operation.slaughter_auto_marked_by_upload",
+        actorEmail: input.user.email,
+        groupId: group.groupId,
+        ipAddress: input.ipAddress,
+        details: {
+          actorId: input.user.id,
+          videoId,
+          previousStatus: group.status,
+          nextStatus: "video_pending",
+          reason: "verified_video_upload_session",
+        },
+      });
+    }
 
     const grant = createDeliveryUploadGrant({
       userId: input.user.id,

@@ -19,6 +19,8 @@ const { mapEvolutionDeliveryStatus } = await import("../lib/delivery/evolution")
 const { getDeliveryVideoStorage } = await import("../lib/delivery/storage");
 const { createDeliveryUploadGrant, verifyDeliveryUploadGrant } =
   await import("../lib/delivery/upload-auth");
+const { validateGroupGate } =
+  await import("../lib/delivery/group-code-upload-session");
 
 assert.equal(normalizePhone("0532 123 45 67"), "905321234567");
 assert.equal(normalizePhone("+90 (532) 123-4567"), "905321234567");
@@ -80,6 +82,27 @@ assert.equal(verifyDeliveryToken(stream, "donor"), null);
 const uploadGrant = createDeliveryUploadGrant({ videoId: "1", groupId: "2", userId: "3" }, 60);
 assert.equal(verifyDeliveryUploadGrant(uploadGrant)?.groupId, "2");
 assert.equal(verifyDeliveryUploadGrant(`${uploadGrant}x`), null);
+
+assert.equal(
+  validateGroupGate({
+    operationType: "slaughter_video",
+    dispatchState: "idle",
+    capacity: 1,
+    confirmedCount: 1,
+    status: "ready_for_slaughter",
+  }),
+  null,
+);
+assert.match(
+  validateGroupGate({
+    operationType: "slaughter_video",
+    dispatchState: "idle",
+    capacity: 2,
+    confirmedCount: 1,
+    status: "collecting",
+  }) || "",
+  /tamamen dolmadan/i,
+);
 
 assert.equal(mapEvolutionDeliveryStatus("READ"), "read");
 assert.equal(mapEvolutionDeliveryStatus("DELIVERY_ACK"), "delivered");
