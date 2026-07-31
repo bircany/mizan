@@ -123,6 +123,10 @@ existing `consume_api_rate_limit` database function. Rotation increments the
 version, invalidates the prior group-wide code and test fingerprint, and is
 rejected while dispatch is running.
 
+`DELIVERY_WEB_BASE_URL` is the public Next.js site origin used for links sent
+to recipients (for example, `https://www.mizander.com.tr`). It is deliberately
+separate from `VIDEO_PUBLIC_BASE_URL`, which remains the VDS API/media origin.
+
 ## Message snapshot contract
 
 Editable text is stored only in `body_snapshot`. Immutable values are:

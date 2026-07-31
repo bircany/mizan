@@ -25,7 +25,7 @@ export async function verifyGroupAccess({ linkToken, accessCode, ip }, config) {
        g.code,
        g.access_code_hash,
        g.access_code_rotation_count,
-       g.expires_at,
+       coalesce(g.expires_at, v.expires_at) as expires_at,
        v.id as video_id,
        v.version,
        coalesce(g.operation_type::text, c.operation_type::text) as operation_type
@@ -79,7 +79,14 @@ export async function getGroupLanding(linkToken) {
   const result = await query(
     `select
        g.code,
-       g.expires_at,
+       coalesce(
+         g.expires_at,
+         (
+           select max(v.expires_at)
+           from operation_videos v
+           where v.group_id = g.id and v.is_active = true and v.status = 'ready'
+         )
+       ) as expires_at,
        c.operation_type,
        coalesce(
          (
@@ -127,7 +134,7 @@ export async function authorizeMedia(videoId, authorization, purpose, verifyToke
        v.processed_sha256,
        v.size_bytes,
        g.code,
-       g.expires_at,
+       coalesce(g.expires_at, v.expires_at) as expires_at,
        g.access_code_rotation_count
      from operation_videos v
      join operation_groups g on g.id = v.group_id
@@ -135,7 +142,7 @@ export async function authorizeMedia(videoId, authorization, purpose, verifyToke
        and v.group_id::text = $2
        and ($4::boolean = true or v.is_active = true)
        and (($4::boolean = true and v.status in ('review_pending', 'ready')) or ($4::boolean = false and v.status = 'ready'))
-       and ($4::boolean = true or g.expires_at > now())
+       and ($4::boolean = true or coalesce(g.expires_at, v.expires_at) > now())
        and g.access_code_rotation_count = $3
      limit 1`,
     [String(videoId), String(claims.groupId), Number(claims.codeVersion), review],

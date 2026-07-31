@@ -5,6 +5,8 @@ import test from "node:test";
 const composeUrl = new URL("../../../deploy/video/compose.yaml", import.meta.url);
 const videoRepositoryUrl = new URL("../src/video-repository.js", import.meta.url);
 const messageRepositoryUrl = new URL("../src/message-repository.js", import.meta.url);
+const accessServiceUrl = new URL("../src/access-service.js", import.meta.url);
+const deliveryControlServiceUrl = new URL("../src/delivery-control-service.js", import.meta.url);
 
 test("tusd CORS rule survives Coolify Compose deployment", async () => {
   const compose = await readFile(composeUrl, "utf8");
@@ -35,4 +37,13 @@ test("message worker enforces test delivery only when policy requires it", async
   const repository = await readFile(messageRepositoryUrl, "utf8");
 
   assert.match(repository, /if \(!message\.is_test && requireTestBeforeDispatch\)/);
+});
+
+test("delivery access falls back to the active video expiry for legacy groups", async () => {
+  const accessSource = await readFile(accessServiceUrl, "utf8");
+  const controlSource = await readFile(deliveryControlServiceUrl, "utf8");
+
+  assert.match(accessSource, /coalesce\(g\.expires_at, v\.expires_at\) as expires_at/);
+  assert.match(accessSource, /coalesce\(g\.expires_at, v\.expires_at\) > now\(\)/);
+  assert.match(controlSource, /expires_at = coalesce\(\$3::timestamptz, now\(\) \+ interval '3 months'\)/);
 });

@@ -170,10 +170,11 @@ export async function reviewVideo(videoIdValue, input, materialsConfig) {
     await client.query(
       `update operation_groups
        set active_video_id = $2, status = 'video_ready', dispatch_state = 'idle',
+           expires_at = coalesce($3::timestamptz, now() + interval '3 months'),
            dispatch_locked_at = null, dispatch_locked_by = null,
            test_message_invalidated_at = now(), updated_at = now()
        where id = $1`,
-      [video.group_id, video.id],
+      [video.group_id, video.id, video.expires_at],
     );
     return { decision, groupId: video.group_id, videoId: video.id };
   });

@@ -62,10 +62,51 @@ test("worker renders immutable link, group and decrypted access code", () => {
   }, {
     key,
     publicLinkSecret: "l".repeat(32),
-    publicBaseUrl: "https://video.softartdevstudios.cloud",
+    landingBaseUrl: "https://www.mizander.com.tr",
   });
   assert.match(text, /Ayşe, Mehmet/);
   assert.match(text, /MD-2026-0001/);
   assert.match(text, /ABCD2345/);
-  assert.match(text, /https:\/\/video\.softartdevstudios\.cloud\/video\/[A-Za-z0-9_-]{43}/);
+  assert.match(text, /https:\/\/www\.mizander\.com\.tr\/video\/[A-Za-z0-9_-]{43}/);
+});
+
+test("worker does not duplicate template greeting, campaign or group lines", () => {
+  const key = Buffer.alloc(32, 4);
+  const text = renderDeliveryMessage({
+    group_id: 42,
+    video_id: 8,
+    message_type: "normal",
+    body_snapshot: [
+      "Sayın Mustafa Emir Kincal,",
+      "",
+      "Bağışınıza ait videonuz hazırlanmıştır.",
+      "",
+      "Kampanya: Test",
+      "Grup kodu: MD-2026-0002",
+    ].join("\n"),
+    message_snapshot: {
+      schemaVersion: 1,
+      recipientNames: ["Mustafa Emir Kincal"],
+      campaignName: "Test",
+    },
+    system_payload_snapshot: {
+      schemaVersion: 1,
+      groupId: 42,
+      videoId: 8,
+      messageType: "normal",
+    },
+  }, {
+    id: 42,
+    code: "MD-2026-0002",
+    access_code_ciphertext: encryptAccessCode("RJ2HLCDK", key),
+  }, {
+    key,
+    publicLinkSecret: "l".repeat(32),
+    landingBaseUrl: "https://www.mizander.com.tr",
+  });
+
+  assert.equal(text.match(/Sayın Mustafa Emir Kincal/g)?.length, 1);
+  assert.equal(text.match(/Kampanya: Test/g)?.length, 1);
+  assert.equal(text.match(/Grup kodu: MD-2026-0002/g)?.length, 1);
+  assert.match(text, /Video bağlantısı: https:\/\/www\.mizander\.com\.tr\/video\//);
 });

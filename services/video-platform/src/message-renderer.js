@@ -38,11 +38,15 @@ export function renderDeliveryMessage(message, group, config) {
     .trim()
     .slice(0, 2000);
   const campaignName = singleLine(snapshot.campaignName, 160);
+  const normalizedBody = editableBody.toLocaleLowerCase("tr-TR");
+  const hasGreeting = /(?:^|\n)\s*sayın\b/.test(normalizedBody);
+  const hasCampaignLine = /(?:^|\n)\s*kampanya\s*:/.test(normalizedBody);
+  const hasGroupCodeLine = /(?:^|\n)\s*grup kodu\s*:/.test(normalizedBody);
   const lines = [
-    `Sayın ${recipientNames.join(", ")},`,
+    hasGreeting ? "" : `Sayın ${recipientNames.join(", ")},`,
     editableBody,
-    campaignName ? `Kampanya: ${campaignName}` : "",
-    `Grup kodu: ${singleLine(group.code, 40)}`,
+    campaignName && !hasCampaignLine ? `Kampanya: ${campaignName}` : "",
+    hasGroupCodeLine ? "" : `Grup kodu: ${singleLine(group.code, 40)}`,
     `Video bağlantısı: ${publicVideoUrl(group.id, config)}`,
     `Erişim kodu: ${accessCode}`,
   ].filter(Boolean);

@@ -18,7 +18,7 @@ export function derivePublicLinkToken(groupId, secret) {
 }
 
 export function publicVideoUrl(groupId, config) {
-  return `${config.publicBaseUrl}/video/${derivePublicLinkToken(groupId, config.publicLinkSecret)}`;
+  return `${config.landingBaseUrl}/video/${derivePublicLinkToken(groupId, config.publicLinkSecret)}`;
 }
 
 export async function initializeAccessMaterials(groupId, config) {

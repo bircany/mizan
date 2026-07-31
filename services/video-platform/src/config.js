@@ -119,7 +119,7 @@ export function accessMaterialsConfig() {
   return Object.freeze({
     ...accessCodeEncryptionConfig(),
     publicLinkSecret: secret("PUBLIC_LINK_TOKEN_SECRET"),
-    publicBaseUrl: env("VIDEO_PUBLIC_BASE_URL", "https://video.softartdevstudios.cloud").replace(/\/$/, ""),
+    landingBaseUrl: env("DELIVERY_WEB_BASE_URL", "https://www.mizander.com.tr").replace(/\/$/, ""),
   });
 }
 
