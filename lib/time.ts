@@ -38,6 +38,17 @@ export function formatIstanbulDateTime(
   }).format(date);
 }
 
+export function getIstanbulYear(value: DateValue = new Date()) {
+  const date = validDate(value);
+  if (!date) return NaN;
+  return Number(
+    new Intl.DateTimeFormat("en", {
+      timeZone: APP_TIME_ZONE,
+      year: "numeric",
+    }).format(date),
+  );
+}
+
 export function toIstanbulDateTimeLocal(value: DateValue) {
   const date = validDate(value);
   if (!date) return "";

@@ -56,7 +56,7 @@ import type {
   QurbaniAdminSnapshot,
   QurbaniPoolAdminRecord,
 } from "@/lib/admin/qurbani-data";
-import { toIstanbulDateTimeLocal } from "@/lib/time";
+import { getIstanbulYear, toIstanbulDateTimeLocal } from "@/lib/time";
 import { formatCurrency } from "@/lib/utils";
 
 const initialState: QurbaniActionState = { success: false, message: null };
@@ -307,7 +307,7 @@ function SeasonForm({
           <span className="admin-label">Yıl *</span>
           <input
             className="admin-input"
-            defaultValue={record?.year ?? new Date().getFullYear()}
+            defaultValue={record?.year ?? getIstanbulYear()}
             min="2020"
             name="year"
             required
