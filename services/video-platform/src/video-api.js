@@ -36,6 +36,13 @@ import {
 } from "./storage.js";
 import { apiDatabaseReadiness, enqueueSafeTestMessage, listSafeTestRecipients } from "./test-message-service.js";
 import { dispatchTusHook } from "./tusd-hooks.js";
+import {
+  createReviewSession,
+  dispatchGroup,
+  prepareDeliveryDrafts,
+  retryStaleVideo,
+  reviewVideo,
+} from "./delivery-control-service.js";
 
 const api = apiConfig();
 const uploads = uploadConfig();
@@ -54,6 +61,7 @@ function hookAuthenticated(url, request) {
 }
 
 function mediaPurpose(url) {
+  if (url.searchParams.get("disposition") === "review") return "review";
   return url.searchParams.get("disposition") === "attachment" ? "download" : "stream";
 }
 
@@ -212,6 +220,42 @@ const server = createServer(async (request, response) => {
       verifyInternalRequest(request.headers, raw, api);
       const result = await enqueueSafeTestMessage(parseJsonBody(raw), safeTestRecipients);
       sendJson(response, 202, result);
+      return;
+    }
+
+    const reviewSessionMatch = /^\/v1\/internal\/videos\/(\d+)\/review-session$/.exec(url.pathname);
+    if (request.method === "POST" && reviewSessionMatch) {
+      const raw = await readBody(request, 16 * 1024);
+      verifyInternalRequest(request.headers, raw, api);
+      sendJson(response, 200, await createReviewSession(reviewSessionMatch[1], api));
+      return;
+    }
+
+    const reviewMatch = /^\/v1\/internal\/videos\/(\d+)\/review$/.exec(url.pathname);
+    if (request.method === "POST" && reviewMatch) {
+      const raw = await readBody(request, 32 * 1024);
+      verifyInternalRequest(request.headers, raw, api);
+      sendJson(response, 200, await reviewVideo(reviewMatch[1], parseJsonBody(raw), accessMaterials));
+      return;
+    }
+
+    const retryVideoMatch = /^\/v1\/internal\/videos\/(\d+)\/retry-processing$/.exec(url.pathname);
+    if (request.method === "POST" && retryVideoMatch) {
+      const raw = await readBody(request, 16 * 1024);
+      verifyInternalRequest(request.headers, raw, api);
+      sendJson(response, 200, await retryStaleVideo(retryVideoMatch[1]));
+      return;
+    }
+
+    const dispatchMatch = /^\/v1\/internal\/groups\/(\d+)\/dispatch$/.exec(url.pathname);
+    if (request.method === "POST" && dispatchMatch) {
+      const raw = await readBody(request, 32 * 1024);
+      verifyInternalRequest(request.headers, raw, api);
+      const body = parseJsonBody(raw);
+      const result = body.action === "prepare"
+        ? await prepareDeliveryDrafts(dispatchMatch[1])
+        : await dispatchGroup(dispatchMatch[1], String(body.action || ""));
+      sendJson(response, 200, result);
       return;
     }
 

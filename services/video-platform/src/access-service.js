@@ -118,6 +118,7 @@ export async function getGroupLanding(linkToken) {
 
 export async function authorizeMedia(videoId, authorization, purpose, verifyToken) {
   const claims = verifyToken(authorization, { videoId, purpose });
+  const review = purpose === "review";
   const result = await query(
     `select
        v.id,
@@ -132,12 +133,12 @@ export async function authorizeMedia(videoId, authorization, purpose, verifyToke
      join operation_groups g on g.id = v.group_id
      where v.id::text = $1
        and v.group_id::text = $2
-       and v.is_active = true
-       and v.status = 'ready'
-       and g.expires_at > now()
+       and ($4::boolean = true or v.is_active = true)
+       and (($4::boolean = true and v.status in ('review_pending', 'ready')) or ($4::boolean = false and v.status = 'ready'))
+       and ($4::boolean = true or g.expires_at > now())
        and g.access_code_rotation_count = $3
      limit 1`,
-    [String(videoId), String(claims.groupId), Number(claims.codeVersion)],
+    [String(videoId), String(claims.groupId), Number(claims.codeVersion), review],
   );
   const media = result.rows[0];
   if (!media?.processed_storage_key) {

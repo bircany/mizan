@@ -65,7 +65,7 @@ export type UnifiedDeliveryRecipient = {
 };
 
 function record(value: unknown): LooseRecord {
-  return value && typeof value === "object" ? value as LooseRecord : {};
+  return value && typeof value === "object" ? (value as LooseRecord) : {};
 }
 
 function text(value: unknown, fallback = ""): string {
@@ -73,7 +73,10 @@ function text(value: unknown, fallback = ""): string {
   if (typeof value === "number") return String(value);
   if (value && typeof value === "object") {
     const localized = value as Record<string, unknown>;
-    return text(localized.tr ?? localized.en ?? localized.title ?? localized.name, fallback);
+    return text(
+      localized.tr ?? localized.en ?? localized.title ?? localized.name,
+      fallback,
+    );
   }
   return fallback;
 }
@@ -89,7 +92,10 @@ function maskPhone(value: unknown): string {
   return `${phone.slice(0, 3)} *** ** ${phone.slice(-2)}`;
 }
 
-async function findOptional(collection: string, options: Record<string, unknown> = {}): Promise<LooseRecord[]> {
+async function findOptional(
+  collection: string,
+  options: Record<string, unknown> = {},
+): Promise<LooseRecord[]> {
   const payload = await getPayloadClient();
   try {
     const result = await (payload.find as unknown as LooseFind)({
@@ -122,42 +128,65 @@ export async function getUnifiedDonationPanelData() {
 
   const campaigns: UnifiedCampaignRow[] = campaignDocs.map((item) => {
     const fixed = text(item.pricingModel ?? item.donationType) === "fixed";
-    const video = Boolean(item.isVideoDonation ?? item.videoEnabled ?? (item.deliveryType === "video" || item.videoDelivery === "video"));
+    const video = Boolean(
+      item.isVideoDonation ??
+      item.videoEnabled ??
+      (item.deliveryType === "video" || item.videoDelivery === "video"),
+    );
     const target = Number(item.targetAmount ?? 0);
     const stock = Number(item.totalStock ?? item.stockLimit ?? 0);
     return {
       id: String(item.id ?? ""),
       title: text(item.title, "Başlıksız bağış"),
       model: fixed ? "fixed" : "flexible",
-      status: text(item.status, item.isDonationOpen === false ? "closed" : "active"),
+      status: text(
+        item.status,
+        item.isDonationOpen === false ? "closed" : "active",
+      ),
       delivery: video ? "video" : "standard",
       currency: text(item.currency, "TRY"),
       targetOrStock: fixed
-        ? (stock > 0 ? `${stock} adet` : "Sınırsız")
-        : (target > 0 ? `${target.toLocaleString("tr-TR")} ${text(item.currency, "TRY")}` : "Hedef yok"),
+        ? stock > 0
+          ? `${stock} adet`
+          : "Sınırsız"
+        : target > 0
+          ? `${target.toLocaleString("tr-TR")} ${text(item.currency, "TRY")}`
+          : "Hedef yok",
     };
   });
 
   const donations: UnifiedDonationRow[] = donationDocs.map((item) => {
     const intent = record(item.donationIntent);
     return {
-    id: String(item.id ?? ""),
-    donorName: text(item.donorName, "İsimsiz bağışçı"),
-    campaign: relationTitle(item.campaign, "Bağış kampanyası"),
-    amount: Number(item.netConfirmedAmount ?? item.grossAmount ?? item.amount ?? 0),
-    currency: text(item.currency, "TRY"),
-    receipt: text(item.receiptNumber, "Hazırlanıyor"),
-    status: text(item.status, "pending"),
-    createdAt: text(item.createdAt),
-    note: text(item.donationNote),
-    email: text(item.email ?? intent.email),
-    phone: text(item.phone ?? intent.phone),
-    address: [text(intent.address), text(intent.city), text(intent.countryCode)].filter(Boolean).join(", "),
-  }; });
+      id: String(item.id ?? ""),
+      donorName: text(item.donorName, "İsimsiz bağışçı"),
+      campaign: relationTitle(item.campaign, "Bağış kampanyası"),
+      amount: Number(
+        item.netConfirmedAmount ?? item.grossAmount ?? item.amount ?? 0,
+      ),
+      currency: text(item.currency, "TRY"),
+      receipt: text(item.receiptNumber, "Hazırlanıyor"),
+      status: text(item.status, "pending"),
+      createdAt: text(item.createdAt),
+      note: text(item.donationNote),
+      email: text(item.email ?? intent.email),
+      phone: text(item.phone ?? intent.phone),
+      address: [
+        text(intent.address),
+        text(intent.city),
+        text(intent.countryCode),
+      ]
+        .filter(Boolean)
+        .join(", "),
+    };
+  });
 
   const efts: UnifiedEftRow[] = newEftDocs.map((item) => ({
     id: String(item.id ?? ""),
-    reference: text(item.reference ?? item.orderNumber ?? item.conversationId, "Referans yok"),
+    reference: text(
+      item.reference ?? item.orderNumber ?? item.conversationId,
+      "Referans yok",
+    ),
     donorName: text(record(item.donationIntent).donorName, "İsimsiz bağışçı"),
     amount: Number(record(item.donationIntent).amount ?? 0),
     currency: text(record(item.donationIntent).currency, "TRY"),
@@ -169,7 +198,9 @@ export async function getUnifiedDonationPanelData() {
   return { campaigns, donations, efts };
 }
 
-export async function getUnifiedDeliveryPanelData(): Promise<UnifiedDeliveryRow[]> {
+export async function getUnifiedDeliveryPanelData(): Promise<
+  UnifiedDeliveryRow[]
+> {
   const [groups, messages, videos, members] = await Promise.all([
     findOptional("operation-groups"),
     findOptional("delivery-messages"),
@@ -187,8 +218,11 @@ export async function getUnifiedDeliveryPanelData(): Promise<UnifiedDeliveryRow[
     const videoByGroup = new Map<string, LooseRecord>();
     for (const video of sourceVideos) {
       const group = record(video.operationGroup ?? video.group ?? video.pool);
-      const groupId = String(group.id ?? video.operationGroup ?? video.group ?? video.pool ?? "");
-      if (groupId) videoByGroup.set(groupId, video);
+      const groupId = String(
+        group.id ?? video.operationGroup ?? video.group ?? video.pool ?? "",
+      );
+      if (groupId && !videoByGroup.has(groupId))
+        videoByGroup.set(groupId, video);
     }
     const recipientsByGroup = new Map<string, UnifiedDeliveryRecipient[]>();
     for (const member of sourceMembers) {
@@ -203,22 +237,51 @@ export async function getUnifiedDeliveryPanelData(): Promise<UnifiedDeliveryRow[
       const intent = record(member.donationIntent);
       const recipients = recipientsByGroup.get(groupId) ?? [];
       recipients.push({
-        id: String(member.id ?? `${groupId}-${member.unitIndex ?? recipients.length + 1}`),
+        id: String(
+          member.id ??
+            `${groupId}-${member.unitIndex ?? recipients.length + 1}`,
+        ),
         name: text(participant.name ?? intent.donorName, "İsimsiz alıcı"),
         maskedPhone: maskPhone(
-          participant.effectivePhone ??
-            participant.phone ??
-            intent.phone,
+          participant.effectivePhone ?? participant.phone ?? intent.phone,
         ),
         unitIndex: Number(member.unitIndex ?? recipients.length + 1),
         status,
       });
       recipientsByGroup.set(groupId, recipients);
     }
-    const groupById = new Map(sourceGroups.map((group) => [String(group.id ?? ""), group]));
-    const messageRows: UnifiedDeliveryRow[] = sourceMessages.map((message) => {
-      const relation = record(message.operationGroup ?? message.group ?? message.pool);
-      const groupId = String(relation.id ?? message.operationGroup ?? message.group ?? message.pool ?? "");
+    const groupById = new Map(
+      sourceGroups.map((group) => [String(group.id ?? ""), group]),
+    );
+    const latestMessageByGroup = new Map<string, LooseRecord>();
+    for (const message of sourceMessages) {
+      if (message.isTest === true) continue;
+      const relation = record(
+        message.operationGroup ?? message.group ?? message.pool,
+      );
+      const groupId = String(
+        relation.id ??
+          message.operationGroup ??
+          message.group ??
+          message.pool ??
+          "",
+      );
+      if (groupId && !latestMessageByGroup.has(groupId))
+        latestMessageByGroup.set(groupId, message);
+    }
+    const messageRows: UnifiedDeliveryRow[] = [
+      ...latestMessageByGroup.values(),
+    ].map((message) => {
+      const relation = record(
+        message.operationGroup ?? message.group ?? message.pool,
+      );
+      const groupId = String(
+        relation.id ??
+          message.operationGroup ??
+          message.group ??
+          message.pool ??
+          "",
+      );
       const group = groupById.get(groupId) ?? relation;
       const video = videoByGroup.get(groupId) ?? {};
       return {
@@ -235,43 +298,43 @@ export async function getUnifiedDeliveryPanelData(): Promise<UnifiedDeliveryRow[
         recipients: recipientsByGroup.get(groupId) ?? [],
       };
     });
-    const groupIdsWithMessages = new Set(sourceMessages.map((message) => {
-      const relation = record(message.operationGroup ?? message.group ?? message.pool);
-      return String(relation.id ?? message.operationGroup ?? message.group ?? message.pool ?? "");
-    }));
+    const groupIdsWithMessages = new Set(latestMessageByGroup.keys());
     const waitingRows: UnifiedDeliveryRow[] = sourceGroups
-    .filter((group) => !groupIdsWithMessages.has(String(group.id ?? "")))
-    .map((group) => {
-      const groupId = String(group.id ?? "");
-      const video = videoByGroup.get(groupId) ?? {};
-      const recipients = recipientsByGroup.get(groupId) ?? [];
-      const confirmedCount = recipients.filter(
-        (recipient) => recipient.status === "confirmed",
-      ).length;
-      const reservedCount = recipients.filter(
-        (recipient) => recipient.status === "reserved",
-      ).length;
-      const recipientSummary = recipients.length
-        ? `${recipients.length} alıcı${
-            reservedCount
-              ? ` (${confirmedCount} onaylı, ${reservedCount} ödeme bekliyor)`
-              : ` (${confirmedCount} onaylı)`
-          }`
-        : "Aktif alıcı yok";
-      return {
-        id: `${source}-group-${groupId}`,
-        groupId,
-        messageId: null,
-        messageBody: "",
-        groupCode: text(group.code ?? group.operationCode, "Grup bekliyor"),
-        campaign: relationTitle(group.campaign ?? group.product, "Video operasyonu"),
-        recipient: recipientSummary,
-        status: text(group.status, "draft"),
-        videoStatus: text(video.status, "waiting"),
-        updatedAt: text(group.updatedAt ?? group.createdAt),
-        recipients,
-      };
-    });
+      .filter((group) => !groupIdsWithMessages.has(String(group.id ?? "")))
+      .map((group) => {
+        const groupId = String(group.id ?? "");
+        const video = videoByGroup.get(groupId) ?? {};
+        const recipients = recipientsByGroup.get(groupId) ?? [];
+        const confirmedCount = recipients.filter(
+          (recipient) => recipient.status === "confirmed",
+        ).length;
+        const reservedCount = recipients.filter(
+          (recipient) => recipient.status === "reserved",
+        ).length;
+        const recipientSummary = recipients.length
+          ? `${recipients.length} alıcı${
+              reservedCount
+                ? ` (${confirmedCount} onaylı, ${reservedCount} ödeme bekliyor)`
+                : ` (${confirmedCount} onaylı)`
+            }`
+          : "Aktif alıcı yok";
+        return {
+          id: `${source}-group-${groupId}`,
+          groupId,
+          messageId: null,
+          messageBody: "",
+          groupCode: text(group.code ?? group.operationCode, "Grup bekliyor"),
+          campaign: relationTitle(
+            group.campaign ?? group.product,
+            "Video operasyonu",
+          ),
+          recipient: recipientSummary,
+          status: text(group.status, "draft"),
+          videoStatus: text(video.status, "waiting"),
+          updatedAt: text(group.updatedAt ?? group.createdAt),
+          recipients,
+        };
+      });
     return [...messageRows, ...waitingRows];
   }
 

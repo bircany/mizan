@@ -4,7 +4,6 @@ import { createHash, randomUUID } from "node:crypto";
 
 import type { Payload } from "payload";
 
-import { sendDeliveryWhatsApp } from "@/lib/delivery/evolution";
 import { issueDonorVideoToken } from "@/lib/delivery/tokens";
 import {
   interpolateDeliveryTemplate,
@@ -29,28 +28,42 @@ function phoneHash(phone: string) {
 
 function publicBaseUrl() {
   ensureLocalEnvLoaded();
-  const value = process.env.NEXT_PUBLIC_BASE_URL?.trim() || "http://localhost:3000";
+  const value =
+    process.env.NEXT_PUBLIC_BASE_URL?.trim() || "http://localhost:3000";
   return value.replace(/\/$/, "");
 }
 
 function recipientFrom(member: AnyDoc) {
   const participant =
-    typeof member.participant === "object" && member.participant ? member.participant : null;
-  const donation = typeof member.donation === "object" && member.donation ? member.donation : null;
-  const consent = Boolean(participant?.isPayer) || (
-    participant?.communicationConsent ??
-    participant?.whatsappConsent ??
-    participant?.contactConsent ??
-    true
-  );
+    typeof member.participant === "object" && member.participant
+      ? member.participant
+      : null;
+  const donation =
+    typeof member.donation === "object" && member.donation
+      ? member.donation
+      : null;
+  const consent =
+    Boolean(participant?.isPayer) ||
+    (participant?.communicationConsent ??
+      participant?.whatsappConsent ??
+      participant?.contactConsent ??
+      true);
   if (!consent) return null;
   const phone = normalizePhone(
-    participant?.effectivePhone || participant?.phone || member.recipientPhone || donation?.phone,
+    participant?.effectivePhone ||
+      participant?.phone ||
+      member.recipientPhone ||
+      donation?.phone,
   );
   if (!phone) return null;
   return {
     phone,
-    name: String(participant?.name || participant?.fullName || donation?.donorName || "Bağışçımız"),
+    name: String(
+      participant?.name ||
+        participant?.fullName ||
+        donation?.donorName ||
+        "Bağışçımız",
+    ),
     donationId: relationId(member.donation),
     participantId: relationId(member.participant),
     memberId: String(member.id),
@@ -85,10 +98,7 @@ export async function prepareDeliveryDrafts(
   const videos = await api.find({
     collection: "operation-videos",
     where: {
-      and: [
-        { group: { equals: groupId } },
-        { status: { equals: "ready" } },
-      ],
+      and: [{ group: { equals: groupId } }, { status: { equals: "ready" } }],
     },
     sort: "-version",
     limit: 1,
@@ -114,7 +124,8 @@ export async function prepareDeliveryDrafts(
   const unique = new Map<string, ReturnType<typeof recipientFrom>>();
   for (const member of members.docs) {
     const recipient = recipientFrom(member);
-    if (recipient && !unique.has(recipient.phone)) unique.set(recipient.phone, recipient);
+    if (recipient && !unique.has(recipient.phone))
+      unique.set(recipient.phone, recipient);
   }
 
   const template = String(
@@ -156,16 +167,19 @@ export async function prepareDeliveryDrafts(
         channel: "whatsapp",
         recipientPhone: recipient.phone,
         recipientPhoneHash: hash,
-        body: `${options.correction ? "Düzeltme videosu: " : ""}${interpolateDeliveryTemplate(template, {
-          name: recipient.name,
-          ad: recipient.name,
-          campaign: campaignName,
-          kampanya: campaignName,
-          groupCode: String(group.code || ""),
-          grup_kodu: String(group.code || ""),
-          videoUrl,
-          video_linki: videoUrl,
-        })}`,
+        body: `${options.correction ? "Düzeltme videosu: " : ""}${interpolateDeliveryTemplate(
+          template,
+          {
+            name: recipient.name,
+            ad: recipient.name,
+            campaign: campaignName,
+            kampanya: campaignName,
+            groupCode: String(group.code || ""),
+            grup_kodu: String(group.code || ""),
+            videoUrl,
+            video_linki: videoUrl,
+          },
+        )}`,
         idempotencyKey,
         status: "draft",
         attemptCount: 0,
@@ -191,11 +205,15 @@ export async function queueDeliveryDrafts(
     depth: 0,
     overrideAccess: true,
   });
-  if (group.dispatchState === "running") throw new Error("Bu grubun gönderimi zaten sürüyor.");
+  if (group.dispatchState === "running")
+    throw new Error("Bu grubun gönderimi zaten sürüyor.");
   const drafts = await api.find({
     collection: "delivery-messages",
     where: {
-      and: [{ group: { equals: groupId } }, { status: { in: ["draft", "paused", "failed"] } }],
+      and: [
+        { group: { equals: groupId } },
+        { status: { in: ["draft", "paused", "failed"] } },
+      ],
     },
     sort: "id",
     limit: 10_000,
@@ -216,7 +234,9 @@ export async function queueDeliveryDrafts(
       data: {
         status: "queued",
         dispatchBatchId: batchId,
-        scheduledAt: new Date(startAt + index * Math.max(1, delaySeconds) * 1000).toISOString(),
+        scheduledAt: new Date(
+          startAt + index * Math.max(1, delaySeconds) * 1000,
+        ).toISOString(),
         lockedAt: null,
         lockedBy: null,
         lastError: null,
@@ -227,17 +247,30 @@ export async function queueDeliveryDrafts(
   await api.update({
     collection: "operation-groups",
     id: groupId,
-    data: { dispatchState: "countdown", dispatchLockedAt: null, dispatchLockedBy: null },
+    data: {
+      dispatchState: "countdown",
+      dispatchLockedAt: null,
+      dispatchLockedBy: null,
+    },
     overrideAccess: true,
   });
-  return { batchId, queued: drafts.docs.length, cancelUntil: new Date(startAt).toISOString() };
+  return {
+    batchId,
+    queued: drafts.docs.length,
+    cancelUntil: new Date(startAt).toISOString(),
+  };
 }
 
-export async function pauseDeliveryGroup(payload: Payload, groupId: string | number) {
+export async function pauseDeliveryGroup(
+  payload: Payload,
+  groupId: string | number,
+) {
   const api = cms(payload);
   const queued = await api.find({
     collection: "delivery-messages",
-    where: { and: [{ group: { equals: groupId } }, { status: { equals: "queued" } }] },
+    where: {
+      and: [{ group: { equals: groupId } }, { status: { equals: "queued" } }],
+    },
     limit: 10_000,
     depth: 0,
     overrideAccess: true,
@@ -267,12 +300,18 @@ export async function resumeDeliveryGroup(
   return queueDeliveryDrafts(payload, groupId, delaySeconds);
 }
 
-export async function cancelDeliveryGroup(payload: Payload, groupId: string | number) {
+export async function cancelDeliveryGroup(
+  payload: Payload,
+  groupId: string | number,
+) {
   const api = cms(payload);
   const pending = await api.find({
     collection: "delivery-messages",
     where: {
-      and: [{ group: { equals: groupId } }, { status: { in: ["draft", "queued", "paused", "failed"] } }],
+      and: [
+        { group: { equals: groupId } },
+        { status: { in: ["draft", "queued", "paused", "failed"] } },
+      ],
     },
     limit: 10_000,
     depth: 0,
@@ -289,13 +328,20 @@ export async function cancelDeliveryGroup(payload: Payload, groupId: string | nu
   await api.update({
     collection: "operation-groups",
     id: groupId,
-    data: { dispatchState: "cancelled", dispatchLockedAt: null, dispatchLockedBy: null },
+    data: {
+      dispatchState: "cancelled",
+      dispatchLockedAt: null,
+      dispatchLockedBy: null,
+    },
     overrideAccess: true,
   });
   return pending.docs.length;
 }
 
-export async function deliverClaimedMessage(payload: Payload, messageId: string | number) {
+export async function retryDeliveryMessage(
+  payload: Payload,
+  messageId: string | number,
+) {
   const api = cms(payload);
   const message = await api.findByID({
     collection: "delivery-messages",
@@ -303,60 +349,8 @@ export async function deliverClaimedMessage(payload: Payload, messageId: string 
     depth: 0,
     overrideAccess: true,
   });
-  if (message.status !== "sending") return { skipped: true };
-  const result = await sendDeliveryWhatsApp(String(message.recipientPhone || ""), String(message.body || ""));
-  await api.update({
-    collection: "delivery-messages",
-    id: message.id,
-    data: {
-      status: "sent",
-      providerMessageId: result.providerMessageId,
-      sentAt: new Date().toISOString(),
-      lockedAt: null,
-      lockedBy: null,
-      lastError: null,
-    },
-    overrideAccess: true,
-  });
-  const groupId = relationId(message.group);
-  await api.update({
-    collection: "operation-groups",
-    id: groupId,
-    data: { dispatchState: "sending" },
-    overrideAccess: true,
-  });
-  const pending = await api.find({
-    collection: "delivery-messages",
-    where: {
-      and: [
-        { group: { equals: groupId } },
-        { status: { in: ["draft", "queued", "paused", "sending", "failed"] } },
-      ],
-    },
-    limit: 1,
-    depth: 0,
-    overrideAccess: true,
-  });
-  if (!pending.docs[0]) {
-    await api.update({
-      collection: "operation-groups",
-      id: groupId,
-      data: { dispatchState: "completed", dispatchLockedAt: null, dispatchLockedBy: null },
-      overrideAccess: true,
-    });
-  }
-  return { skipped: false, providerMessageId: result.providerMessageId };
-}
-
-export async function retryDeliveryMessage(payload: Payload, messageId: string | number) {
-  const api = cms(payload);
-  const message = await api.findByID({
-    collection: "delivery-messages",
-    id: messageId,
-    depth: 0,
-    overrideAccess: true,
-  });
-  if (message.status !== "failed") throw new Error("Yalnızca başarısız mesaj yeniden denenebilir.");
+  if (message.status !== "failed")
+    throw new Error("Yalnızca başarısız mesaj yeniden denenebilir.");
   await api.update({
     collection: "delivery-messages",
     id: message.id,
@@ -402,11 +396,16 @@ export async function markDeliveryFailure(
       attemptCount: attempts,
       scheduledAt: terminal
         ? message.scheduledAt
-        : new Date(Date.now() + Math.min(3600, 30 * 2 ** attempts) * 1000).toISOString(),
+        : new Date(
+            Date.now() + Math.min(3600, 30 * 2 ** attempts) * 1000,
+          ).toISOString(),
       failedAt: terminal ? new Date().toISOString() : null,
       lockedAt: null,
       lockedBy: null,
-      lastError: error instanceof Error ? error.message.slice(0, 1000) : "Mesaj gönderim hatası.",
+      lastError:
+        error instanceof Error
+          ? error.message.slice(0, 1000)
+          : "Mesaj gönderim hatası.",
     },
     overrideAccess: true,
   });
@@ -415,7 +414,11 @@ export async function markDeliveryFailure(
     await api.update({
       collection: "operation-groups",
       id: groupId,
-      data: { dispatchState: "failed", dispatchLockedAt: null, dispatchLockedBy: null },
+      data: {
+        dispatchState: "failed",
+        dispatchLockedAt: null,
+        dispatchLockedBy: null,
+      },
       overrideAccess: true,
     });
   }

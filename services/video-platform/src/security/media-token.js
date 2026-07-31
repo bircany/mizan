@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { HttpError } from "../errors.js";
 import { decodeBase64Url, encodeBase64Url, parseJsonBuffer } from "./encoding.js";
 
-const allowedPurposes = new Set(["stream", "download"]);
+const allowedPurposes = new Set(["stream", "download", "review"]);
 
 function signatureFor(payloadPart, secret) {
   return createHmac("sha256", secret).update(payloadPart).digest();

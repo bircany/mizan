@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Check, Copy, Landmark, Phone } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
+import { InternationalPhoneField } from "@/components/international-phone-field";
 import { useCart } from "@/lib/cart-context";
 import {
   formatIban,
@@ -17,7 +18,10 @@ import {
   getMaximumCardQuantity,
   isIyzicoAmountAllowed,
 } from "@/lib/payments/limits";
-import { isValidTurkishIdentityNumber, normalizeTurkishIdentityNumber } from "@/lib/turkish-identity";
+import {
+  isValidTurkishIdentityNumber,
+  normalizeTurkishIdentityNumber,
+} from "@/lib/turkish-identity";
 import { formatCurrency } from "@/lib/utils";
 
 type CountryOption = { code: string; name: string };
@@ -52,6 +56,9 @@ export default function PaymentForm({
   });
   const [participantNames, setParticipantNames] = useState<string[]>([]);
   const [participantPhones, setParticipantPhones] = useState<string[]>([]);
+  const [participantPhoneCountries, setParticipantPhoneCountries] = useState<
+    string[]
+  >([]);
   const [copiedIban, setCopiedIban] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -79,7 +86,9 @@ export default function PaymentForm({
     : null;
 
   function updateField(
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+    event: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) {
     const { name, type, value } = event.target;
     const checked = (event.target as HTMLInputElement).checked;
@@ -93,14 +102,18 @@ export default function PaymentForm({
   function updateIdentityNumber(event: React.ChangeEvent<HTMLInputElement>) {
     setForm((current) => ({
       ...current,
-      tcKimlik: current.countryCode === "TR"
-        ? normalizeTurkishIdentityNumber(event.target.value).slice(0, 11)
-        : event.target.value.slice(0, 30),
+      tcKimlik:
+        current.countryCode === "TR"
+          ? normalizeTurkishIdentityNumber(event.target.value).slice(0, 11)
+          : event.target.value.slice(0, 30),
     }));
   }
 
-  function updateCountry(event: React.ChangeEvent<HTMLSelectElement>) {
-    setForm((current) => ({ ...current, countryCode: event.target.value, tcKimlik: "" }));
+  function updateCountry(countryCode: string) {
+    setForm((current) => ({ ...current, countryCode, tcKimlik: "" }));
+    setParticipantPhoneCountries((current) =>
+      current.map((value) => value || countryCode),
+    );
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -129,23 +142,33 @@ export default function PaymentForm({
       return;
     }
 
-    if (form.countryCode === "TR" && !isValidTurkishIdentityNumber(form.tcKimlik)) {
+    if (
+      form.countryCode === "TR" &&
+      !isValidTurkishIdentityNumber(form.tcKimlik)
+    ) {
       setSubmitError("Geçerli bir T.C. Kimlik No girin.");
       return;
     }
 
-    if (form.countryCode !== "TR" && !/^[A-Za-z0-9][A-Za-z0-9 -]{4,29}$/.test(form.tcKimlik)) {
+    if (
+      form.countryCode !== "TR" &&
+      !/^[A-Za-z0-9][A-Za-z0-9 -]{4,29}$/.test(form.tcKimlik)
+    ) {
       setSubmitError("Geçerli bir pasaport veya ulusal kimlik numarası girin.");
       return;
     }
 
     if (items.some((item) => item.campaignId !== items[0]?.campaignId)) {
-      setSubmitError("Bu sürümde her ödeme işlemi tek bir bağış alanı için başlatılabilir.");
+      setSubmitError(
+        "Bu sürümde her ödeme işlemi tek bir bağış alanı için başlatılabilir.",
+      );
       return;
     }
 
     if (items.some((item) => item.isRecurring)) {
-      setSubmitError("Düzenli bağış tahsilatı henüz kullanıma açılmadı. Lütfen tek seferlik bağış seçin.");
+      setSubmitError(
+        "Düzenli bağış tahsilatı henüz kullanıma açılmadı. Lütfen tek seferlik bağış seçin.",
+      );
       return;
     }
 
@@ -160,6 +183,9 @@ export default function PaymentForm({
             phone: form.ownIdentity
               ? undefined
               : participantPhones[index]?.trim() || undefined,
+            phoneCountryCode: form.ownIdentity
+              ? form.countryCode
+              : participantPhoneCountries[index] || form.countryCode,
             useBuyerIdentity: form.ownIdentity,
           }))
         : [];
@@ -221,7 +247,9 @@ export default function PaymentForm({
 
       throw new Error("iyzico ödeme formu dönmedi.");
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "Ödeme başlatılamadı.");
+      setSubmitError(
+        error instanceof Error ? error.message : "Ödeme başlatılamadı.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -234,9 +262,13 @@ export default function PaymentForm({
           className="rounded-[28px] border border-white/70 bg-white/90 p-6 shadow-ambient"
           onSubmit={handleSubmit}
         >
-          <p className="text-label-sm uppercase tracking-[0.28em] text-primary">Güvenli Ödeme</p>
+          <p className="text-label-sm uppercase tracking-[0.28em] text-primary">
+            Güvenli Ödeme
+          </p>
           <h1 className="mt-3 text-headline-xl text-on-surface">
-            {form.paymentMethod === "card" ? "Bağışçı Bilgileri" : "EFT / Havale ile Bağış"}
+            {form.paymentMethod === "card"
+              ? "Bağışçı Bilgileri"
+              : "EFT / Havale ile Bağış"}
           </h1>
           <p className="mt-3 text-body-md text-on-surface-variant">
             {form.paymentMethod === "card"
@@ -247,9 +279,12 @@ export default function PaymentForm({
           <div className="mt-8 rounded-[24px] border border-outline-variant bg-surface p-5">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-label-md font-semibold text-on-surface">Ödeme Yöntemi</p>
+                <p className="text-label-md font-semibold text-on-surface">
+                  Ödeme Yöntemi
+                </p>
                 <p className="mt-1 text-sm text-on-surface-variant">
-                  Kart ödemesi çevrim içi alınır; EFT/Havale işlemini dernek görevlisi birebir yürütür.
+                  Kart ödemesi çevrim içi alınır; EFT/Havale işlemini dernek
+                  görevlisi birebir yürütür.
                 </p>
               </div>
               {form.paymentMethod === "card" ? (
@@ -293,200 +328,222 @@ export default function PaymentForm({
           </div>
 
           {form.paymentMethod === "card" ? (
-          <>
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
-            <label className="block">
-              <span className="mb-2 block text-label-md text-on-surface-variant">Ad <span className="text-error">*</span></span>
-              <input
-                autoComplete="given-name"
-                className="w-full rounded-2xl border border-outline-variant bg-surface p-4"
-                name="firstName"
-                onChange={updateField}
-                required
-                value={form.firstName}
-              />
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-label-md text-on-surface-variant">Soyad <span className="text-error">*</span></span>
-              <input
-                autoComplete="family-name"
-                className="w-full rounded-2xl border border-outline-variant bg-surface p-4"
-                name="lastName"
-                onChange={updateField}
-                required
-                value={form.lastName}
-              />
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-label-md text-on-surface-variant">E-posta</span>
-              <input
-                autoComplete="email"
-                className="w-full rounded-2xl border border-outline-variant bg-surface p-4"
-                name="email"
-                onChange={updateField}
-                required
-                type="email"
-                value={form.email}
-              />
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-label-md text-on-surface-variant">Telefon</span>
-              <input
-                autoComplete="tel"
-                className="w-full rounded-2xl border border-outline-variant bg-surface p-4"
-                name="phone"
-                onChange={updateField}
-                required
-                type="tel"
-                value={form.phone}
-              />
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-label-md text-on-surface-variant">{form.countryCode === "TR" ? "T.C. Kimlik No" : "Pasaport / Ulusal Kimlik No"} <span className="text-error">*</span></span>
-              <input
-                autoComplete="off"
-                className="w-full rounded-2xl border border-outline-variant bg-surface p-4"
-                inputMode={form.countryCode === "TR" ? "numeric" : "text"}
-                maxLength={form.countryCode === "TR" ? 11 : 30}
-                name="tcKimlik"
-                onChange={updateIdentityNumber}
-                pattern={form.countryCode === "TR" ? "[0-9]{11}" : "[A-Za-z0-9 -]{5,30}"}
-                required
-                value={form.tcKimlik}
-              />
-              <span className="mt-2 block text-xs text-on-surface-variant">{form.countryCode === "TR" ? "11 haneli T.C. Kimlik Numaranızı girin." : "Pasaport veya ülkenizde geçerli ulusal kimlik numaranızı girin."}</span>
-            </label>
-            <label className="block md:col-span-2">
-              <span className="mb-2 block text-label-md text-on-surface-variant">Ülke <span className="text-error">*</span></span>
-              <select
-                autoComplete="country-name"
-                className="w-full rounded-2xl border border-outline-variant bg-surface p-4"
-                name="countryCode"
-                onChange={updateCountry}
-                required
-                value={form.countryCode}
-              >
-                {countries.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}
-              </select>
-            </label>
-            <label className="block md:col-span-2">
-              <span className="mb-2 block text-label-md text-on-surface-variant">Şehir <span className="text-error">*</span></span>
-              <input
-                autoComplete="address-level2"
-                className="w-full rounded-2xl border border-outline-variant bg-surface p-4"
-                name="city"
-                onChange={updateField}
-                required
-                value={form.city}
-              />
-            </label>
-          </div>
-
-          <label className="mt-4 block">
-            <span className="mb-2 block text-label-md text-on-surface-variant">Adres</span>
-            <textarea
-              className="min-h-28 w-full rounded-2xl border border-outline-variant bg-surface p-4"
-              name="address"
-              onChange={updateField}
-              required
-              value={form.address}
-            />
-          </label>
-
-          <label className="mt-4 block">
-            <span className="mb-2 block text-label-md text-on-surface-variant">Bağış Notu</span>
-            <textarea
-              className="min-h-28 w-full rounded-2xl border border-outline-variant bg-surface p-4"
-              name="donationNote"
-              onChange={updateField}
-              value={form.donationNote}
-            />
-          </label>
-
-          {checkoutItem?.participantRequired ? (
-            <div className="mt-6 rounded-[24px] border border-outline-variant bg-surface p-5">
-              <label className="flex items-center gap-3 text-sm font-semibold text-on-surface">
-                <input
-                  checked={form.ownIdentity}
-                  name="ownIdentity"
-                  onChange={updateField}
-                  type="checkbox"
+            <>
+              <div className="mt-8 grid gap-4 md:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-label-md text-on-surface-variant">
+                    Ad <span className="text-error">*</span>
+                  </span>
+                  <input
+                    autoComplete="given-name"
+                    className="w-full rounded-2xl border border-outline-variant bg-surface p-4"
+                    name="firstName"
+                    onChange={updateField}
+                    required
+                    value={form.firstName}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-label-md text-on-surface-variant">
+                    Soyad <span className="text-error">*</span>
+                  </span>
+                  <input
+                    autoComplete="family-name"
+                    className="w-full rounded-2xl border border-outline-variant bg-surface p-4"
+                    name="lastName"
+                    onChange={updateField}
+                    required
+                    value={form.lastName}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-label-md text-on-surface-variant">
+                    E-posta
+                  </span>
+                  <input
+                    autoComplete="email"
+                    className="w-full rounded-2xl border border-outline-variant bg-surface p-4"
+                    name="email"
+                    onChange={updateField}
+                    required
+                    type="email"
+                    value={form.email}
+                  />
+                </label>
+                <InternationalPhoneField
+                  className="md:col-span-2"
+                  countries={countries}
+                  countryCode={form.countryCode}
+                  nationalNumber={form.phone}
+                  onCountryChange={updateCountry}
+                  onNumberChange={(phone) =>
+                    setForm((current) => ({ ...current, phone }))
+                  }
                 />
-                Tüm hisse/adetleri kendi adıma alıyorum
+                <label className="block">
+                  <span className="mb-2 block text-label-md text-on-surface-variant">
+                    {form.countryCode === "TR"
+                      ? "T.C. Kimlik No"
+                      : "Pasaport / Ulusal Kimlik No"}{" "}
+                    <span className="text-error">*</span>
+                  </span>
+                  <input
+                    autoComplete="off"
+                    className="w-full rounded-2xl border border-outline-variant bg-surface p-4"
+                    inputMode={form.countryCode === "TR" ? "numeric" : "text"}
+                    maxLength={form.countryCode === "TR" ? 11 : 30}
+                    name="tcKimlik"
+                    onChange={updateIdentityNumber}
+                    pattern={
+                      form.countryCode === "TR"
+                        ? "[0-9]{11}"
+                        : "[A-Za-z0-9 -]{5,30}"
+                    }
+                    required
+                    value={form.tcKimlik}
+                  />
+                  <span className="mt-2 block text-xs text-on-surface-variant">
+                    {form.countryCode === "TR"
+                      ? "11 haneli T.C. Kimlik Numaranızı girin."
+                      : "Pasaport veya ülkenizde geçerli ulusal kimlik numaranızı girin."}
+                  </span>
+                </label>
+                <label className="block md:col-span-2">
+                  <span className="mb-2 block text-label-md text-on-surface-variant">
+                    Şehir <span className="text-error">*</span>
+                  </span>
+                  <input
+                    autoComplete="address-level2"
+                    className="w-full rounded-2xl border border-outline-variant bg-surface p-4"
+                    name="city"
+                    onChange={updateField}
+                    required
+                    value={form.city}
+                  />
+                </label>
+              </div>
+
+              <label className="mt-4 block">
+                <span className="mb-2 block text-label-md text-on-surface-variant">
+                  Adres
+                </span>
+                <textarea
+                  className="min-h-28 w-full rounded-2xl border border-outline-variant bg-surface p-4"
+                  name="address"
+                  onChange={updateField}
+                  required
+                  value={form.address}
+                />
               </label>
-              {!form.ownIdentity ? (
-                <div className="mt-4 grid gap-3">
-                  {Array.from(
-                    { length: checkoutItem.quantity },
-                    (_, index) => participantNames[index] || "",
-                  ).map((name, index) => (
-                    <div className="grid gap-3 md:grid-cols-2" key={index}>
-                      <label className="block">
-                        <span className="mb-2 block text-sm text-on-surface-variant">
-                          {index + 1}. katılımcı / vekâlet sahibi
-                        </span>
-                        <input
-                          className="w-full rounded-2xl border border-outline-variant bg-white p-4"
-                          onChange={(event) =>
-                            setParticipantNames((current) => {
-                              const next = Array.from(
-                                { length: checkoutItem.quantity },
-                                (_, itemIndex) => current[itemIndex] || "",
-                              );
-                              next[index] = event.target.value;
-                              return next;
-                            })
-                          }
-                          required
-                          value={name}
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="mb-2 block text-sm text-on-surface-variant">
-                          WhatsApp telefonu (isteğe bağlı)
-                        </span>
-                        <input
-                          className="w-full rounded-2xl border border-outline-variant bg-white p-4"
-                          onChange={(event) =>
-                            setParticipantPhones((current) => {
-                              const next = Array.from(
-                                { length: checkoutItem.quantity },
-                                (_, itemIndex) => current[itemIndex] || "",
-                              );
-                              next[index] = event.target.value;
-                              return next;
-                            })
-                          }
-                          type="tel"
-                          value={participantPhones[index] || ""}
-                        />
-                      </label>
-                    </div>
-                  ))}
-                  <label className="flex items-start gap-3 text-sm text-on-surface">
+
+              <label className="mt-4 block">
+                <span className="mb-2 block text-label-md text-on-surface-variant">
+                  Bağış Notu
+                </span>
+                <textarea
+                  className="min-h-28 w-full rounded-2xl border border-outline-variant bg-surface p-4"
+                  name="donationNote"
+                  onChange={updateField}
+                  value={form.donationNote}
+                />
+              </label>
+
+              {checkoutItem?.participantRequired ? (
+                <div className="mt-6 rounded-[24px] border border-outline-variant bg-surface p-5">
+                  <label className="flex items-center gap-3 text-sm font-semibold text-on-surface">
                     <input
-                      checked={form.thirdPartyContact}
-                      name="thirdPartyContact"
+                      checked={form.ownIdentity}
+                      name="ownIdentity"
                       onChange={updateField}
                       type="checkbox"
                     />
-                    Katılımcıların telefonlarını WhatsApp video teslimatı için paylaşmaya yetkiliyim.
+                    Tüm hisse/adetleri kendi adıma alıyorum
+                  </label>
+                  {!form.ownIdentity ? (
+                    <div className="mt-4 grid gap-3">
+                      {Array.from(
+                        { length: checkoutItem.quantity },
+                        (_, index) => participantNames[index] || "",
+                      ).map((name, index) => (
+                        <div className="grid gap-3 md:grid-cols-2" key={index}>
+                          <label className="block">
+                            <span className="mb-2 block text-sm text-on-surface-variant">
+                              {index + 1}. katılımcı / vekâlet sahibi
+                            </span>
+                            <input
+                              className="w-full rounded-2xl border border-outline-variant bg-white p-4"
+                              onChange={(event) =>
+                                setParticipantNames((current) => {
+                                  const next = Array.from(
+                                    { length: checkoutItem.quantity },
+                                    (_, itemIndex) => current[itemIndex] || "",
+                                  );
+                                  next[index] = event.target.value;
+                                  return next;
+                                })
+                              }
+                              required
+                              value={name}
+                            />
+                          </label>
+                          <InternationalPhoneField
+                            className="sm:col-span-2"
+                            countries={countries}
+                            countryCode={
+                              participantPhoneCountries[index] ||
+                              form.countryCode
+                            }
+                            nationalNumber={participantPhones[index] || ""}
+                            onCountryChange={(countryCode) =>
+                              setParticipantPhoneCountries((current) => {
+                                const next = Array.from(
+                                  { length: checkoutItem.quantity },
+                                  (_, itemIndex) =>
+                                    current[itemIndex] || form.countryCode,
+                                );
+                                next[index] = countryCode;
+                                return next;
+                              })
+                            }
+                            onNumberChange={(phone) =>
+                              setParticipantPhones((current) => {
+                                const next = Array.from(
+                                  { length: checkoutItem.quantity },
+                                  (_, itemIndex) => current[itemIndex] || "",
+                                );
+                                next[index] = phone;
+                                return next;
+                              })
+                            }
+                            phoneLabel="WhatsApp telefonu (isteğe bağlı)"
+                            required={false}
+                          />
+                        </div>
+                      ))}
+                      <label className="flex items-start gap-3 text-sm text-on-surface">
+                        <input
+                          checked={form.thirdPartyContact}
+                          name="thirdPartyContact"
+                          onChange={updateField}
+                          type="checkbox"
+                        />
+                        Katılımcıların telefonlarını WhatsApp video teslimatı
+                        için paylaşmaya yetkiliyim.
+                      </label>
+                    </div>
+                  ) : null}
+                  <label className="mt-4 flex items-center gap-3 text-sm text-on-surface">
+                    <input
+                      checked={form.powerOfAttorney}
+                      name="powerOfAttorney"
+                      onChange={updateField}
+                      type="checkbox"
+                    />
+                    Katılımcı/vekâlet şartlarını onaylıyorum.
                   </label>
                 </div>
               ) : null}
-              <label className="mt-4 flex items-center gap-3 text-sm text-on-surface">
-                <input
-                  checked={form.powerOfAttorney}
-                  name="powerOfAttorney"
-                  onChange={updateField}
-                  type="checkbox"
-                />
-                Katılımcı/vekâlet şartlarını onaylıyorum.
-              </label>
-            </div>
-          ) : null}
-
-          </>
+            </>
           ) : null}
 
           {form.paymentMethod === "eft" ? (
@@ -505,48 +562,111 @@ export default function PaymentForm({
           ) : null}
 
           {form.paymentMethod === "card" ? (
-          <div className="mt-6 space-y-4 rounded-[24px] border border-outline-variant bg-white p-5">
-            <label className="flex cursor-pointer items-center gap-3 text-sm text-on-surface">
-              <input checked={form.taxReceipt} className="size-4 rounded border-outline-variant accent-primary" name="taxReceipt" onChange={updateField} type="checkbox" />
-              Bağış makbuzu istiyorum.
-            </label>
-            <label className="flex cursor-pointer items-center gap-3 text-sm text-on-surface">
-              <input checked={form.kvkk} className="size-4 rounded border-outline-variant accent-primary" name="kvkk" onChange={updateField} type="checkbox" />
-              <span><Link className="underline underline-offset-2 hover:text-primary" href="/kvkk-aydinlatma-metni" target="_blank">KVKK Aydınlatma Metni</Link>&apos;ni okudum.</span>
-            </label>
-            <label className="flex cursor-pointer items-center gap-3 text-sm text-on-surface">
-              <input checked={form.terms} className="size-4 rounded border-outline-variant accent-primary" name="terms" onChange={updateField} type="checkbox" />
-              <span><Link className="underline underline-offset-2 hover:text-primary" href="/bagis-ve-destek-sartlari" target="_blank">Bağış ve Destek Şartları</Link> ile <Link className="underline underline-offset-2 hover:text-primary" href="/kullanim-kosullari" target="_blank">Kullanım Koşulları</Link>&apos;nı kabul ediyorum.</span>
-            </label>
-          </div>
+            <div className="mt-6 space-y-4 rounded-[24px] border border-outline-variant bg-white p-5">
+              <label className="flex cursor-pointer items-center gap-3 text-sm text-on-surface">
+                <input
+                  checked={form.taxReceipt}
+                  className="size-4 rounded border-outline-variant accent-primary"
+                  name="taxReceipt"
+                  onChange={updateField}
+                  type="checkbox"
+                />
+                Bağış makbuzu istiyorum.
+              </label>
+              <label className="flex cursor-pointer items-center gap-3 text-sm text-on-surface">
+                <input
+                  checked={form.kvkk}
+                  className="size-4 rounded border-outline-variant accent-primary"
+                  name="kvkk"
+                  onChange={updateField}
+                  type="checkbox"
+                />
+                <span>
+                  <Link
+                    className="underline underline-offset-2 hover:text-primary"
+                    href="/kvkk-aydinlatma-metni"
+                    target="_blank"
+                  >
+                    KVKK Aydınlatma Metni
+                  </Link>
+                  &apos;ni okudum.
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-3 text-sm text-on-surface">
+                <input
+                  checked={form.terms}
+                  className="size-4 rounded border-outline-variant accent-primary"
+                  name="terms"
+                  onChange={updateField}
+                  type="checkbox"
+                />
+                <span>
+                  <Link
+                    className="underline underline-offset-2 hover:text-primary"
+                    href="/bagis-ve-destek-sartlari"
+                    target="_blank"
+                  >
+                    Bağış ve Destek Şartları
+                  </Link>{" "}
+                  ile{" "}
+                  <Link
+                    className="underline underline-offset-2 hover:text-primary"
+                    href="/kullanim-kosullari"
+                    target="_blank"
+                  >
+                    Kullanım Koşulları
+                  </Link>
+                  &apos;nı kabul ediyorum.
+                </span>
+              </label>
+            </div>
           ) : null}
 
-          {submitError ? <Alert className="mt-4" tone="error">{submitError}</Alert> : null}
+          {submitError ? (
+            <Alert className="mt-4" tone="error">
+              {submitError}
+            </Alert>
+          ) : null}
 
-          {form.paymentMethod === "card" ? <button
-            className="btn-primary mt-6 w-full justify-center"
-            disabled={isSubmitting || !items.length || cardLimitExceeded}
-            type="submit"
-          >
-            {isSubmitting ? "Ödeme Sayfası Hazırlanıyor..." : "Bağışımı Tamamla"}
-          </button> : null}
+          {form.paymentMethod === "card" ? (
+            <button
+              className="btn-primary mt-6 w-full justify-center"
+              disabled={isSubmitting || !items.length || cardLimitExceeded}
+              type="submit"
+            >
+              {isSubmitting
+                ? "Ödeme Sayfası Hazırlanıyor..."
+                : "Bağışımı Tamamla"}
+            </button>
+          ) : null}
         </form>
 
         <aside className="rounded-[28px] border border-white/70 bg-white/90 p-6 shadow-soft">
-          <p className="text-label-sm uppercase tracking-[0.28em] text-primary">Bağış Özeti</p>
+          <p className="text-label-sm uppercase tracking-[0.28em] text-primary">
+            Bağış Özeti
+          </p>
           <div className="mt-6 space-y-4">
             {items.length ? (
               items.map((item) => (
-                <div key={item.campaignId} className="rounded-2xl bg-surface p-4">
+                <div
+                  key={item.campaignId}
+                  className="rounded-2xl bg-surface p-4"
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-semibold text-on-surface">{item.title}</p>
+                      <p className="font-semibold text-on-surface">
+                        {item.title}
+                      </p>
                       <p className="mt-1 text-sm text-on-surface-variant">
-                        {item.quantity} adet {item.isRecurring ? "düzenli" : "tek sefer"}
+                        {item.quantity} adet{" "}
+                        {item.isRecurring ? "düzenli" : "tek sefer"}
                       </p>
                     </div>
                     <p className="font-semibold text-primary">
-                      {formatCurrency(item.amount * item.quantity, item.currency)}
+                      {formatCurrency(
+                        item.amount * item.quantity,
+                        item.currency,
+                      )}
                     </p>
                   </div>
                   {item.pricingModel === "fixed" ? (
@@ -615,14 +735,19 @@ export default function PaymentForm({
 
           <div className="mt-6 rounded-[24px] border border-dashed border-primary/30 bg-secondary-container/30 p-5">
             <div className="flex items-center justify-between">
-              <span className="text-label-md text-on-surface-variant">Toplam</span>
+              <span className="text-label-md text-on-surface-variant">
+                Toplam
+              </span>
               <strong className="text-headline-md text-primary">
-                {formatCurrency(totalAmount || 0, checkoutItem?.currency || "TRY")}
+                {formatCurrency(
+                  totalAmount || 0,
+                  checkoutItem?.currency || "TRY",
+                )}
               </strong>
             </div>
             <p className="mt-3 text-sm text-on-surface-variant">
-              Ödeme başarılı olsa bile sistem bağışı ancak iyzico retrieve ve webhook doğrulamasından
-              sonra kesinleştirir.
+              Ödeme başarılı olsa bile sistem bağışı ancak iyzico retrieve ve
+              webhook doğrulamasından sonra kesinleştirir.
             </p>
           </div>
         </aside>
@@ -657,13 +782,19 @@ function EftGuidancePanel({
       <div className="flex items-start gap-3">
         <Landmark className="mt-0.5 size-6 shrink-0 text-primary" />
         <div>
-          <h2 className="text-lg font-semibold text-on-surface">{guidance.title}</h2>
+          <h2 className="text-lg font-semibold text-on-surface">
+            {guidance.title}
+          </h2>
           <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-            EFT/Havale işlemleri dernek görevlisiyle birebir yürütülür. Bu ekranda
-            çevrim içi sipariş, stok rezervasyonu veya dekont kaydı oluşturulmaz.
+            EFT/Havale işlemleri dernek görevlisiyle birebir yürütülür. Bu
+            ekranda çevrim içi sipariş, stok rezervasyonu veya dekont kaydı
+            oluşturulmaz.
           </p>
           {guidance.description.map((paragraph) => (
-            <p className="mt-2 text-sm leading-6 text-on-surface-variant" key={paragraph}>
+            <p
+              className="mt-2 text-sm leading-6 text-on-surface-variant"
+              key={paragraph}
+            >
               {paragraph}
             </p>
           ))}
@@ -712,7 +843,9 @@ function EftGuidancePanel({
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-on-surface">{account.bankName}</p>
+                  <p className="font-semibold text-on-surface">
+                    {account.bankName}
+                  </p>
                   <p className="mt-1 text-xs text-on-surface-variant">
                     {account.accountHolder} · {account.currency}
                   </p>
@@ -727,7 +860,9 @@ function EftGuidancePanel({
                   ) : (
                     <Copy className="size-4" />
                   )}
-                  {copiedIban === account.iban ? "Kopyalandı" : "IBAN’ı kopyala"}
+                  {copiedIban === account.iban
+                    ? "Kopyalandı"
+                    : "IBAN’ı kopyala"}
                 </button>
               </div>
               <p className="mt-3 break-all font-mono text-sm font-semibold tracking-wide text-on-surface">

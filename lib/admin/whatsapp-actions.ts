@@ -5,15 +5,19 @@ import { revalidatePath } from "next/cache";
 import { requireAdminUser } from "@/lib/admin/data";
 import {
   connectEvolutionInstance,
+  configureEvolutionDeliveryWebhook,
   disconnectEvolutionInstance,
   getEvolutionConnectionStatus,
+  getEvolutionWebhookStatus,
   type EvolutionConnectionStatus,
+  type EvolutionWebhookStatus,
 } from "@/lib/qurbani/evolution";
 
 export type WhatsAppActionState = {
   success: boolean;
   message: string | null;
   status?: EvolutionConnectionStatus;
+  webhook?: EvolutionWebhookStatus;
 };
 
 export async function manageWhatsAppConnection(
@@ -29,27 +33,43 @@ export async function manageWhatsAppConnection(
         throw new Error("WhatsApp bağlantısını kapatma onayı eksik.");
       }
       await disconnectEvolutionInstance();
+    } else if (intent === "webhook") {
+      const webhook = await configureEvolutionDeliveryWebhook();
+      revalidatePath("/panel/whatsapp");
+      return {
+        success: true,
+        message: webhook.message,
+        status: await getEvolutionConnectionStatus(),
+        webhook,
+      };
     } else if (intent !== "connect" && intent !== "status") {
       throw new Error("WhatsApp bağlantı işlemi geçerli değil.");
     }
 
-    const status = intent === "connect"
-      ? await connectEvolutionInstance()
-      : await getEvolutionConnectionStatus();
+    const status =
+      intent === "connect"
+        ? await connectEvolutionInstance()
+        : await getEvolutionConnectionStatus();
     revalidatePath("/panel/whatsapp");
 
     return {
       success: status.state !== "error" && status.state !== "unconfigured",
-      message: intent === "disconnect"
-        ? "WhatsApp bağlantısı kapatıldı. Yeniden bağlanmak için QR kodu oluşturabilirsiniz."
-        : status.message || null,
+      message:
+        intent === "disconnect"
+          ? "WhatsApp bağlantısı kapatıldı. Yeniden bağlanmak için QR kodu oluşturabilirsiniz."
+          : status.message || null,
       status,
+      webhook: await getEvolutionWebhookStatus(),
     };
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : "WhatsApp bağlantı işlemi tamamlanamadı.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "WhatsApp bağlantı işlemi tamamlanamadı.",
       status: await getEvolutionConnectionStatus(),
+      webhook: await getEvolutionWebhookStatus(),
     };
   }
 }

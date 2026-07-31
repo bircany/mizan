@@ -1,57 +1,8 @@
 import "server-only";
 
-import {
-  createHash,
-  createHmac,
-  timingSafeEqual,
-} from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
-import { ensureLocalEnvLoaded, requiredEnv } from "@/lib/env";
-import { normalizePhone } from "@/lib/delivery/types";
-
-function configuration() {
-  ensureLocalEnvLoaded();
-  return {
-    baseUrl: requiredEnv("EVOLUTION_API_URL").replace(/\/$/, ""),
-    apiKey: requiredEnv("EVOLUTION_API_KEY"),
-    instanceName: process.env.EVOLUTION_INSTANCE_NAME?.trim() || "mizan-delivery",
-  };
-}
-
-async function evolutionRequest(path: string, init: RequestInit) {
-  const config = configuration();
-  const response = await fetch(`${config.baseUrl}${path}`, {
-    ...init,
-    cache: "no-store",
-    signal: AbortSignal.timeout(20_000),
-    headers: {
-      apikey: config.apiKey,
-      "content-type": "application/json",
-      ...init.headers,
-    },
-  });
-  const body = await response.json().catch(() => ({})) as Record<string, unknown>;
-  if (!response.ok) {
-    throw new Error(String(body.message || body.error || `Evolution API ${response.status}`));
-  }
-  return body;
-}
-
-export async function sendDeliveryWhatsApp(phone: string, body: string) {
-  const number = normalizePhone(phone);
-  if (!number) throw new Error("WhatsApp telefon numarasi gecersiz.");
-  if (!body.trim()) throw new Error("Bos WhatsApp mesaji gonderilemez.");
-  const config = configuration();
-  const response = await evolutionRequest(`/message/sendText/${encodeURIComponent(config.instanceName)}`, {
-    method: "POST",
-    body: JSON.stringify({ number, text: body, delay: 600, linkPreview: true }),
-  });
-  const key = response.key as Record<string, unknown> | undefined;
-  return {
-    providerMessageId: String(key?.id || response.messageId || ""),
-    response,
-  };
-}
+import { ensureLocalEnvLoaded } from "@/lib/env";
 
 function webhookSecret() {
   ensureLocalEnvLoaded();
@@ -67,6 +18,7 @@ export type DeliveryEvolutionWebhookVerification =
       valid: true;
       replayKey: string;
       timestamp: number;
+      method: "hmac" | "native-secret";
     }
   | {
       valid: false;
@@ -96,6 +48,37 @@ export function verifyDeliveryEvolutionWebhook(
 ): DeliveryEvolutionWebhookVerification {
   const secret = webhookSecret();
   if (!secret) return { valid: false, reason: "missing_secret" };
+
+  const nativeHeader = headers.get("x-evolution-webhook-secret")?.trim() || "";
+  if (nativeHeader) {
+    const expected = Buffer.from(secret, "utf8");
+    const actual = Buffer.from(nativeHeader, "utf8");
+    if (
+      expected.length !== actual.length ||
+      !timingSafeEqual(expected, actual)
+    ) {
+      return { valid: false, reason: "invalid_signature" };
+    }
+    let replayMaterial = rawBody;
+    try {
+      const parsed = JSON.parse(rawBody) as Record<string, any>;
+      const data = parsed?.data || parsed;
+      replayMaterial = [
+        parsed?.instance || parsed?.instanceName || "",
+        parsed?.event || parsed?.type || "",
+        data?.key?.id || data?.messageId || data?.id || "",
+        data?.status || data?.update?.status || "",
+      ].join(":");
+    } catch {
+      // Invalid JSON is rejected by the route after authentication.
+    }
+    return {
+      valid: true,
+      replayKey: createHash("sha256").update(replayMaterial).digest("hex"),
+      timestamp: Math.floor((options.now ?? Date.now()) / 1000),
+      method: "native-secret",
+    };
+  }
 
   const timestampHeader = headers.get("x-mizan-timestamp")?.trim() || "";
   if (!/^\d{10}$/.test(timestampHeader)) {
@@ -137,6 +120,7 @@ export function verifyDeliveryEvolutionWebhook(
       .update(`${timestampHeader}:${suppliedHex}`)
       .digest("hex"),
     timestamp,
+    method: "hmac",
   };
 }
 
@@ -145,6 +129,7 @@ export function mapEvolutionDeliveryStatus(value: unknown) {
   if (status.includes("read") || status === "4") return "read" as const;
   if (status.includes("deliver") || status === "3") return "delivered" as const;
   if (status.includes("sent") || status === "2") return "sent" as const;
-  if (status.includes("error") || status.includes("fail")) return "failed" as const;
+  if (status.includes("error") || status.includes("fail"))
+    return "failed" as const;
   return null;
 }

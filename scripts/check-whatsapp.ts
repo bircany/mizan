@@ -3,11 +3,15 @@ import assert from "node:assert/strict";
 process.env.EVOLUTION_API_URL = "https://evolution.example.test";
 process.env.EVOLUTION_API_KEY = "test-api-key";
 process.env.EVOLUTION_INSTANCE_NAME = "MizanDernegi";
+process.env.DELIVERY_EVOLUTION_WEBHOOK_SECRET = "test-webhook-secret";
 
 const responses: Array<{ status: number; body: unknown }> = [];
 const calls: Array<{ url: string; method: string; body?: string }> = [];
 
-globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+globalThis.fetch = (async (
+  input: string | URL | Request,
+  init?: RequestInit,
+) => {
   const next = responses.shift();
   assert.ok(next, "Unexpected Evolution API call");
   calls.push({
@@ -22,15 +26,22 @@ globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) =>
 }) as typeof fetch;
 
 const {
+  configureEvolutionDeliveryWebhook,
   connectEvolutionInstance,
   getEvolutionConnectionStatus,
 } = await import("../lib/qurbani/evolution");
 
-responses.push({ status: 200, body: { instance: { state: "open", owner: "905000000000" } } });
+responses.push({
+  status: 200,
+  body: { instance: { state: "open", owner: "905000000000" } },
+});
 const connected = await getEvolutionConnectionStatus();
 assert.equal(connected.state, "connected");
 assert.equal(connected.phone, "905000000000");
-assert.equal(calls[0].url, "https://evolution.example.test/instance/connectionState/MizanDernegi");
+assert.equal(
+  calls[0].url,
+  "https://evolution.example.test/instance/connectionState/MizanDernegi",
+);
 
 responses.push(
   { status: 404, body: { message: "Instance not found" } },
@@ -47,11 +58,46 @@ assert.deepEqual(JSON.parse(calls[2].body || "{}"), {
   integration: "WHATSAPP-BAILEYS",
   qrcode: true,
 });
-assert.equal(calls[3].url, "https://evolution.example.test/instance/connect/MizanDernegi");
+assert.equal(
+  calls[3].url,
+  "https://evolution.example.test/instance/connect/MizanDernegi",
+);
 
-responses.push({ status: 401, body: { response: { message: ["Invalid API key"] } } });
+responses.push({
+  status: 401,
+  body: { response: { message: ["Invalid API key"] } },
+});
 const failed = await getEvolutionConnectionStatus();
 assert.equal(failed.state, "error");
 assert.equal(failed.message, "Invalid API key");
+
+responses.push(
+  { status: 200, body: { success: true } },
+  {
+    status: 200,
+    body: {
+      enabled: true,
+      url: "https://www.mizander.com.tr/api/delivery/evolution/webhook",
+      events: ["SEND_MESSAGE", "MESSAGES_UPDATE", "CONNECTION_UPDATE"],
+    },
+  },
+);
+const webhook = await configureEvolutionDeliveryWebhook();
+assert.equal(webhook.configured, true);
+assert.equal(
+  calls[5].url,
+  "https://evolution.example.test/webhook/set/MizanDernegi",
+);
+assert.deepEqual(JSON.parse(calls[5].body || "{}"), {
+  enabled: true,
+  url: "https://www.mizander.com.tr/api/delivery/evolution/webhook",
+  events: ["SEND_MESSAGE", "MESSAGES_UPDATE", "CONNECTION_UPDATE"],
+  headers: { "x-evolution-webhook-secret": "test-webhook-secret" },
+  base64: false,
+});
+assert.equal(
+  calls[6].url,
+  "https://evolution.example.test/webhook/find/MizanDernegi",
+);
 
 console.log("WhatsApp Evolution connection checks passed.");

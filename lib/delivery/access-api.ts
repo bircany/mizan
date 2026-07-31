@@ -36,8 +36,7 @@ function configuration() {
   ensureLocalEnvLoaded();
   const apiUrl = process.env.DELIVERY_VIDEO_API_URL?.trim();
   if (!apiUrl) throw new Error("DELIVERY_VIDEO_API_URL yapılandırılmamış.");
-  const internalSecret =
-    process.env.DELIVERY_VIDEO_API_INTERNAL_SECRET?.trim();
+  const internalSecret = process.env.DELIVERY_VIDEO_API_INTERNAL_SECRET?.trim();
   if (!internalSecret) {
     throw new Error("DELIVERY_VIDEO_API_INTERNAL_SECRET yapılandırılmamış.");
   }
@@ -58,9 +57,8 @@ export function normalizeDeliveryLinkToken(value: unknown) {
 }
 
 export function normalizeDeliveryAccessCode(value: unknown) {
-  const code = typeof value === "string"
-    ? value.trim().toLocaleUpperCase("en-US")
-    : "";
+  const code =
+    typeof value === "string" ? value.trim().toLocaleUpperCase("en-US") : "";
   return /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/.test(code) ? code : null;
 }
 
@@ -71,7 +69,8 @@ function text(value: unknown, fallback: string, maxLength = 160) {
 }
 
 function isoDate(value: unknown) {
-  if (typeof value !== "string" || !Number.isFinite(Date.parse(value))) return null;
+  if (typeof value !== "string" || !Number.isFinite(Date.parse(value)))
+    return null;
   return new Date(value).toISOString();
 }
 
@@ -85,15 +84,13 @@ function safeMediaUrl(value: unknown) {
     return null;
   }
   if (url.origin !== publicBase.origin) return null;
-  if (
-    process.env.NODE_ENV === "production" &&
-    url.protocol !== "https:"
-  ) return null;
+  if (process.env.NODE_ENV === "production" && url.protocol !== "https:")
+    return null;
   if (!["https:", "http:"].includes(url.protocol)) return null;
   return url.toString();
 }
 
-async function videoApiRequest(
+export async function deliveryVideoApiRequest(
   path: string,
   init: RequestInit,
   client?: { ipAddress?: string | null; userAgent?: string | null },
@@ -115,11 +112,16 @@ async function videoApiRequest(
       "x-mizan-timestamp": timestamp,
       "x-mizan-signature": `v1=${signature}`,
       ...(client?.ipAddress ? { "x-mizan-client-ip": client.ipAddress } : {}),
-      ...(client?.userAgent ? { "x-mizan-client-user-agent": client.userAgent.slice(0, 300) } : {}),
+      ...(client?.userAgent
+        ? { "x-mizan-client-user-agent": client.userAgent.slice(0, 300) }
+        : {}),
       ...init.headers,
     },
   });
-  const body = await response.json().catch(() => ({})) as Record<string, unknown>;
+  const body = (await response.json().catch(() => ({}))) as Record<
+    string,
+    unknown
+  >;
   if (!response.ok) {
     const retryAfterHeader = Number(response.headers.get("retry-after"));
     throw new DeliveryAccessApiError(
@@ -141,20 +143,26 @@ async function videoApiRequest(
 
 export async function getDeliveryAccessMetadata(linkToken: string) {
   const normalized = normalizeDeliveryLinkToken(linkToken);
-  if (!normalized) throw new DeliveryAccessApiError("Video bağlantısı geçersiz.", 404);
-  const { body, serverNow } = await videoApiRequest(
+  if (!normalized)
+    throw new DeliveryAccessApiError("Video bağlantısı geçersiz.", 404);
+  const { body, serverNow } = await deliveryVideoApiRequest(
     `/v1/groups/${encodeURIComponent(normalized)}`,
     { method: "GET" },
   );
   const expiresAt = isoDate(body.expiresAt);
-  if (!expiresAt) throw new DeliveryAccessApiError("Video saklama süresi bulunamadı.", 502);
+  if (!expiresAt)
+    throw new DeliveryAccessApiError("Video saklama süresi bulunamadı.", 502);
   return {
     groupCode: text(body.groupCode, "Mizan"),
-    campaignName: text(body.campaignName || body.campaign, "Mizan bağış videosu"),
+    campaignName: text(
+      body.campaignName || body.campaign,
+      "Mizan bağış videosu",
+    ),
     expiresAt,
     serverNow,
     sensitiveContent: body.sensitiveContent === true,
-    available: body.available !== false && Date.parse(expiresAt) > Date.parse(serverNow),
+    available:
+      body.available !== false && Date.parse(expiresAt) > Date.parse(serverNow),
   } satisfies DeliveryAccessMetadata;
 }
 
@@ -166,9 +174,12 @@ export async function verifyDeliveryAccess(
   const normalizedToken = normalizeDeliveryLinkToken(linkToken);
   const normalizedCode = normalizeDeliveryAccessCode(accessCode);
   if (!normalizedToken || !normalizedCode) {
-    throw new DeliveryAccessApiError("Bağlantı veya 8 karakterli erişim kodu geçersiz.", 400);
+    throw new DeliveryAccessApiError(
+      "Bağlantı veya 8 karakterli erişim kodu geçersiz.",
+      400,
+    );
   }
-  const { body, serverNow } = await videoApiRequest(
+  const { body, serverNow } = await deliveryVideoApiRequest(
     "/v1/access/verify",
     {
       method: "POST",
@@ -183,7 +194,10 @@ export async function verifyDeliveryAccess(
   const streamUrl = safeMediaUrl(body.streamUrl);
   const downloadUrl = safeMediaUrl(body.downloadUrl);
   if (!expiresAt || !streamUrl || !downloadUrl) {
-    throw new DeliveryAccessApiError("Video servisi eksik erişim yanıtı döndürdü.", 502);
+    throw new DeliveryAccessApiError(
+      "Video servisi eksik erişim yanıtı döndürdü.",
+      502,
+    );
   }
   return {
     streamUrl,

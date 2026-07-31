@@ -2,13 +2,7 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Retired legacy per-message token endpoint.
- *
- * Current delivery links are group-stable `/video/:token` links and require an
- * eight-character access code. Keeping this route as an explicit tombstone
- * prevents accidental fallback to Vercel/local-filesystem video delivery.
- */
+/** Retired legacy per-message token endpoint. */
 export async function GET() {
   return NextResponse.json(
     {

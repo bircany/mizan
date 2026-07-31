@@ -35,10 +35,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false }, { status: 413 });
   }
 
-  const verification = verifyDeliveryEvolutionWebhook(
-    rawBody,
-    request.headers,
-  );
+  const verification = verifyDeliveryEvolutionWebhook(rawBody, request.headers);
   if (!verification.valid) {
     const configurationError = verification.reason === "missing_secret";
     return NextResponse.json(
@@ -57,23 +54,48 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
-  const accepted = await claimDeliveryWebhookReplayKey(
-    verification.replayKey,
+  const expectedInstance =
+    process.env.EVOLUTION_INSTANCE_NAME?.trim() || "MizanDernegi";
+  const instance = String(
+    body.instance || body.instanceName || body.data?.instance || "",
   );
+  if (instance && instance !== expectedInstance) {
+    return NextResponse.json({ ok: false }, { status: 403 });
+  }
+
+  const accepted = await claimDeliveryWebhookReplayKey(verification.replayKey);
   if (!accepted) {
     return NextResponse.json({ ok: true, duplicate: true });
   }
 
   const event = String(body.event || body.type || "").toLowerCase();
   const data = body.data || body;
+  if (event.includes("connection")) {
+    const state = safeProviderCode(
+      data?.state || data?.status || data?.instance?.state || "unknown",
+    );
+    const payload = await getPayloadClient();
+    await logAuditEvent(payload, {
+      action: "delivery.webhook.connection_update",
+      targetCollection: "evolution-instance",
+      targetId: expectedInstance,
+      details: { state, authentication: verification.method },
+    });
+    return NextResponse.json({ ok: true });
+  }
   const providerMessageId = String(
     data?.key?.id || data?.messageId || data?.id || "",
   ).slice(0, 255);
-  if (!providerMessageId || (!event.includes("message") && !event.includes("status"))) {
+  if (
+    !providerMessageId ||
+    (!event.includes("message") && !event.includes("status"))
+  ) {
     return NextResponse.json({ ok: true });
   }
 
-  const status = mapEvolutionDeliveryStatus(data?.status || data?.update?.status);
+  const status = mapEvolutionDeliveryStatus(
+    data?.status || data?.update?.status,
+  );
   if (!status) return NextResponse.json({ ok: true });
 
   const payload = await getPayloadClient();
@@ -120,7 +142,9 @@ export async function POST(request: Request) {
         webhookTimestamp: verification.timestamp,
       },
       deliveredAt:
-        status === "delivered" || status === "read" ? message.deliveredAt || now : message.deliveredAt,
+        status === "delivered" || status === "read"
+          ? message.deliveredAt || now
+          : message.deliveredAt,
       readAt: status === "read" ? message.readAt || now : message.readAt,
       failedAt: status === "failed" ? now : message.failedAt,
       lastErrorCode:

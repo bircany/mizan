@@ -1,5 +1,9 @@
 import { isSupportedCountryCode } from "@/lib/countries";
 import {
+  normalizeInternationalPhone,
+  optionalInternationalPhone,
+} from "@/lib/phone";
+import {
   isValidTurkishIdentityNumber,
   normalizeTurkishIdentityNumber,
 } from "@/lib/turkish-identity";
@@ -7,6 +11,7 @@ import {
 export type UnifiedDonationParticipantInput = {
   name: string;
   phone?: string;
+  phoneCountryCode?: string;
   useBuyerIdentity: boolean;
 };
 
@@ -14,7 +19,9 @@ export type UnifiedDonationCheckoutInput = {
   campaignId: string;
   paymentMethod: "card" | "eft";
   amount?: number;
-  childDonationPackages?: Partial<Record<"food" | "stationery" | "toy" | "clothing", number>>;
+  childDonationPackages?: Partial<
+    Record<"food" | "stationery" | "toy" | "clothing", number>
+  >;
   childDonationCurrency?: "TRY" | "USD" | "EUR";
   quantity: number;
   participants: UnifiedDonationParticipantInput[];
@@ -41,23 +48,6 @@ export type UnifiedDonationCheckoutInput = {
 const text = (value: unknown, maxLength: number) =>
   typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 
-export function normalizeDonationPhone(value: unknown) {
-  const raw = text(value, 24);
-  const digits = raw.replace(/\D/g, "");
-
-  if (/^0\d{10}$/.test(digits)) return `+90${digits.slice(1)}`;
-  if (/^5\d{9}$/.test(digits)) return `+90${digits}`;
-  if (/^90\d{10}$/.test(digits)) return `+${digits}`;
-  if (raw.startsWith("+") && /^\d{10,15}$/.test(digits)) return `+${digits}`;
-
-  throw new Error("Telefon numarası geçersiz.");
-}
-
-function optionalPhone(value: unknown) {
-  if (!text(value, 24)) return undefined;
-  return normalizeDonationPhone(value);
-}
-
 export function parseUnifiedDonationCheckout(
   value: unknown,
 ): UnifiedDonationCheckoutInput {
@@ -77,7 +67,8 @@ export function parseUnifiedDonationCheckout(
 
   const campaignId = text(input.campaignId, 80);
   const quantity = input.quantity === undefined ? 1 : Number(input.quantity);
-  const rawAmount = input.amount === undefined ? undefined : Number(input.amount);
+  const rawAmount =
+    input.amount === undefined ? undefined : Number(input.amount);
   const countryCode = text(buyerInput.countryCode, 2).toUpperCase();
   const identityNumber = text(buyerInput.identityNumber, 32);
   const email = text(buyerInput.email, 254).toLowerCase();
@@ -129,6 +120,9 @@ export function parseUnifiedDonationCheckout(
             ? (item as Record<string, unknown>)
             : {};
         const useBuyerIdentity = participant.useBuyerIdentity === true;
+        const phoneCountryCode = useBuyerIdentity
+          ? countryCode
+          : text(participant.phoneCountryCode, 2).toUpperCase() || countryCode;
         const name = useBuyerIdentity
           ? `${firstName} ${lastName}`.trim()
           : text(participant.name, 120);
@@ -140,26 +134,37 @@ export function parseUnifiedDonationCheckout(
         return {
           name,
           phone: useBuyerIdentity
-            ? normalizeDonationPhone(buyerInput.phone)
-            : optionalPhone(participant.phone),
+            ? normalizeInternationalPhone(buyerInput.phone, countryCode)
+            : optionalInternationalPhone(participant.phone, phoneCountryCode),
+          phoneCountryCode,
           useBuyerIdentity,
         };
       })
     : [];
-  const childDonationPackages = input.childDonationPackages && typeof input.childDonationPackages === "object"
-    ? Object.fromEntries(
-        ["food", "stationery", "toy", "clothing"].flatMap((key) => {
-          const value = Number((input.childDonationPackages as Record<string, unknown>)[key]);
-          return Number.isInteger(value) && value > 0 && value <= 100 ? [[key, value]] : [];
-        }),
-      ) as UnifiedDonationCheckoutInput["childDonationPackages"]
-    : undefined;
-  const childDonationCurrency = ["TRY", "USD", "EUR"].includes(String(input.childDonationCurrency))
-    ? String(input.childDonationCurrency) as "TRY" | "USD" | "EUR"
+  const childDonationPackages =
+    input.childDonationPackages &&
+    typeof input.childDonationPackages === "object"
+      ? (Object.fromEntries(
+          ["food", "stationery", "toy", "clothing"].flatMap((key) => {
+            const value = Number(
+              (input.childDonationPackages as Record<string, unknown>)[key],
+            );
+            return Number.isInteger(value) && value > 0 && value <= 100
+              ? [[key, value]]
+              : [];
+          }),
+        ) as UnifiedDonationCheckoutInput["childDonationPackages"])
+      : undefined;
+  const childDonationCurrency = ["TRY", "USD", "EUR"].includes(
+    String(input.childDonationCurrency),
+  )
+    ? (String(input.childDonationCurrency) as "TRY" | "USD" | "EUR")
     : undefined;
 
   if (
-    participants.some((participant) => !participant.useBuyerIdentity && participant.phone) &&
+    participants.some(
+      (participant) => !participant.useBuyerIdentity && participant.phone,
+    ) &&
     consentsInput.thirdPartyContact !== true
   ) {
     throw new Error(
@@ -179,7 +184,7 @@ export function parseUnifiedDonationCheckout(
       firstName,
       lastName,
       email,
-      phone: normalizeDonationPhone(buyerInput.phone),
+      phone: normalizeInternationalPhone(buyerInput.phone, countryCode),
       identityNumber:
         countryCode === "TR"
           ? normalizeTurkishIdentityNumber(identityNumber)

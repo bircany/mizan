@@ -11,10 +11,28 @@ export type EvolutionConnectionStatus = {
   message?: string;
 };
 
+export type EvolutionWebhookStatus = {
+  configured: boolean;
+  url: string;
+  events: string[];
+  message: string;
+};
+
+const deliveryWebhookUrl =
+  "https://www.mizander.com.tr/api/delivery/evolution/webhook";
+const deliveryWebhookEvents = [
+  "SEND_MESSAGE",
+  "MESSAGES_UPDATE",
+  "CONNECTION_UPDATE",
+] as const;
+
 type JsonRecord = Record<string, unknown>;
 
 class EvolutionHttpError extends Error {
-  constructor(message: string, readonly status: number) {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
     super(message);
     this.name = "EvolutionHttpError";
   }
@@ -24,7 +42,8 @@ function optionalConfig() {
   ensureLocalEnvLoaded();
   const baseUrl = process.env.EVOLUTION_API_URL?.trim();
   const apiKey = process.env.EVOLUTION_API_KEY?.trim();
-  const instanceName = process.env.EVOLUTION_INSTANCE_NAME?.trim() || "MizanDernegi";
+  const instanceName =
+    process.env.EVOLUTION_INSTANCE_NAME?.trim() || "MizanDernegi";
 
   if (!baseUrl || !apiKey) return null;
   return { baseUrl: baseUrl.replace(/\/$/, ""), apiKey, instanceName };
@@ -51,9 +70,13 @@ function errorText(body: unknown, fallback: string): string {
 
   const record = body as JsonRecord;
   for (const candidate of [record.message, record.error, record.response]) {
-    if (typeof candidate === "string" && candidate.trim()) return candidate.trim();
+    if (typeof candidate === "string" && candidate.trim())
+      return candidate.trim();
     if (Array.isArray(candidate)) {
-      const text = candidate.filter((item): item is string => typeof item === "string").join(" ").trim();
+      const text = candidate
+        .filter((item): item is string => typeof item === "string")
+        .join(" ")
+        .trim();
       if (text) return text;
     }
     if (candidate && typeof candidate === "object") {
@@ -87,7 +110,7 @@ async function evolutionRequest(path: string, init?: RequestInit) {
 }
 
 function nestedRecord(value: unknown): JsonRecord | undefined {
-  return value && typeof value === "object" ? value as JsonRecord : undefined;
+  return value && typeof value === "object" ? (value as JsonRecord) : undefined;
 }
 
 function connectionState(value: unknown): EvolutionConnectionStatus["state"] {
@@ -106,7 +129,8 @@ function safeFailure(error: unknown): EvolutionConnectionStatus {
   return {
     state: "error",
     instanceName: configuredInstanceName(),
-    message: error instanceof Error ? error.message : "Evolution API bağlantı hatası.",
+    message:
+      error instanceof Error ? error.message : "Evolution API bağlantı hatası.",
   };
 }
 
@@ -123,9 +147,10 @@ async function readConnectionStatus(): Promise<EvolutionConnectionStatus> {
     state,
     instanceName: current.instanceName,
     phone: typeof owner === "string" && owner ? owner : undefined,
-    message: state === "connected"
-      ? "WhatsApp hesabı Evolution API üzerinden bağlı ve mesaj gönderimine hazır."
-      : "WhatsApp hesabı bağlı değil. Yeni bir QR kodu oluşturabilirsiniz.",
+    message:
+      state === "connected"
+        ? "WhatsApp hesabı Evolution API üzerinden bağlı ve mesaj gönderimine hazır."
+        : "WhatsApp hesabı bağlı değil. Yeni bir QR kodu oluşturabilirsiniz.",
   };
 }
 
@@ -145,19 +170,25 @@ export async function getEvolutionConnectionStatus(): Promise<EvolutionConnectio
       return {
         state: "disconnected",
         instanceName: configuredInstanceName(),
-        message: "Evolution instance henüz oluşturulmadı. Bağlan düğmesiyle oluşturabilirsiniz.",
+        message:
+          "Evolution instance henüz oluşturulmadı. Bağlan düğmesiyle oluşturabilirsiniz.",
       };
     }
     return safeFailure(error);
   }
 }
 
-function qrStatus(body: JsonRecord, instanceName: string): EvolutionConnectionStatus {
+function qrStatus(
+  body: JsonRecord,
+  instanceName: string,
+): EvolutionConnectionStatus {
   const qrcode = nestedRecord(body.qrcode);
   const rawBase64 = body.base64 ?? qrcode?.base64;
   const base64 = typeof rawBase64 === "string" ? rawBase64.trim() : "";
-  const rawPairingCode = body.pairingCode ?? body.code ?? qrcode?.pairingCode ?? qrcode?.code;
-  const pairingCode = typeof rawPairingCode === "string" ? rawPairingCode.trim() : "";
+  const rawPairingCode =
+    body.pairingCode ?? body.code ?? qrcode?.pairingCode ?? qrcode?.code;
+  const pairingCode =
+    typeof rawPairingCode === "string" ? rawPairingCode.trim() : "";
 
   return {
     state: base64 || pairingCode ? "connecting" : "disconnected",
@@ -168,9 +199,10 @@ function qrStatus(body: JsonRecord, instanceName: string): EvolutionConnectionSt
         ? `data:image/png;base64,${base64}`
         : undefined,
     pairingCode: pairingCode || undefined,
-    message: base64 || pairingCode
-      ? "WhatsApp > Bağlı cihazlar > Cihaz bağla adımlarından QR kodunu tarayın."
-      : "Evolution API bağlantı kodu üretmedi. Birkaç saniye sonra yenileyin.",
+    message:
+      base64 || pairingCode
+        ? "WhatsApp > Bağlı cihazlar > Cihaz bağla adımlarından QR kodunu tarayın."
+        : "Evolution API bağlantı kodu üretmedi. Birkaç saniye sonra yenileyin.",
   };
 }
 
@@ -183,7 +215,8 @@ export async function connectEvolutionInstance(): Promise<EvolutionConnectionSta
       const currentStatus = await readConnectionStatus();
       if (currentStatus.state === "connected") return currentStatus;
     } catch (error) {
-      if (!(error instanceof EvolutionHttpError) || error.status !== 404) throw error;
+      if (!(error instanceof EvolutionHttpError) || error.status !== 404)
+        throw error;
       await evolutionRequest("/instance/create", {
         method: "POST",
         body: JSON.stringify({
@@ -205,19 +238,113 @@ export async function connectEvolutionInstance(): Promise<EvolutionConnectionSta
 
 export async function disconnectEvolutionInstance() {
   const current = config();
-  await evolutionRequest(`/instance/logout/${encodeURIComponent(current.instanceName)}`, {
-    method: "DELETE",
-  });
+  await evolutionRequest(
+    `/instance/logout/${encodeURIComponent(current.instanceName)}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
+
+function webhookRecord(body: JsonRecord) {
+  return nestedRecord(body.webhook) || body;
+}
+
+export async function getEvolutionWebhookStatus(): Promise<EvolutionWebhookStatus> {
+  ensureLocalEnvLoaded();
+  const secret = process.env.DELIVERY_EVOLUTION_WEBHOOK_SECRET?.trim();
+  if (!isEvolutionConfigured() || !secret) {
+    return {
+      configured: false,
+      url: deliveryWebhookUrl,
+      events: [...deliveryWebhookEvents],
+      message: !secret
+        ? "DELIVERY_EVOLUTION_WEBHOOK_SECRET ortam değişkeni eksik."
+        : "Evolution API henüz yapılandırılmadı.",
+    };
+  }
+
+  try {
+    const current = config();
+    const body = webhookRecord(
+      await evolutionRequest(
+        `/webhook/find/${encodeURIComponent(current.instanceName)}`,
+      ),
+    );
+    const events = Array.isArray(body.events)
+      ? body.events.map(String).map((event) => event.toUpperCase())
+      : [];
+    const configured =
+      body.enabled === true &&
+      body.url === deliveryWebhookUrl &&
+      deliveryWebhookEvents.every((event) => events.includes(event));
+    return {
+      configured,
+      url: typeof body.url === "string" ? body.url : deliveryWebhookUrl,
+      events,
+      message: configured
+        ? "Teslimat webhook'u etkin ve gerekli olayları dinliyor."
+        : "Webhook eksik veya güncel teslimat ayarlarıyla eşleşmiyor.",
+    };
+  } catch (error) {
+    return {
+      configured: false,
+      url: deliveryWebhookUrl,
+      events: [...deliveryWebhookEvents],
+      message:
+        error instanceof Error
+          ? error.message
+          : "Webhook durumu doğrulanamadı.",
+    };
+  }
+}
+
+export async function configureEvolutionDeliveryWebhook() {
+  ensureLocalEnvLoaded();
+  const secret = process.env.DELIVERY_EVOLUTION_WEBHOOK_SECRET?.trim();
+  if (!secret) {
+    throw new Error("DELIVERY_EVOLUTION_WEBHOOK_SECRET ortam değişkeni eksik.");
+  }
+  const current = config();
+  await evolutionRequest(
+    `/webhook/set/${encodeURIComponent(current.instanceName)}`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        enabled: true,
+        url: deliveryWebhookUrl,
+        events: [...deliveryWebhookEvents],
+        headers: { "x-evolution-webhook-secret": secret },
+        base64: false,
+      }),
+    },
+  );
+  const verified = await getEvolutionWebhookStatus();
+  if (!verified.configured) {
+    throw new Error(
+      `Webhook kaydedildi ancak doğrulanamadı: ${verified.message}`,
+    );
+  }
+  return verified;
 }
 
 export async function sendEvolutionText(phone: string, text: string) {
   const current = config();
   const digits = phone.replace(/\D/g, "");
-  if (digits.length < 10 || digits.length > 15) throw new Error("WhatsApp telefon numarası geçersiz.");
-  const body = await evolutionRequest(`/message/sendText/${encodeURIComponent(current.instanceName)}`, {
-    method: "POST",
-    body: JSON.stringify({ number: digits, text, delay: 600, linkPreview: true }),
-  });
+  if (digits.length < 10 || digits.length > 15)
+    throw new Error("WhatsApp telefon numarası geçersiz.");
+  const body = await evolutionRequest(
+    `/message/sendText/${encodeURIComponent(current.instanceName)}`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        number: digits,
+        text,
+        delay: 600,
+        linkPreview: true,
+      }),
+    },
+  );
   const key = nestedRecord(body.key);
   return {
     providerMessageId: String(key?.id || body.messageId || ""),
@@ -229,5 +356,8 @@ export function isValidEvolutionWebhook(request: Request) {
   ensureLocalEnvLoaded();
   const expected = process.env.QURBANI_EVOLUTION_WEBHOOK_SECRET?.trim();
   if (!expected) return process.env.NODE_ENV !== "production";
-  return request.headers.get("x-qurbani-webhook-secret") === expected || new URL(request.url).searchParams.get("secret") === expected;
+  return (
+    request.headers.get("x-qurbani-webhook-secret") === expected ||
+    new URL(request.url).searchParams.get("secret") === expected
+  );
 }

@@ -3,14 +3,24 @@
 import Image from "next/image";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { LoaderCircle, LogOut, MessageCircle, QrCode, RefreshCw, ShieldCheck } from "lucide-react";
+import {
+  LoaderCircle,
+  LogOut,
+  MessageCircle,
+  QrCode,
+  RefreshCw,
+  ShieldCheck,
+} from "lucide-react";
 
 import { StatusBadge } from "@/components/admin/panel-ui";
 import {
   manageWhatsAppConnection,
   type WhatsAppActionState,
 } from "@/lib/admin/whatsapp-actions";
-import type { EvolutionConnectionStatus } from "@/lib/qurbani/evolution";
+import type {
+  EvolutionConnectionStatus,
+  EvolutionWebhookStatus,
+} from "@/lib/qurbani/evolution";
 
 function SubmitButton({
   children,
@@ -26,7 +36,9 @@ function SubmitButton({
       disabled={pending}
       type="submit"
     >
-      {pending ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : null}
+      {pending ? (
+        <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+      ) : null}
       {children}
     </button>
   );
@@ -51,17 +63,25 @@ function stateLabel(state: EvolutionConnectionStatus["state"]) {
 
 export function WhatsAppConnectionPanel({
   initialStatus,
+  initialWebhook,
 }: {
   initialStatus: EvolutionConnectionStatus;
+  initialWebhook: EvolutionWebhookStatus;
 }) {
   const initialState: WhatsAppActionState = {
-    success: initialStatus.state !== "error" && initialStatus.state !== "unconfigured",
+    success:
+      initialStatus.state !== "error" && initialStatus.state !== "unconfigured",
     message: null,
     status: initialStatus,
+    webhook: initialWebhook,
   };
-  const [actionState, action] = useActionState(manageWhatsAppConnection, initialState);
+  const [actionState, action] = useActionState(
+    manageWhatsAppConnection,
+    initialState,
+  );
   const status = actionState.status || initialStatus;
   const connected = status.state === "connected";
+  const webhook = actionState.webhook || initialWebhook;
 
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_24rem]">
@@ -73,12 +93,16 @@ export function WhatsAppConnectionPanel({
             </span>
             <div>
               <p className="admin-eyebrow">Evolution API</p>
-              <h3 className="mt-1 text-lg font-semibold">Kurumsal WhatsApp bağlantısı</h3>
+              <h3 className="mt-1 text-lg font-semibold">
+                Kurumsal WhatsApp bağlantısı
+              </h3>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <StatusBadge status={badgeState(status.state)} />
-            <span className="text-xs font-medium text-[var(--admin-muted)]">{stateLabel(status.state)}</span>
+            <span className="text-xs font-medium text-[var(--admin-muted)]">
+              {stateLabel(status.state)}
+            </span>
           </div>
         </div>
 
@@ -95,14 +119,43 @@ export function WhatsAppConnectionPanel({
 
         <div className="mt-5 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] p-4">
           <div className="flex gap-3">
-            <ShieldCheck aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[var(--admin-primary)]" />
+            <ShieldCheck
+              aria-hidden="true"
+              className="mt-0.5 size-5 shrink-0 text-[var(--admin-primary)]"
+            />
             <div>
               <p className="text-sm font-semibold">Tek ve güvenli bağlantı</p>
               <p className="mt-1 text-xs leading-5 text-[var(--admin-muted)]">
-                Bu ekran video teslimat işçisinin kullandığı aynı Evolution instance’ını yönetir. API anahtarı tarayıcıya gönderilmez.
+                Bu ekran video teslimat işçisinin kullandığı aynı Evolution
+                instance’ını yönetir. API anahtarı tarayıcıya gönderilmez.
               </p>
             </div>
           </div>
+        </div>
+
+        <div className="mt-4 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">Teslimat webhook&apos;u</p>
+              <p className="mt-1 break-all text-xs text-[var(--admin-muted)]">
+                {webhook.url}
+              </p>
+              <p className="mt-1 text-xs text-[var(--admin-muted)]">
+                {webhook.message}
+              </p>
+            </div>
+            <StatusBadge status={webhook.configured ? "success" : "failed"} />
+          </div>
+          <p className="mt-3 text-xs text-[var(--admin-muted)]">
+            {webhook.events.join(" · ")}
+          </p>
+          <form action={action} className="mt-3">
+            <input name="intent" type="hidden" value="webhook" />
+            <SubmitButton>
+              <ShieldCheck aria-hidden="true" className="size-4" />
+              Webhook&apos;u kur ve doğrula
+            </SubmitButton>
+          </form>
         </div>
 
         {actionState.message || status.message ? (
@@ -146,7 +199,10 @@ export function WhatsAppConnectionPanel({
 
       <section className="admin-card">
         <div className="flex items-center gap-2">
-          <QrCode aria-hidden="true" className="size-5 text-[var(--admin-primary)]" />
+          <QrCode
+            aria-hidden="true"
+            className="size-5 text-[var(--admin-primary)]"
+          />
           <h3 className="font-semibold">WhatsApp cihaz eşleştirme</h3>
         </div>
         {status.qrCodeDataUrl ? (
@@ -162,19 +218,27 @@ export function WhatsAppConnectionPanel({
               />
             </div>
             <p className="mt-3 text-xs leading-5 text-[var(--admin-muted)]">
-              WhatsApp uygulamasında Ayarlar → Bağlı cihazlar → Cihaz bağla yolunu açıp kodu tarayın. Sonra “Durumu yenile” düğmesine basın.
+              WhatsApp uygulamasında Ayarlar → Bağlı cihazlar → Cihaz bağla
+              yolunu açıp kodu tarayın. Sonra “Durumu yenile” düğmesine basın.
             </p>
           </>
         ) : status.pairingCode ? (
           <div className="mt-5 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-5 text-center">
             <p className="text-xs text-[var(--admin-muted)]">Eşleştirme kodu</p>
-            <p className="mt-2 break-all font-mono text-2xl font-semibold tracking-[0.12em]">{status.pairingCode}</p>
+            <p className="mt-2 break-all font-mono text-2xl font-semibold tracking-[0.12em]">
+              {status.pairingCode}
+            </p>
           </div>
         ) : (
           <div className="mt-4 grid min-h-72 place-items-center rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface)] p-6 text-center">
             <div>
-              <QrCode aria-hidden="true" className="mx-auto size-8 text-[var(--admin-muted)]" />
-              <p className="mt-3 text-sm font-semibold">{connected ? "Hesap bağlı" : "QR kodu bekleniyor"}</p>
+              <QrCode
+                aria-hidden="true"
+                className="mx-auto size-8 text-[var(--admin-muted)]"
+              />
+              <p className="mt-3 text-sm font-semibold">
+                {connected ? "Hesap bağlı" : "QR kodu bekleniyor"}
+              </p>
               <p className="mx-auto mt-1 max-w-xs text-xs leading-5 text-[var(--admin-muted)]">
                 {connected
                   ? "Bağlı hesap için QR kodu gösterilmez."

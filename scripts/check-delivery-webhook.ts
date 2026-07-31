@@ -4,9 +4,8 @@ import { createHmac } from "node:crypto";
 process.env.DELIVERY_EVOLUTION_WEBHOOK_SECRET =
   "local-webhook-test-secret-at-least-32-bytes";
 
-const { verifyDeliveryEvolutionWebhook } = await import(
-  "../lib/delivery/evolution"
-);
+const { verifyDeliveryEvolutionWebhook } =
+  await import("../lib/delivery/evolution");
 
 const timestamp = 1_800_000_000;
 const rawBody = JSON.stringify({
@@ -31,7 +30,18 @@ assert.equal(valid.valid, true);
 if (valid.valid) {
   assert.match(valid.replayKey, /^[a-f0-9]{64}$/);
   assert.equal(valid.timestamp, timestamp);
+  assert.equal(valid.method, "hmac");
 }
+
+const native = verifyDeliveryEvolutionWebhook(
+  rawBody,
+  new Headers({
+    "x-evolution-webhook-secret": process.env.DELIVERY_EVOLUTION_WEBHOOK_SECRET,
+  }),
+  { now: timestamp * 1000 },
+);
+assert.equal(native.valid, true);
+if (native.valid) assert.equal(native.method, "native-secret");
 
 assert.deepEqual(
   verifyDeliveryEvolutionWebhook(`${rawBody} `, headers, {
