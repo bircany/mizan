@@ -503,7 +503,6 @@ export function DeliveryOperationModal({ groupId }: { groupId: string }) {
                           />
                         ) : null}
                         {detail.role === "admin" &&
-                        detail.group.testMessagePassedAt &&
                         normalMessages.some((message) =>
                           ["draft", "paused", "failed"].includes(
                             message.status,

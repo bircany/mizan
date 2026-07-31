@@ -282,12 +282,14 @@ export async function dispatchGroup(groupIdValue, action) {
     const group = selected.rows[0];
     if (!group) throw new HttpError(404, "group_not_found", "Operasyon grubu bulunamadı.");
     if (action === "queue" || action === "resume") {
+      if (process.env.REQUIRE_DELIVERY_TEST === "true") {
       const current = await computeGroupMessageFingerprint(client, groupId);
       const testPassed = String(group.test_message_video_id) === String(current.activeVideoId)
         && group.test_message_fingerprint === current.fingerprint
         && group.test_message_passed_at
         && !group.test_message_invalidated_at;
       if (!testPassed) throw new HttpError(409, "test_message_required", "Gerçek gönderimden önce güncel taslakla güvenli test mesajı gönderin.");
+      }
       const batchId = randomUUID();
       const queued = await client.query(
         `with candidates as (
