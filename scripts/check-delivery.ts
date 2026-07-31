@@ -19,7 +19,7 @@ const { mapEvolutionDeliveryStatus } = await import("../lib/delivery/evolution")
 const { getDeliveryVideoStorage } = await import("../lib/delivery/storage");
 const { createDeliveryUploadGrant, verifyDeliveryUploadGrant } =
   await import("../lib/delivery/upload-auth");
-const { validateGroupGate } =
+const { uploadGrantLifetimeSeconds, validateGroupGate } =
   await import("../lib/delivery/group-code-upload-session");
 
 assert.equal(normalizePhone("0532 123 45 67"), "905321234567");
@@ -102,6 +102,20 @@ assert.match(
     status: "collecting",
   }) || "",
   /tamamen dolmadan/i,
+);
+assert.equal(
+  uploadGrantLifetimeSeconds(
+    "2026-07-31T10:10:00.000Z",
+    Date.parse("2026-07-31T10:00:00.000Z"),
+  ),
+  600,
+);
+assert.equal(
+  uploadGrantLifetimeSeconds(
+    "2026-07-31T10:09:42.900Z",
+    Date.parse("2026-07-31T10:00:00.000Z"),
+  ),
+  582,
 );
 
 assert.equal(mapEvolutionDeliveryStatus("READ"), "read");

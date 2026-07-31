@@ -131,6 +131,19 @@ export function validateGroupGate(group: UploadGateGroup) {
   return null;
 }
 
+export function uploadGrantLifetimeSeconds(
+  expiresAt: Date | string,
+  nowMs = Date.now(),
+) {
+  return Math.max(
+    30,
+    Math.min(
+      10 * 60,
+      Math.floor((new Date(expiresAt).getTime() - nowMs) / 1000),
+    ),
+  );
+}
+
 export async function reserveDeliveryUploadSession(
   input: ReserveDeliveryUploadInput,
 ): Promise<DeliveryUploadReservation> {
@@ -273,7 +286,16 @@ export async function reserveDeliveryUploadSession(
     const jti = randomUUID();
     const nonce = randomBytes(24).toString("base64url");
     const nonceHash = createHash("sha256").update(nonce).digest("hex");
-    const expiresAt = new Date(Date.now() + 10 * 60_000);
+    // `created_at` uses the PostgreSQL transaction timestamp but is stored at
+    // millisecond precision. Keep a one-second margin so sub-millisecond
+    // rounding can never exceed the strict ten-minute database constraint.
+    const tokenWindow = await client.query<{ expiresAt: Date }>(
+      `select now() + interval '9 minutes 59 seconds' as "expiresAt"`,
+    );
+    const expiresAt = new Date(tokenWindow.rows[0]?.expiresAt);
+    if (!Number.isFinite(expiresAt.getTime())) {
+      throw new Error("Video upload token süresi oluşturulamadı.");
+    }
 
     const inserted = await client.query<{ id: string }>(
       `insert into public.operation_videos (
@@ -368,16 +390,19 @@ export async function reserveDeliveryUploadSession(
       });
     }
 
-    const grant = createDeliveryUploadGrant({
-      userId: input.user.id,
-      role: input.user.role,
-      groupId: group.groupId,
-      videoId,
-      jti,
-      nonce,
-      maxBytes: input.maxBytes,
-      allowedMime: [input.mimeType],
-    });
+    const grant = createDeliveryUploadGrant(
+      {
+        userId: input.user.id,
+        role: input.user.role,
+        groupId: group.groupId,
+        videoId,
+        jti,
+        nonce,
+        maxBytes: input.maxBytes,
+        allowedMime: [input.mimeType],
+      },
+      uploadGrantLifetimeSeconds(expiresAt),
+    );
     await appendAudit(client, {
       action: "delivery.upload.session_created",
       actorEmail: input.user.email,
