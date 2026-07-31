@@ -30,6 +30,16 @@ function cleanFilename(value) {
     .slice(0, 180) || "video";
 }
 
+export async function resolveFinishedUploadPath(storageRoot, uploadId, suppliedPath) {
+  // tusd and video-api mount the same Docker volume at different container
+  // paths. Trust the already validated upload ID, not tusd's container-local
+  // absolute path, and resolve the file inside video-api's own mount.
+  if (path.basename(suppliedPath) !== uploadId) {
+    throw new HttpError(409, "upload_path_mismatch", "Upload depolama yolu eşleşmiyor.");
+  }
+  return assertExistingPathWithin(storageRoot, path.join(storageRoot, uploadId));
+}
+
 export async function handlePreCreate(payload, dependencies) {
   const upload = uploadFromHook(payload);
   if (upload.SizeIsDeferred || !Number.isSafeInteger(upload.Size) || upload.Size <= 0) {
@@ -92,11 +102,11 @@ export async function handlePostFinish(payload, dependencies) {
     await markUploadRejected(uploadId, "Beklenmeyen tusd depolama sürücüsü.");
     throw new HttpError(409, "invalid_upload_storage", "Upload depolama bilgisi geçersiz.");
   }
-  const trustedPath = await assertExistingPathWithin(dependencies.storage.uploads, suppliedPath);
-  if (path.basename(trustedPath) !== uploadId) {
+  if (path.basename(suppliedPath) !== uploadId) {
     await markUploadRejected(uploadId, "Tus depolama yolu upload kimliğiyle eşleşmiyor.");
     throw new HttpError(409, "upload_path_mismatch", "Upload depolama yolu eşleşmiyor.");
   }
+  await resolveFinishedUploadPath(dependencies.storage.uploads, uploadId, suppliedPath);
   const result = await finishUpload({
     id: uploadId,
     size: upload.Size,
