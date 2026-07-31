@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { ChevronDown, ClipboardPlus, LoaderCircle, Pencil, Plus } from "lucide-react";
 
 import { saveFieldTask, type FieldTaskActionState } from "@/lib/admin/field-task-actions";
+import { toIstanbulDateTimeLocal } from "@/lib/time";
 
 type Option = { label: string; value: string };
 type FieldTaskRecord = { assignedTo: string; campaign: string; dueAt: string; id: string; location: string; notes: string; title: string };
@@ -77,7 +78,7 @@ export function FieldTaskForm({ campaigns, operators, record }: { campaigns: rea
           </label>
           <label>
             <span className="mb-2 block text-xs font-semibold text-[var(--admin-muted)]">Teslim tarihi</span>
-            <input className="admin-input" defaultValue={record?.dueAt || ""} name="dueAt" type="datetime-local" />
+            <input className="admin-input" defaultValue={record?.dueAt ? toIstanbulDateTimeLocal(record.dueAt) : ""} name="dueAt" type="datetime-local" />
           </label>
           <label className="sm:col-span-2">
             <span className="mb-2 block text-xs font-semibold text-[var(--admin-muted)]">İç not</span>

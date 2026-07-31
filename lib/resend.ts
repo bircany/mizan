@@ -67,7 +67,7 @@ export async function sendDonationReceipt(
           </tr>
           <tr>
             <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Tarih:</strong></td>
-            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${new Date().toLocaleDateString("tr-TR")}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${new Date().toLocaleDateString("tr-TR", { timeZone: "Europe/Istanbul" })}</td>
           </tr>
         </table>
         <p>Desteğinizle daha fazla ihtiyaç sahibine ulaşmamız mümkün oluyor.</p>

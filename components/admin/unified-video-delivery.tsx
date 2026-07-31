@@ -106,7 +106,7 @@ export function UnifiedVideoDelivery({
                     </td>
                     <td className="px-5 py-4"><StatusBadge status={row.videoStatus} /></td>
                     <td className="px-5 py-4"><StatusBadge status={row.status} /></td>
-                    <td className="px-5 py-4 text-xs text-[var(--admin-muted)]">{row.updatedAt ? new Date(row.updatedAt).toLocaleString("tr-TR") : "Kayıt yok"}</td>
+                    <td className="px-5 py-4 text-xs text-[var(--admin-muted)]">{row.updatedAt ? new Date(row.updatedAt).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }) : "Kayıt yok"}</td>
                     <td className="px-5 py-4"><DeliveryRowActions groupId={row.groupId} messageBody={row.messageBody} messageId={row.messageId} status={row.status} videoStatus={row.videoStatus} /></td>
                   </tr>
                 ))}

@@ -89,7 +89,9 @@ export async function fulfillPaidDonation(payload: Payload, donationId: number |
         donation.donorName,
         Number(donation.netConfirmedAmount),
         donation.currency,
-        new Date(donation.createdAt).toLocaleDateString("tr-TR"),
+        new Date(donation.createdAt).toLocaleDateString("tr-TR", {
+          timeZone: "Europe/Istanbul",
+        }),
         donation.receiptNumber,
       );
       const receiptBuffer = Buffer.from(await receipt.arrayBuffer());

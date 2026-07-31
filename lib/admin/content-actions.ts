@@ -8,6 +8,7 @@ import { PANEL_ROUTE_ACCESS, type PanelRouteKey } from "@/lib/auth/panel-access"
 import { getPayloadClient } from "@/lib/payload";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 import type { ContentCollection } from "@/lib/admin/content";
+import { istanbulDateTimeLocalToIso } from "@/lib/time";
 
 export type ContentActionState = {
   message: string | null;
@@ -541,7 +542,9 @@ async function contentData(
       author: readText(formData, "author"),
       category: parseNewsCategory(readText(formData, "category")),
       content: content ? localizedRichText(plainTextEditorState(content)) : undefined,
-      publishedAt: publishedAt ? new Date(publishedAt).toISOString() : undefined,
+      publishedAt: publishedAt
+        ? istanbulDateTimeLocalToIso(publishedAt)
+        : undefined,
       slug: readText(formData, "slug", true),
       title: localized(readText(formData, "title", true)),
     };

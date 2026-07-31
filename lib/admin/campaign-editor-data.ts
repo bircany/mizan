@@ -3,6 +3,7 @@ import "server-only";
 import type { CampaignEditorRecord } from "@/components/admin/unified-campaign-editor";
 import { lexicalParagraphs } from "@/lib/pages";
 import { getPayloadClient } from "@/lib/payload";
+import { toIstanbulDateTimeLocal } from "@/lib/time";
 
 function relationId(value: unknown) {
   if (typeof value === "number" || typeof value === "string") return String(value);
@@ -13,7 +14,9 @@ function relationId(value: unknown) {
 }
 
 function localDate(value: unknown) {
-  return typeof value === "string" && value ? value.slice(0, 16) : "";
+  return typeof value === "string" && value
+    ? toIstanbulDateTimeLocal(value)
+    : "";
 }
 
 export async function getCampaignEditorData() {

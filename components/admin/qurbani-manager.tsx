@@ -56,6 +56,7 @@ import type {
   QurbaniAdminSnapshot,
   QurbaniPoolAdminRecord,
 } from "@/lib/admin/qurbani-data";
+import { toIstanbulDateTimeLocal } from "@/lib/time";
 import { formatCurrency } from "@/lib/utils";
 
 const initialState: QurbaniActionState = { success: false, message: null };
@@ -283,14 +284,6 @@ function Modal({
   );
 }
 
-function localDateTime(value: string) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
-}
-
 function SeasonForm({
   onClose,
   record,
@@ -339,7 +332,7 @@ function SeasonForm({
           <span className="admin-label">Satış başlangıcı *</span>
           <input
             className="admin-input"
-            defaultValue={localDateTime(record?.salesStartAt || "")}
+            defaultValue={record?.salesStartAt ? toIstanbulDateTimeLocal(record.salesStartAt) : ""}
             name="salesStartAt"
             required
             type="datetime-local"
@@ -349,7 +342,7 @@ function SeasonForm({
           <span className="admin-label">Satış bitişi *</span>
           <input
             className="admin-input"
-            defaultValue={localDateTime(record?.salesEndAt || "")}
+            defaultValue={record?.salesEndAt ? toIstanbulDateTimeLocal(record.salesEndAt) : ""}
             name="salesEndAt"
             required
             type="datetime-local"
@@ -359,7 +352,7 @@ function SeasonForm({
           <span className="admin-label">Bayram tarihi *</span>
           <input
             className="admin-input"
-            defaultValue={localDateTime(record?.feastAt || "")}
+            defaultValue={record?.feastAt ? toIstanbulDateTimeLocal(record.feastAt) : ""}
             name="feastAt"
             required
             type="datetime-local"
@@ -973,6 +966,7 @@ export function QurbaniManager({
                         {season.salesStartAt
                           ? new Date(season.salesStartAt).toLocaleDateString(
                               "tr-TR",
+                              { timeZone: "Europe/Istanbul" },
                             )
                           : "—"}
                       </dd>
@@ -981,7 +975,9 @@ export function QurbaniManager({
                       <dt className="text-[var(--admin-muted)]">Bayram</dt>
                       <dd className="mt-1">
                         {season.feastAt
-                          ? new Date(season.feastAt).toLocaleDateString("tr-TR")
+                          ? new Date(season.feastAt).toLocaleDateString("tr-TR", {
+                              timeZone: "Europe/Istanbul",
+                            })
                           : "—"}
                       </dd>
                     </div>

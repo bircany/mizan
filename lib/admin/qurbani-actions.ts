@@ -12,6 +12,7 @@ import { requireAdminUser } from "@/lib/admin/data";
 import { logAuditEvent } from "@/lib/audit";
 import { getPayloadClient } from "@/lib/payload";
 import { slugifyEditorial } from "@/lib/editorial";
+import { istanbulDateTimeLocalToIso } from "@/lib/time";
 import {
   adjustQurbaniEmptyStock as adjustQurbaniEmptyStockService,
   createManualPaidQurbaniOrder as createManualPaidQurbaniOrderService,
@@ -64,6 +65,9 @@ function errorMessage(error: unknown, fallback: string) {
 
 function asIso(value: string) {
   if (!value) return undefined;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(value)) {
+    return istanbulDateTimeLocalToIso(value);
+  }
   const date = new Date(value);
   if (Number.isNaN(date.getTime()))
     throw new Error("Tarih değeri geçerli değil.");

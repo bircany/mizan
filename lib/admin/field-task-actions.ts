@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireAdminUser } from "@/lib/admin/data";
 import { getPayloadClient } from "@/lib/payload";
+import { istanbulDateTimeLocalToIso } from "@/lib/time";
 
 export type FieldTaskActionState = {
   message: string | null;
@@ -31,7 +32,7 @@ export async function saveFieldTask(_: FieldTaskActionState, formData: FormData)
     const data = {
       assignedTo: text(formData, "assignedTo", true),
       campaign: text(formData, "campaign", true),
-      dueAt: dueAt ? new Date(dueAt).toISOString() : undefined,
+      dueAt: dueAt ? istanbulDateTimeLocalToIso(dueAt) : undefined,
       location: text(formData, "location", true),
       notes: text(formData, "notes"),
       title: text(formData, "title", true),

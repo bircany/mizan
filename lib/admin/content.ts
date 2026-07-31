@@ -1,5 +1,6 @@
 import { getPayloadClient } from "@/lib/payload";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
+import { toIstanbulDateTimeLocal } from "@/lib/time";
 
 export type ContentCollection = "campaigns" | "categories" | "news" | "pages";
 
@@ -203,14 +204,16 @@ function booleanValue(value: unknown) {
 
 function dateValue(value: unknown) {
   if (typeof value !== "string" || !value) return "";
-  return value.slice(0, 16);
+  return toIstanbulDateTimeLocal(value);
 }
 
 function updatedMeta(value: unknown) {
   if (typeof value !== "string") return "Son guncelleme bilinmiyor";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Son guncelleme bilinmiyor";
-  return `Son guncelleme: ${date.toLocaleDateString("tr-TR")}`;
+  return `Son guncelleme: ${date.toLocaleDateString("tr-TR", {
+    timeZone: "Europe/Istanbul",
+  })}`;
 }
 
 function contentValues(values: ContentRecord["values"]) {

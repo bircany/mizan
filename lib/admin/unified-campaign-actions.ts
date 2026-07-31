@@ -7,6 +7,7 @@ import { PANEL_ROUTE_ACCESS } from "@/lib/auth/panel-access";
 import { buildProtectedDeliveryTemplate } from "@/lib/delivery/template";
 import { plainTextEditorState } from "@/lib/pages";
 import { getPayloadClient } from "@/lib/payload";
+import { istanbulDateTimeLocalToIso } from "@/lib/time";
 
 export type CampaignActionState = {
   success: boolean;
@@ -143,6 +144,12 @@ export async function saveUnifiedCampaign(
         : undefined;
     const publishStartAt = text(formData, "publishStartAt");
     const publishEndAt = text(formData, "publishEndAt");
+    const publishStartAtIso = publishStartAt
+      ? istanbulDateTimeLocalToIso(publishStartAt)
+      : undefined;
+    const publishEndAtIso = publishEndAt
+      ? istanbulDateTimeLocalToIso(publishEndAt)
+      : undefined;
     if (
       (publishStartAt && !Number.isFinite(new Date(publishStartAt).getTime())) ||
       (publishEndAt && !Number.isFinite(new Date(publishEndAt).getTime()))
@@ -150,9 +157,9 @@ export async function saveUnifiedCampaign(
       throw new Error("Yayın başlangıç veya bitiş tarihi geçersiz.");
     }
     if (
-      publishStartAt &&
-      publishEndAt &&
-      new Date(publishEndAt) <= new Date(publishStartAt)
+      publishStartAtIso &&
+      publishEndAtIso &&
+      new Date(publishEndAtIso) <= new Date(publishStartAtIso)
     ) {
       throw new Error("Yayın bitişi başlangıçtan sonra olmalıdır.");
     }
@@ -224,12 +231,8 @@ export async function saveUnifiedCampaign(
       groupCapacity: groupCapacity ?? null,
       participantRequired:
         formData.get("participantRequired") === "on",
-      publishStartAt: publishStartAt
-        ? new Date(publishStartAt).toISOString()
-        : undefined,
-      publishEndAt: publishEndAt
-        ? new Date(publishEndAt).toISOString()
-        : undefined,
+      publishStartAt: publishStartAtIso,
+      publishEndAt: publishEndAtIso,
       messageTemplate:
         videoDelivery === "video"
           ? buildProtectedDeliveryTemplate(text(formData, "messageBody"))

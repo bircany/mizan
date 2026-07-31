@@ -21,7 +21,11 @@ export default async function AuditLogPage() {
           <div className="flex items-center gap-3 border-b border-[var(--admin-border)] p-5"><span className="grid size-9 place-items-center rounded-md bg-[rgb(245_185_66_/_12%)] text-[var(--admin-warning)]"><ScrollText aria-hidden="true" className="size-5" /></span><div><p className="text-sm font-semibold text-[var(--admin-text)]">Son hareketler</p><p className="mt-1 text-xs text-[var(--admin-muted)]">Kayıtlar yalnızca güvenilir sunucu işlemleri tarafından eklenir.</p></div></div>
           {result.docs.length ? <div className="divide-y divide-[var(--admin-border)]">{result.docs.map((document) => {
             const record = document as unknown as Record<string, unknown>;
-            const createdAt = typeof record.createdAt === "string" ? new Date(record.createdAt).toLocaleString("tr-TR") : "-";
+            const createdAt = typeof record.createdAt === "string"
+              ? new Date(record.createdAt).toLocaleString("tr-TR", {
+                  timeZone: "Europe/Istanbul",
+                })
+              : "-";
             return <article className="grid gap-2 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6 sm:p-5" key={String(record.id)}><div className="min-w-0"><p className="truncate font-mono text-xs font-semibold text-[var(--admin-text)]">{typeof record.action === "string" ? record.action : "Bilinmeyen işlem"}</p><p className="mt-1 text-xs text-[var(--admin-muted)]">{typeof record.actorEmail === "string" ? record.actorEmail : "Sistem"} · {typeof record.targetCollection === "string" ? record.targetCollection : "Genel"}</p></div><p className="font-mono text-[11px] text-[var(--admin-muted)]">{createdAt}</p></article>;
           })}</div> : <div className="p-5"><EmptyPanelState description="Kritik bir işlem gerçekleştiğinde denetim kaydı burada oluşur." title="Denetim kaydı bulunmuyor" /></div>}
         </PanelCard>

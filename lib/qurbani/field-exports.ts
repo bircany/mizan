@@ -84,7 +84,11 @@ export async function generateQurbaniFieldPackagePdf(
       y + 17,
     );
     doc.text(
-      new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(input.preparedAt),
+      new Intl.DateTimeFormat("tr-TR", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "Europe/Istanbul",
+      }).format(input.preparedAt),
       pageWidth - margin - 6,
       y + 17,
       { align: "right" },

@@ -5,7 +5,7 @@ import { MailOpen, MessageSquareText, Search, GraduationCap } from "lucide-react
 import { useMemo, useState } from "react";
 import type { ContactMessageRecord } from "@/lib/admin/contact-message-data";
 
-function date(value: string) { return value ? new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "-"; }
+function date(value: string) { return value ? new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" }).format(new Date(value)) : "-"; }
 type TypeFilter = "all" | "student" | "contact";
 type StatusFilter = "all" | "unread" | "read" | "archived";
 

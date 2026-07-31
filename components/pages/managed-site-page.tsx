@@ -18,7 +18,7 @@ export async function ManagedSitePage({ slug }: { slug: string }) {
         <header className="border-b border-outline-variant pb-8">
           <span className="grid size-11 place-items-center rounded-2xl bg-primary-container text-primary"><FileText className="size-5" /></span>
           <h1 className="mt-5 text-display-lg-mobile text-on-surface md:text-display-lg">{title}</h1>
-          {page?.updatedAt ? <p className="mt-4 text-sm text-on-surface-variant">Son güncelleme: {new Date(page.updatedAt).toLocaleDateString(localeTag(locale), { day: "numeric", month: "long", year: "numeric" })}</p> : null}
+          {page?.updatedAt ? <p className="mt-4 text-sm text-on-surface-variant">Son güncelleme: {new Date(page.updatedAt).toLocaleDateString(localeTag(locale), { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Istanbul" })}</p> : null}
         </header>
         <div className="mt-10 space-y-6 whitespace-pre-line text-body-lg leading-8 text-on-surface-variant" dir={locale === "ar" ? "rtl" : "ltr"}>
           {paragraphs.map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>)}
