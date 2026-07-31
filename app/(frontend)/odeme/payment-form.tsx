@@ -257,9 +257,9 @@ export default function PaymentForm({
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,_#f9f9f7_0%,_#eef7ef_100%)] px-margin-mobile py-lg md:px-margin-desktop">
-      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="mx-auto grid min-w-0 max-w-6xl gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <form
-          className="rounded-[28px] border border-white/70 bg-white/90 p-6 shadow-ambient"
+          className="min-w-0 rounded-[24px] border border-white/70 bg-white/90 p-4 shadow-ambient sm:rounded-[28px] sm:p-6"
           onSubmit={handleSubmit}
         >
           <p className="text-label-sm uppercase tracking-[0.28em] text-primary">
@@ -641,7 +641,7 @@ export default function PaymentForm({
           ) : null}
         </form>
 
-        <aside className="rounded-[28px] border border-white/70 bg-white/90 p-6 shadow-soft">
+        <aside className="min-w-0 rounded-[24px] border border-white/70 bg-white/90 p-4 shadow-soft sm:rounded-[28px] sm:p-6">
           <p className="text-label-sm uppercase tracking-[0.28em] text-primary">
             Bağış Özeti
           </p>
@@ -652,9 +652,9 @@ export default function PaymentForm({
                   key={item.campaignId}
                   className="rounded-2xl bg-surface p-4"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-semibold text-on-surface">
+                  <div className="flex min-w-0 items-start justify-between gap-3 sm:gap-4">
+                    <div className="min-w-0">
+                      <p className="break-words font-semibold text-on-surface">
                         {item.title}
                       </p>
                       <p className="mt-1 text-sm text-on-surface-variant">
@@ -662,7 +662,7 @@ export default function PaymentForm({
                         {item.isRecurring ? "düzenli" : "tek sefer"}
                       </p>
                     </div>
-                    <p className="font-semibold text-primary">
+                    <p className="shrink-0 font-semibold text-primary">
                       {formatCurrency(
                         item.amount * item.quantity,
                         item.currency,

@@ -40,15 +40,15 @@ export function InternationalPhoneField({
 
   return (
     <div
-      className={`grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] ${className}`}
+      className={`grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] ${className}`}
     >
-      <label className="text-sm text-on-surface-variant">
+      <label className="min-w-0 text-sm text-on-surface-variant">
         <span className="mb-2 block">
           {countryLabel}
           {required ? " *" : ""}
         </span>
         <select
-          className="w-full rounded-xl border border-outline-variant bg-surface px-4 py-3 text-on-surface outline-none focus:border-primary"
+          className="block w-full min-w-0 max-w-full rounded-xl border border-outline-variant bg-surface px-4 py-3 text-on-surface outline-none focus:border-primary"
           onChange={(event) => onCountryChange(event.target.value)}
           required={required}
           value={countryCode}
@@ -60,12 +60,12 @@ export function InternationalPhoneField({
           ))}
         </select>
       </label>
-      <label className="text-sm text-on-surface-variant">
+      <label className="min-w-0 text-sm text-on-surface-variant">
         <span className="mb-2 block">
           {phoneLabel}
           {required ? " *" : ""}
         </span>
-        <span className="flex overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest focus-within:border-primary">
+        <span className="flex min-w-0 overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest focus-within:border-primary">
           <span className="flex min-w-16 items-center justify-center border-r border-outline-variant px-3 text-sm font-semibold text-on-surface">
             {selectedCallingCode}
           </span>
