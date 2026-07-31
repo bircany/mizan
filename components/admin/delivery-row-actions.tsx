@@ -235,7 +235,7 @@ export function DeliveryRowActions({
         ref={fileInput}
         type="file"
       />
-      {["waiting", "uploading", "failed"].includes(videoStatus) ? (
+      {["waiting", "uploading", "failed", "quarantined"].includes(videoStatus) ? (
         <Button disabled={busy} onClick={() => fileInput.current?.click()}>
           Video yükle
         </Button>
