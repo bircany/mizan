@@ -45,7 +45,7 @@ export function ManagementShell({
   const breadcrumbLabels: Record<string, string> = {
     icerik: "İçerik", "bagis-alanlari": "Bağış alanları", kategoriler: "Kategoriler", haberler: "Haberler", sayfalar: "Sayfalar", medya: "Medya",
     bagislar: "Bağışlar", odemeler: "Ödemeler", iadeler: "İadeler", teslimatlar: "Teslimatlar", kurban: "Kurban", saha: "Saha", teslimler: "Teslimler", raporlar: "Raporlar", kullanicilar: "Kullanıcılar", denetim: "Denetim", sistem: "Sistem",
-    "bagis-yonetimi": "Bağış Yönetimi", "video-teslimat": "Video Teslimat", icerikler: "İçerikler", ayarlar: "Denetim ve Ayarlar",
+    "bagis-yonetimi": "Bağış Yönetimi", "video-teslimat": "Video Teslimat", whatsapp: "WhatsApp Bağlantısı", icerikler: "İçerikler", ayarlar: "Denetim ve Ayarlar",
   };
   const pathParts = currentPath.split("/").filter(Boolean).slice(1);
   const breadcrumbs = [{ label: "Panel", href: currentPath === "/panel" ? undefined : "/panel" }, ...pathParts.map((part) => ({ label: breadcrumbLabels[part] || part }))];

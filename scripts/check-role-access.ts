@@ -16,6 +16,8 @@ assert.equal(canAccessPanelRoute("field_operator", "fieldSubmissions"), true);
 assert.equal(canAccessPanelRoute("field_operator", "refunds"), false);
 assert.equal(canAccessPanelRoute("field_operator", "contentNews"), false);
 assert.equal(canAccessPanelRoute("field_operator", "users"), false);
+assert.equal(canAccessPanelRoute("field_operator", "whatsapp"), false);
+assert.equal(canAccessPanelRoute("admin", "whatsapp"), true);
 
 // Legacy database/session values are accepted only during the cutover window
 // and normalize to the new admin role.

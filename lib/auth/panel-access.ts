@@ -7,6 +7,7 @@ export const PANEL_ROUTE_ACCESS = {
   dashboard: ALL_PANEL_ROLES,
   donationManagement: ["admin"],
   videoDelivery: ["admin", "field_operator"],
+  whatsapp: ["admin"],
   content: ["admin"],
   settings: ["admin"],
   contentCampaigns: ["admin"],
@@ -50,6 +51,7 @@ export type PanelNavigationIcon =
   | "dashboard"
   | "donationManagement"
   | "videoDelivery"
+  | "whatsapp"
   | "content"
   | "settings"
   | "campaigns"
@@ -103,6 +105,7 @@ export const PANEL_NAVIGATION_GROUPS: readonly PanelNavigationGroup[] = [
     items: [
       { href: "/panel/bagis-yonetimi", icon: "donationManagement", isAvailable: true, label: "Bağış Yönetimi", roles: PANEL_ROUTE_ACCESS.donationManagement, route: "donationManagement" },
       { href: "/panel/video-teslimat", icon: "videoDelivery", isAvailable: true, label: "Video Teslimat", roles: PANEL_ROUTE_ACCESS.videoDelivery, route: "videoDelivery" },
+      { href: "/panel/whatsapp", icon: "whatsapp", isAvailable: true, label: "WhatsApp Bağlantısı", roles: PANEL_ROUTE_ACCESS.whatsapp, route: "whatsapp" },
       { href: "/panel/icerikler", icon: "content", isAvailable: true, label: "İçerikler", roles: PANEL_ROUTE_ACCESS.content, route: "content" },
       { href: "/panel/mesajlar", icon: "contactMessages", isAvailable: true, label: "Mesajlar", roles: PANEL_ROUTE_ACCESS.contactMessages, route: "contactMessages" },
       { href: "/panel/kullanicilar", icon: "users", isAvailable: true, label: "Kullanıcılar", roles: PANEL_ROUTE_ACCESS.users, route: "users" },

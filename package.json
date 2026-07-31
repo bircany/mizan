@@ -19,6 +19,7 @@
     "test:eft-guidance": "tsx scripts/check-eft-guidance.ts",
     "test:inquiry-pages": "tsx scripts/check-inquiry-pages.ts",
     "test:time": "tsx scripts/check-time.ts",
+    "test:whatsapp": "node --conditions=react-server --import tsx scripts/check-whatsapp.ts",
     "delivery:worker": "node -e \"console.error('Legacy delivery worker is disabled; use services/video-platform.'); process.exit(1)\"",
     "qurbani:worker": "tsx scripts/qurbani-video-worker.ts",
     "qurbani:cleanup": "tsx scripts/qurbani-storage-cleanup.ts",
