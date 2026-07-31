@@ -173,13 +173,13 @@ export async function markVideoFailed(video, failure) {
          retry_after = case when $3 then now() + ($4::int * interval '1 second') else null end,
          quarantine_until = case when $3 then null else now() + interval '24 hours' end,
          raw_storage_key = coalesce($5, raw_storage_key),
-         last_error = $6,
-         last_error_code = $7,
-         ffmpeg_log = $8,
+         last_error = $6::text,
+         last_error_code = $7::text,
+         ffmpeg_log = $8::text,
          technical_metadata = coalesce(technical_metadata, '{}'::jsonb)
            || jsonb_build_object(
              'lastFailureAt', now(),
-             'lastFailureCode', $7,
+             'lastFailureCode', $7::text,
              'automaticRetryRemaining', $3
            ),
          updated_at = now()
