@@ -311,11 +311,17 @@ export async function configureEvolutionDeliveryWebhook() {
     {
       method: "POST",
       body: JSON.stringify({
-        enabled: true,
-        url: deliveryWebhookUrl,
-        events: [...deliveryWebhookEvents],
-        headers: { "x-evolution-webhook-secret": secret },
-        base64: false,
+        // Evolution API 2.3.x validates the configuration under a `webhook`
+        // object. Keeping this explicit also prevents silently accepting a
+        // request that the provider later ignores.
+        webhook: {
+          enabled: true,
+          url: deliveryWebhookUrl,
+          events: [...deliveryWebhookEvents],
+          headers: { "x-evolution-webhook-secret": secret },
+          byEvents: false,
+          base64: false,
+        },
       }),
     },
   );
