@@ -33,8 +33,17 @@ export function resolveStorageKey(root, key) {
 }
 
 export async function resolveExistingFile(root, key) {
-  const normalizedRoot = await realpath(root);
-  const candidate = await realpath(resolveStorageKey(normalizedRoot, key));
+  let normalizedRoot;
+  let candidate;
+  try {
+    normalizedRoot = await realpath(root);
+    candidate = await realpath(resolveStorageKey(normalizedRoot, key));
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      throw new HttpError(404, "video_not_found", "Video bulunamadı.");
+    }
+    throw error;
+  }
   if (!isInside(normalizedRoot, candidate)) {
     throw new HttpError(400, "invalid_storage_key", "Geçersiz depolama anahtarı.");
   }

@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
+import { mkdtemp, rm } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import test from "node:test";
 
-import { contentDisposition, parseSingleRange, resolveStorageKey } from "../src/storage.js";
+import {
+  contentDisposition,
+  parseSingleRange,
+  resolveExistingFile,
+  resolveStorageKey,
+} from "../src/storage.js";
 
 test("single HTTP byte ranges are parsed safely", () => {
   assert.deepEqual(parseSingleRange("bytes=0-99", 1_000), { start: 0, end: 99 });
@@ -24,4 +32,14 @@ test("download header has ASCII fallback and RFC 5987 filename", () => {
   assert.match(header, /^attachment;/);
   assert.match(header, /filename\*=UTF-8''/);
   assert.equal(header.includes("\r"), false);
+});
+
+test("a missing file is reported as a stable 404", async (context) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "mizan-storage-"));
+  context.after(() => rm(root, { force: true, recursive: true }));
+
+  await assert.rejects(
+    resolveExistingFile(root, "missing-video.source"),
+    (error) => error?.statusCode === 404 && error?.code === "video_not_found",
+  );
 });
