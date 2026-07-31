@@ -160,6 +160,7 @@ export function videoWorkerConfig() {
     outputGrowthRatio: Number.parseFloat(env("OUTPUT_MAX_RAW_RATIO", "1.10")),
     retryDelaySeconds: positiveInteger("VIDEO_RETRY_DELAY_SECONDS", 30, { max: 3600 }),
     ffmpegThreads: positiveInteger("FFMPEG_THREADS", 2, { max: 8 }),
+    transcodeEnabled: boolean("VIDEO_TRANSCODE_ENABLED", false),
     closingTitle: env("CLOSING_TITLE", "Mizan İnsani Yardım Derneği"),
     closingMessage: env("CLOSING_MESSAGE", "Allah hayrınızı kabul etsin."),
     closingCredit: env("CLOSING_CREDIT", "Powered by SoftArt Studios"),

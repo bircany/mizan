@@ -1,4 +1,4 @@
-import { access, stat, unlink } from "node:fs/promises";
+import { access, copyFile, mkdir, open, rename, stat, unlink } from "node:fs/promises";
 import path from "node:path";
 
 import { retentionConfig, storageConfig, videoWorkerConfig } from "./config.js";
@@ -14,7 +14,7 @@ import {
   resolveExistingFile,
   resolveStorageKey,
 } from "./storage.js";
-import { ffprobe, validateProbe } from "./video-probe.js";
+import { ffprobe, isDirectDeliveryCompatible, validateProbe } from "./video-probe.js";
 import {
   claimVideo,
   findDuplicateSource,
@@ -90,6 +90,19 @@ async function quarantineSource(video, source) {
   return key;
 }
 
+async function copySourceToReady(sourcePath, readyPath) {
+  await mkdir(path.dirname(readyPath), { recursive: true });
+  const temporary = `${readyPath}.partial-${process.pid}-${Date.now()}`;
+  await copyFile(sourcePath, temporary);
+  const handle = await open(temporary, "r");
+  try {
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
+  await rename(temporary, readyPath);
+}
+
 async function processClaim(claim) {
   const video = claim.video;
   let source;
@@ -100,13 +113,15 @@ async function processClaim(claim) {
     if (source.stat.size <= 0 || source.stat.size > settings.maxBytes) {
       throw new HttpError(413, "SOURCE_SIZE_INVALID", "Ham video 2 GB sınırını aşıyor veya boş.");
     }
-    const [rawSha256, sourceProbe, currentDisk] = await Promise.all([
+    const [rawSha256, sourceProbe] = await Promise.all([
       hashFile(source.path),
       ffprobe(source.path),
-      diskStatus(storage.processing, retention),
     ]);
     const probe = validateProbe(sourceProbe, String(video.mime_type).toLowerCase(), settings);
-    const capacity = hasProcessingCapacity(currentDisk, source.stat.size, retention.ffmpegReserveBytes);
+    const currentDisk = await diskStatus(storage.processing, retention);
+    const capacity = settings.transcodeEnabled
+      ? hasProcessingCapacity(currentDisk, source.stat.size, retention.ffmpegReserveBytes)
+      : { allowed: true };
     if (!capacity.allowed) {
       throw new HttpError(507, "INSUFFICIENT_PROCESSING_SPACE", "Video işleme için yeterli güvenli geçici alan yok.");
     }
@@ -118,6 +133,41 @@ async function processClaim(claim) {
         "DUPLICATE_SOURCE",
         "Aynı video bu gruba daha önce yüklenmiş. Yeni sürüm için yetkili onayı gerekiyor.",
       );
+    }
+
+    if (!settings.transcodeEnabled) {
+      if (!isDirectDeliveryCompatible(probe)) {
+        throw new HttpError(
+          422,
+          "DIRECT_DELIVERY_FORMAT_UNSUPPORTED",
+          "Direct delivery requires an MP4 file with H.264 video and AAC audio. Re-upload the video in that format to send it without transcoding.",
+        );
+      }
+      const readyKey = `${video.group_id}/${video.upload_id}-v${video.version}.mp4`;
+      const readyPath = resolveStorageKey(storage.ready, readyKey);
+      await copySourceToReady(source.path, readyPath);
+      await markVideoProcessed(video.id, {
+        probe,
+        outputProbe: probe,
+        rawSha256,
+        processedSha256: rawSha256,
+        rawStorageKey: source.key,
+        processedStorageKey: readyKey,
+        outputBytes: source.stat.size,
+        snapshots: {
+          processing: { mode: "direct", transcoded: false },
+          watermark: { required: false },
+          closingCard: { enabled: false },
+        },
+        slaughterScriptSnapshot: video.slaughter_script_snapshot || video.group_slaughter_script_snapshot,
+        ffmpegLog: "",
+      });
+      logger.info("Video accepted without transcoding; awaiting human review", {
+        videoId: video.id,
+        groupId: video.group_id,
+        rawBytes: source.stat.size,
+      });
+      return;
     }
 
     outputPath = path.join(storage.processing, `${video.id}-attempt-${video.attempt_count}.mp4`);

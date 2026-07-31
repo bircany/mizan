@@ -80,6 +80,14 @@ export function validateProbe(probe, expectedMime, limits) {
   };
 }
 
+export function isDirectDeliveryCompatible(probe) {
+  return (
+    probe.detectedMime === "video/mp4" &&
+    probe.videoCodec === "h264" &&
+    (!probe.audioCodec || probe.audioCodec === "aac")
+  );
+}
+
 export function outputDimensions(width, height) {
   const landscape = width >= height;
   const maxWidth = landscape ? 1920 : 1080;

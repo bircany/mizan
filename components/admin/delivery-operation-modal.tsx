@@ -328,7 +328,7 @@ export function DeliveryOperationModal({ groupId }: { groupId: string }) {
                                 video.status,
                               )
                                 ? "Güvenli önizlemeyi aç"
-                                : "Video işleniyor"}
+                                : "Video doğrulanıyor"}
                             </button>
                           )}
                           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">

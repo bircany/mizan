@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { outputDimensions, validateProbe } from "../src/video-probe.js";
+import { isDirectDeliveryCompatible, outputDimensions, validateProbe } from "../src/video-probe.js";
 
 function probe(formatName, codecName, width, height, duration, audio = "aac") {
   return {
@@ -25,4 +25,9 @@ test("dimension calculation preserves orientation and never upscales", () => {
   assert.deepEqual(outputDimensions(3840, 2160), { width: 1920, height: 1080, scaled: true });
   assert.deepEqual(outputDimensions(2160, 3840), { width: 1080, height: 1920, scaled: true });
   assert.deepEqual(outputDimensions(640, 360), { width: 640, height: 360, scaled: false });
+});
+
+test("direct delivery accepts only browser-compatible MP4 sources", () => {
+  assert.equal(isDirectDeliveryCompatible(validateProbe(probe("mov,mp4,m4a,3gp,3g2,mj2", "h264", 1920, 1080, 60), "video/mp4", { maxSeconds: 600 })), true);
+  assert.equal(isDirectDeliveryCompatible(validateProbe(probe("matroska,webm", "vp9", 1280, 720, 60, "opus"), "video/webm", { maxSeconds: 600 })), false);
 });
