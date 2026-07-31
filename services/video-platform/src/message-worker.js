@@ -2,6 +2,7 @@ import { randomInt } from "node:crypto";
 
 import {
   accessMaterialsConfig,
+  deliveryPolicyConfig,
   messageWorkerConfig,
   safeTestRecipientsConfig,
 } from "./config.js";
@@ -28,6 +29,7 @@ import { renderDeliveryMessage } from "./message-renderer.js";
 import { installShutdown } from "./shutdown.js";
 
 const config = messageWorkerConfig();
+const deliveryPolicy = deliveryPolicyConfig();
 const materials = accessMaterialsConfig();
 const safeTestRecipients = safeTestRecipientsConfig();
 const abortController = new AbortController();
@@ -98,6 +100,7 @@ logger.info("Message worker started", {
   workerId: config.workerId,
   safeTestRecipientCount: safeTestRecipients.size,
   evolutionUrl: config.evolutionUrl,
+  requireTestBeforeDispatch: deliveryPolicy.requireTestBeforeDispatch,
 });
 
 while (!abortController.signal.aborted) {
@@ -128,7 +131,11 @@ while (!abortController.signal.aborted) {
       }
     }
 
-    claim = await claimDeliveryMessage(config.workerId, config.leaseMinutes);
+    claim = await claimDeliveryMessage(
+      config.workerId,
+      config.leaseMinutes,
+      deliveryPolicy.requireTestBeforeDispatch,
+    );
     if (!claim) {
       await sleep(config.pollIntervalMs);
       continue;

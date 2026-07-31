@@ -3,7 +3,7 @@ import { computeGroupMessageFingerprint } from "./message-fingerprint.js";
 
 const senderLockName = "mizan:whatsapp-single-sender:v1";
 
-export async function claimDeliveryMessage(workerId, leaseMinutes) {
+export async function claimDeliveryMessage(workerId, leaseMinutes, requireTestBeforeDispatch) {
   const client = await getPool().connect();
   try {
     const lock = await client.query("select pg_try_advisory_lock(hashtext($1)) as acquired", [senderLockName]);
@@ -55,7 +55,7 @@ export async function claimDeliveryMessage(workerId, leaseMinutes) {
       return null;
     }
 
-    if (!message.is_test) {
+    if (!message.is_test && requireTestBeforeDispatch) {
       const current = await computeGroupMessageFingerprint(client, message.group_id);
       const validTest =
         String(message.group_active_video_id) === String(message.video_id) &&

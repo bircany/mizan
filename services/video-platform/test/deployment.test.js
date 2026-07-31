@@ -4,6 +4,7 @@ import test from "node:test";
 
 const composeUrl = new URL("../../../deploy/video/compose.yaml", import.meta.url);
 const videoRepositoryUrl = new URL("../src/video-repository.js", import.meta.url);
+const messageRepositoryUrl = new URL("../src/message-repository.js", import.meta.url);
 
 test("tusd CORS rule survives Coolify Compose deployment", async () => {
   const compose = await readFile(composeUrl, "utf8");
@@ -28,4 +29,10 @@ test("video failure metadata casts variadic JSON parameters explicitly", async (
 
   assert.match(repository, /'lastFailureCode', \$7::text/);
   assert.match(repository, /last_error_code = \$7::text/);
+});
+
+test("message worker enforces test delivery only when policy requires it", async () => {
+  const repository = await readFile(messageRepositoryUrl, "utf8");
+
+  assert.match(repository, /if \(!message\.is_test && requireTestBeforeDispatch\)/);
 });

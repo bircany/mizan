@@ -2,9 +2,25 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { derivePublicLinkToken } from "../src/access-materials.js";
+import { deliveryPolicyConfig } from "../src/config.js";
 import { stableStringify } from "../src/message-fingerprint.js";
 import { renderDeliveryMessage } from "../src/message-renderer.js";
 import { encryptAccessCode } from "../src/security/access-code-crypto.js";
+
+test("delivery test policy is optional by default and explicitly configurable", () => {
+  const previous = process.env.REQUIRE_DELIVERY_TEST;
+  try {
+    delete process.env.REQUIRE_DELIVERY_TEST;
+    assert.equal(deliveryPolicyConfig().requireTestBeforeDispatch, false);
+    process.env.REQUIRE_DELIVERY_TEST = "true";
+    assert.equal(deliveryPolicyConfig().requireTestBeforeDispatch, true);
+    process.env.REQUIRE_DELIVERY_TEST = "false";
+    assert.equal(deliveryPolicyConfig().requireTestBeforeDispatch, false);
+  } finally {
+    if (previous === undefined) delete process.env.REQUIRE_DELIVERY_TEST;
+    else process.env.REQUIRE_DELIVERY_TEST = previous;
+  }
+});
 
 test("stable JSON makes fingerprint input independent of object key order", () => {
   assert.equal(

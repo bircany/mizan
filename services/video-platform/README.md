@@ -153,7 +153,8 @@ numbers are neither returned by the API nor written into test message rows.
 The test fingerprint covers active video ID/version/checksum, access-code
 rotation, and every non-test draft's immutable snapshots in ID order. A
 successful test atomically writes the fingerprint to the group. Normal claim
-recomputes it and pauses dispatch if it differs.
+recomputes it and pauses dispatch if it differs only when
+`REQUIRE_DELIVERY_TEST=true`. The default `false` keeps test delivery optional.
 
 Normal dispatch starts with `scheduled_at = now() + 5 seconds`. A claim accepts
 `countdown`, changes it to `sending` in the same short transaction, and never

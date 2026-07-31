@@ -10,9 +10,10 @@ import {
   resolveExistingFile,
   resolveStorageKey,
 } from "./storage.js";
-import { storageConfig } from "./config.js";
+import { deliveryPolicyConfig, storageConfig } from "./config.js";
 
 const ffmpegLockName = "mizan:video-ffmpeg:v1";
+const deliveryPolicy = deliveryPolicyConfig();
 
 function numericId(value, label) {
   const normalized = String(value || "");
@@ -282,7 +283,7 @@ export async function dispatchGroup(groupIdValue, action) {
     const group = selected.rows[0];
     if (!group) throw new HttpError(404, "group_not_found", "Operasyon grubu bulunamadı.");
     if (action === "queue" || action === "resume") {
-      if (process.env.REQUIRE_DELIVERY_TEST === "true") {
+      if (deliveryPolicy.requireTestBeforeDispatch) {
       const current = await computeGroupMessageFingerprint(client, groupId);
       const testPassed = String(group.test_message_video_id) === String(current.activeVideoId)
         && group.test_message_fingerprint === current.fingerprint

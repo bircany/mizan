@@ -167,6 +167,12 @@ export function videoWorkerConfig() {
   });
 }
 
+export function deliveryPolicyConfig() {
+  return Object.freeze({
+    requireTestBeforeDispatch: boolean("REQUIRE_DELIVERY_TEST", false),
+  });
+}
+
 export function messageWorkerConfig() {
   return Object.freeze({
     workerId: env("WORKER_ID", `message-${process.pid}`),
