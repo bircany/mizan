@@ -111,7 +111,9 @@ services:
       SERVICE_NAME: video-worker
       WORKER_ID: "${VIDEO_WORKER_ID:-video-worker-1}"
       HEALTH_FILE: /tmp/mizan-video-worker.health
-      DATABASE_POOL_MAX: "1"
+      # The worker keeps one connection for its session advisory lock while
+      # repository updates use a second short-lived connection.
+      DATABASE_POOL_MAX: "2"
     volumes:
       - video_uploads:/var/lib/mizan/uploads
       - video_raw:/var/lib/mizan/raw

@@ -13,3 +13,11 @@ test("tusd CORS rule survives Coolify Compose deployment", async () => {
   );
   assert.doesNotMatch(compose, /TUSD_CORS_ALLOW_ORIGIN/);
 });
+
+test("video worker has a second database connection for repository updates", async () => {
+  const compose = await readFile(composeUrl, "utf8");
+  const worker = compose.match(/  video-worker:\r?\n([\s\S]*?)\r?\n  message-worker:/)?.[1];
+
+  assert.ok(worker, "video-worker service must exist");
+  assert.match(worker, /DATABASE_POOL_MAX:\s*"2"/);
+});
