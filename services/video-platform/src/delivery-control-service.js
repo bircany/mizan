@@ -5,6 +5,12 @@ import { transaction } from "./db.js";
 import { HttpError } from "./errors.js";
 import { computeGroupMessageFingerprint } from "./message-fingerprint.js";
 import { createMediaToken } from "./security/media-token.js";
+import {
+  moveFile,
+  resolveExistingFile,
+  resolveStorageKey,
+} from "./storage.js";
+import { storageConfig } from "./config.js";
 
 const ffmpegLockName = "mizan:video-ffmpeg:v1";
 
@@ -338,10 +344,24 @@ export async function dispatchGroup(groupIdValue, action) {
 
 export async function retryStaleVideo(videoIdValue) {
   const videoId = numericId(videoIdValue, "video");
+  const storage = storageConfig();
   return transaction(async (client) => {
     const lock = await client.query("select pg_try_advisory_xact_lock(hashtext($1)) as acquired", [ffmpegLockName]);
     if (!lock.rows[0]?.acquired) {
       throw new HttpError(409, "video_worker_busy", "Video worker şu anda çalışıyor; işlem zorla kesilmedi.");
+    }
+    const current = await client.query(
+      `select status, raw_storage_key from operation_videos where id = $1 for update`,
+      [videoId],
+    );
+    const video = current.rows[0];
+    if (video?.status === "quarantined") {
+      const key = String(video.raw_storage_key || "");
+      if (!key) {
+        throw new HttpError(409, "quarantined_source_missing", "Karantinadaki video dosyası bulunamadı; videoyu yeniden yükleyin.");
+      }
+      const source = await resolveExistingFile(storage.quarantine, key);
+      await moveFile(source.path, resolveStorageKey(storage.raw, key));
     }
     const updated = await client.query(
       `update operation_videos
