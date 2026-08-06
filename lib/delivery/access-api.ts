@@ -59,7 +59,7 @@ export function normalizeDeliveryLinkToken(value: unknown) {
 export function normalizeDeliveryAccessCode(value: unknown) {
   const code =
     typeof value === "string" ? value.trim().toLocaleUpperCase("en-US") : "";
-  return /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/.test(code) ? code : null;
+  return /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8}$/.test(code) ? code : null;
 }
 
 function text(value: unknown, fallback: string, maxLength = 160) {

@@ -156,12 +156,12 @@ export function VideoAccessClient({
                 setAccessCode(
                   event.target.value
                     .toLocaleUpperCase("en-US")
-                    .replace(/[^ABCDEFGHJKMNPQRSTUVWXYZ23456789]/g, "")
+                    .replace(/[^ABCDEFGHJKLMNPQRSTUVWXYZ23456789]/g, "")
                     .slice(0, 8),
                 );
                 setError("");
               }}
-              pattern="[A-HJ-KM-NP-Z2-9]{8}"
+              pattern="[A-HJ-NP-Z2-9]{8}"
               required
               type="text"
               value={accessCode}
