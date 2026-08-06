@@ -121,6 +121,24 @@ export async function confirmCheckoutToken(
   const session = sessions.docs[0];
   if (!session) throw new Error("Ödeme oturumu bulunamadı.");
 
+  const processedDonation = await payload.find({
+    collection: "donations",
+    where: { paymentSession: { equals: session.id } },
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+  });
+  const existingDonation = processedDonation.docs[0];
+  if (existingDonation) {
+    const isPaid =
+      existingDonation.status === "paid" ||
+      existingDonation.status === "partially_refunded";
+    return {
+      state: isPaid ? ("paid" as const) : ("pending_review" as const),
+      donation: existingDonation,
+    };
+  }
+
   const paymentResult = await retrieveCheckoutForm(
     token,
     session.conversationId,

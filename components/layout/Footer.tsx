@@ -21,7 +21,7 @@ const footerLinks = {
 
 const socialLinks = [
   {
-    href: "#",
+    href: "https://www.instagram.com/mizandernegi/",
     label: "Instagram",
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 448 512" fill="currentColor">
@@ -39,7 +39,7 @@ const socialLinks = [
     ),
   },
   {
-    href: "#",
+    href: "https://www.youtube.com/@MizanMektebiHamzaALG%C3%9CLHoca",
     label: "YouTube",
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 576 512" fill="currentColor">

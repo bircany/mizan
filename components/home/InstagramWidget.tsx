@@ -69,7 +69,7 @@ export default function InstagramWidget() {
             <div className="h-1.5 w-24 bg-secondary rounded-full" />
           </div>
           <Link
-            href="https://instagram.com/mizandernegi"
+            href="https://www.instagram.com/mizandernegi/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary text-label-md font-semibold hover:underline flex items-center gap-1"
