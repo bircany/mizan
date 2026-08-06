@@ -48,7 +48,8 @@ export function renderDeliveryMessage(message, group, config) {
     campaignName && !hasCampaignLine ? `Kampanya: ${campaignName}` : "",
     hasGroupCodeLine ? "" : `Grup kodu: ${singleLine(group.code, 40)}`,
     `Video bağlantısı: ${publicVideoUrl(group.id, config)}`,
-    `Erişim kodu: ${accessCode}`,
+    `Erişim kodu: *${accessCode}*`,
+    `Kodu kopyala`,
   ].filter(Boolean);
   return lines.join("\n\n");
 }
