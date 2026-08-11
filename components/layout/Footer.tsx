@@ -16,6 +16,8 @@ const footerLinks = {
     { href: "/cerez-politikasi", label: "Çerez Politikası" },
     { href: "/kullanim-kosullari", label: "Kullanım Koşulları" },
     { href: "/bagis-ve-destek-sartlari", label: "Bağış ve Destek Şartları" },
+    { href: "/mesafeli-satis-sozlesmesi", label: "Mesafeli Satış Sözleşmesi" },
+    { href: "/iade-ve-iptal-politikasi", label: "İade ve İptal Politikası" },
   ],
 };
 
@@ -154,15 +156,26 @@ export default function Footer() {
                   {addressLineTwo}
                 </p>
               </div>
+<div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-[20px] text-primary/70">
+                  mail
+                </span>
+                <a
+                  href="mailto:info@mizandernegi.org"
+                  className="transition-colors duration-200 hover:text-primary"
+                >
+                  info@mizandernegi.org
+                </a>
+              </div>
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-[20px] text-primary/70">
                   mail
                 </span>
                 <a
-                  href="mailto:bilgi@mizandernegi.org.tr"
+                  href="mailto:bagis@mizandernegi.org"
                   className="transition-colors duration-200 hover:text-primary"
                 >
-                  bilgi@mizandernegi.org.tr
+                  bagis@mizandernegi.org
                 </a>
               </div>
               <div className="flex items-center gap-3">
@@ -180,13 +193,61 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-between gap-3 border-t border-gray-100 pt-6 sm:flex-row">
+        <div className="flex flex-col items-center justify-between gap-3 border-t border-gray-100 pt-6 lg:flex-row">
           <p className="text-[13px] text-gray-500">
             {t("footer.copyright")}
           </p>
           <p className="text-[13px] text-gray-400">
             {t("footer.organization")}
           </p>
+        </div>
+
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-gray-100 pt-6 sm:flex-row">
+          <div className="flex flex-col items-center gap-1.5 sm:items-start">
+            <div className="flex items-center gap-2 text-[13px] font-semibold text-gray-700">
+              <svg
+                aria-hidden="true"
+                className="size-4 text-emerald-600"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4Zm-1.06 15.5-3.54-3.54 1.41-1.41 2.13 2.12 4.79-4.79 1.41 1.42-6.2 6.2Z" />
+              </svg>
+              {t("footer.ssl")}
+            </div>
+            <p className="text-[12px] text-gray-500">
+              {t("footer.securePayment")}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-8 items-center rounded-md border border-gray-200 bg-white px-3">
+              <Image
+                src="/images/payments/visa.svg"
+                alt="Visa"
+                width={120}
+                height={39}
+                className="h-4 w-auto object-contain"
+              />
+            </span>
+            <span className="inline-flex h-8 items-center rounded-md border border-gray-200 bg-white px-2.5">
+              <Image
+                src="/images/payments/mastercard.svg"
+                alt="Mastercard"
+                width={120}
+                height={34}
+                className="h-5 w-auto object-contain"
+              />
+            </span>
+            <span className="inline-flex h-8 items-center rounded-md border border-gray-200 bg-white px-2.5">
+              <Image
+                src="/images/payments/iyzico-ile-ode.svg"
+                alt={t("footer.iyzicoAlt")}
+                width={144}
+                height={36}
+                className="h-5 w-auto object-contain"
+              />
+            </span>
+          </div>
         </div>
       </div>
     </footer>

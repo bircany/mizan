@@ -143,10 +143,13 @@
   "footer": {
     "description": "Based in Elbistan, Mizan Association set out to bring balance and hope to oppressed people around the world.",
     "quickLinks": ["About Us", "Become a Student", "Donate and Support", "Contact"],
-    "legalLinks": ["Data Protection Notice", "Privacy Policy", "Cookie Policy", "Terms of Use", "Donation and Support Terms"],
-    "address": "Yeşilyurt Neighborhood, Güvenlik Street No:22|Elbistan, Kahramanmaraş",
+    "legalLinks": ["Data Protection Notice", "Privacy Policy", "Cookie Policy", "Terms of Use", "Donation and Support Terms", "Distance Sales Contract", "Return and Cancellation Policy"],
+    "address": "Şehit Mehmet Efendi Boulevard No:42|Elbistan, Kahramanmaraş",
     "copyright": "© 2024 Mizan Association. All Rights Reserved.",
     "organization": "Mizan Humanitarian Aid Association",
-    "motto": "Goodness in Balance"
+    "motto": "Goodness in Balance",
+    "ssl": "Secure Connection with 256-bit SSL",
+    "securePayment": "Your payments are processed securely via the PCI DSS compliant iyzico infrastructure.",
+    "iyzicoAlt": "Pay with iyzico"
   }
 }

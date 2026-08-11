@@ -62,3 +62,6 @@ Desktop.ini
 /.agents/
 /skills-lock.json
 /supabase/.temp/
+
+# Production secrets file (no dot prefix) — never commit
+/env

@@ -143,10 +143,13 @@
   "footer": {
     "description": "Elbistan merkezli Mizan Derneği, dünyanın dört bir yanındaki mazlumlara denge ve umut olmak için yola çıkmıştır.",
     "quickLinks": ["Hakkımızda", "Talebe Ol", "Bağış ve Destek", "İletişim"],
-    "legalLinks": ["KVKK Aydınlatma Metni", "Gizlilik Politikası", "Çerez Politikası", "Kullanım Koşulları", "Bağış ve Destek Şartları"],
-    "address": "Yeşilyurt Mah. Güvenlik Cad. No:22|Elbistan, Kahramanmaraş",
+    "legalLinks": ["KVKK Aydınlatma Metni", "Gizlilik Politikası", "Çerez Politikası", "Kullanım Koşulları", "Bağış ve Destek Şartları", "Mesafeli Satış Sözleşmesi", "İade ve İptal Politikası"],
+    "address": "Şehit Mehmet Efendi Bulvarı No:42|Elbistan, Kahramanmaraş",
     "copyright": "© 2024 Mizan Derneği. Tüm Hakları Saklıdır.",
     "organization": "Mizan İnsani Yardım Derneği",
-    "motto": "İyilikte Mizan"
+    "motto": "İyilikte Mizan",
+    "ssl": "256-bit SSL ile Güvenli Bağlantı",
+    "securePayment": "Ödemeleriniz PCI DSS uyumlu iyzico altyapısı ile güvenle gerçekleştirilir.",
+    "iyzicoAlt": "iyzico ile Öde"
   }
 }

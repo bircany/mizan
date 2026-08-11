@@ -20,6 +20,8 @@ const staticRoutes = [
   { url: "/gizlilik-politikasi", changefreq: "yearly" as const, priority: 0.3 },
   { url: "/kullanim-kosullari", changefreq: "yearly" as const, priority: 0.3 },
   { url: "/bagis-ve-destek-sartlari", changefreq: "yearly" as const, priority: 0.3 },
+  { url: "/mesafeli-satis-sozlesmesi", changefreq: "yearly" as const, priority: 0.3 },
+  { url: "/iade-ve-iptal-politikasi", changefreq: "yearly" as const, priority: 0.3 },
   { url: "/odeme", changefreq: "monthly" as const, priority: 0.3 },
 ];
 
