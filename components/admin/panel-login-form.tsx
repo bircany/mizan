@@ -82,8 +82,6 @@ export function PanelLoginForm() {
             {!isPending ? <ArrowRight aria-hidden="true" className="size-4 transition-transform group-hover:translate-x-0.5" /> : null}
           </button>
         </form>
-
-        <p className="border-t border-[var(--admin-border)] bg-[var(--admin-surface)] px-6 py-4 text-xs leading-5 text-[var(--admin-muted)] sm:px-8">Yetkisiz erişim denetlenir. Hesabınız pasifse giriş yapılamaz.</p>
       </section>
     </main>
   );
