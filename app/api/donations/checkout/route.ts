@@ -7,6 +7,10 @@ import {
 import { parseUnifiedDonationCheckout } from "@/lib/donations/validation";
 import { getPayloadClient } from "@/lib/payload";
 import { getPaymentPublicUrl } from "@/lib/payments/urls";
+import {
+  areCardPaymentsEnabled,
+  CARD_PAYMENTS_UNAVAILABLE_MESSAGE,
+} from "@/lib/payments/card-payments";
 import { enforceRateLimit, RateLimitError } from "@/lib/rate-limit";
 
 function requestIp(request: Request) {
@@ -20,6 +24,9 @@ function requestIp(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = parseUnifiedDonationCheckout(await request.json());
+    if (body.paymentMethod === "card" && !areCardPaymentsEnabled()) {
+      throw new UnifiedCheckoutError(CARD_PAYMENTS_UNAVAILABLE_MESSAGE, 409);
+    }
     const ip = requestIp(request);
     await enforceRateLimit({
       scope: "unified-donation-checkout",
