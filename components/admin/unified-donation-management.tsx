@@ -100,7 +100,7 @@ function CampaignCards({
   rows: UnifiedCampaignRow[];
   childDonation: { campaign: string; usdCampaign: string; eurCampaign: string; foodPrice: number; stationeryPrice: number; toyPrice: number; clothingPrice: number; foodUsdPrice: number; stationeryUsdPrice: number; toyUsdPrice: number; clothingUsdPrice: number; foodEurPrice: number; stationeryEurPrice: number; toyEurPrice: number; clothingEurPrice: number } | null;
 }) {
-  if (!rows.length) return <EmptyPanelState title="Kampanya bulunamadı" description="Arama ölçütünü temizleyin veya ilk bağış kampanyasını oluşturun." />;
+  // The managed Ahmet card exists independently of the standard campaign list.
   const visibleIds = new Set(rows.map((row) => row.id));
   return (
     <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
