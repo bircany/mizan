@@ -41,3 +41,11 @@ Ek olarak: `/iletisim`, `/bagis/[slug]`, `/haberler/[slug]`
 - SEO (sitemap, robots, meta tags)
 - Instagram widget
 - Deployment (Vercel)
+
+## Yerel Test ve Deployment Akisi
+- Degisiklikleri once yerelde uygula.
+- Push oncesinde en az typecheck, lint ve degisiklikle ilgili hedefli testleri calistir.
+- Hizli kontroller basarili olur olmaz `main` dalina push ederek deployment'i baslat.
+- Deployment kuyrukta veya build asamasindayken yerel production build ve kapsamli entegrasyon testlerini paralel olarak tamamla.
+- Yerel kapsamli testler bitmeden isi tamamlandi olarak raporlama; hata cikarsa hemen duzeltip yeni commit pushla.
+- Yalnizca kullanicinin acikca istedigi servisleri redeploy et; web degisikliklerinde varsayilan hedef Vercel'dir.

@@ -18,6 +18,7 @@ import {
   getMaximumCardQuantity,
   isIyzicoAmountAllowed,
 } from "@/lib/payments/limits";
+import { CARD_PAYMENTS_UNAVAILABLE_MESSAGE } from "@/lib/payments/card-payments";
 import {
   isValidTurkishIdentityNumber,
   normalizeTurkishIdentityNumber,
@@ -29,10 +30,12 @@ type CountryOption = { code: string; name: string };
 export default function PaymentForm({
   countries,
   eftGuidance,
+  cardPaymentsEnabled,
   iyzicoMaxPaymentAmount,
 }: {
   countries: CountryOption[];
   eftGuidance: EftGuidance;
+  cardPaymentsEnabled: boolean;
   iyzicoMaxPaymentAmount: number;
 }) {
   const { items, totalAmount, updateQuantity } = useCart();
@@ -119,6 +122,11 @@ export default function PaymentForm({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitError(null);
+
+    if (!cardPaymentsEnabled) {
+      setSubmitError(CARD_PAYMENTS_UNAVAILABLE_MESSAGE);
+      return;
+    }
 
     if (form.paymentMethod === "eft") {
       setSubmitError(
@@ -299,7 +307,7 @@ export default function PaymentForm({
               ) : null}
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-outline-variant bg-white p-4">
+              <label className="flex items-center gap-3 rounded-2xl border border-outline-variant bg-surface p-4 text-on-surface-variant">
                 <input
                   checked={form.paymentMethod === "eft"}
                   name="paymentMethod"
@@ -310,6 +318,11 @@ export default function PaymentForm({
                 EFT / Havale
               </label>
             </div>
+            {!cardPaymentsEnabled ? (
+              <Alert className="mt-4" tone="info">
+                {CARD_PAYMENTS_UNAVAILABLE_MESSAGE}
+              </Alert>
+            ) : null}
             {cardLimitMessage ? (
               <Alert className="mt-4" tone="error">
                 {cardLimitMessage}
