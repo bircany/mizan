@@ -67,6 +67,21 @@ export default function HomePage() {
   const { t, dir, locale } = useLanguage();
   const [donationAreas, setDonationAreas] = useState<DonationAreaCard[]>([]);
   const [donationAreasLoading, setDonationAreasLoading] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const slides = [
+    { img: "/images/home/hero-community-meal.png", title: t("home.heroTitle"), desc: t("home.heroDescription1") },
+    { img: "/images/home/hero-qurbani.jpeg", title: t("home.heroTitle2"), desc: t("home.heroDescription2") },
+    { img: "/images/home/hero-student-support.jpeg", title: t("home.heroTitle3"), desc: t("home.heroDescription3") },
+    { img: "/images/home/hero-mizan-mescidi.png", title: t("home.heroTitle4"), desc: t("home.heroDescription4") },
+  ];
+  const goToSlide = (index: number) => setCurrentSlide(index);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
   const [activeTab, setActiveTab] = useState(0);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
@@ -142,6 +157,103 @@ export default function HomePage() {
 
   return (
     <div className="overflow-x-hidden" dir={dir}>
+      {/* HERO */}
+      <section className="relative h-[560px] overflow-hidden sm:h-[600px] lg:h-[700px]">
+        <AnimatePresence>
+          <motion.div
+            key={currentSlide}
+            initial={{ opacity: 0, x: "-100%" }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: "100%" }}
+            transition={{ duration: 1, ease: "easeInOut" }}
+            className="absolute inset-0 bg-cover bg-[center_35%]"
+            style={{ backgroundImage: `url(${slides[currentSlide].img})` }}
+          />
+        </AnimatePresence>
+        <div className="absolute inset-0 bg-black/45" />
+
+        <div className="relative z-10 mx-auto flex h-full max-w-[1140px] items-center px-5 sm:px-8 lg:px-2.5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-6 items-center w-full">
+            <div className="max-w-lg lg:max-w-none">
+              <AnimatePresence mode="wait">
+                <motion.div key={currentSlide}>
+                  <motion.h5
+                    initial={{ opacity: 0, x: -100 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 2, ease: "easeOut" }}
+                    className="text-gold text-base uppercase tracking-[0.2em] font-medium mb-5"
+                  >
+                    {t(`home.heroBadge${currentSlide + 1}`)}
+                  </motion.h5>
+
+                  <motion.h1
+                    initial={{ opacity: 0, x: 60 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 2, ease: "easeOut" }}
+                    className="text-display-lg max-sm:text-display-lg-mobile text-white leading-[1.08] mb-5 max-w-[560px]"
+                  >
+                    {slides[currentSlide].title}
+                  </motion.h1>
+
+                  <motion.p
+                    initial={{ opacity: 0, x: 60 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 2, ease: "easeOut" }}
+                    className="text-base text-white/60 leading-relaxed mb-7 max-w-[480px]"
+                  >
+                    {slides[currentSlide].desc}
+                  </motion.p>
+
+                  <div className="flex flex-wrap gap-3 sm:gap-5">
+                    <motion.div
+                      initial={{ opacity: 0, x: -100 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 2, ease: "easeOut" }}
+                    >
+                      <Link
+                        href="/bagis"
+                        className="inline-flex min-h-12 items-center justify-center gap-2 bg-secondary px-6 py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:px-10 sm:py-5 sm:text-base"
+                      >
+                        {t("common.donate")} →
+                      </Link>
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, x: 60 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 2, delay: 1, ease: "easeOut" }}
+                    >
+                      <Link
+                        href="/hakkimizda"
+                        className="inline-flex min-h-12 items-center justify-center gap-2 border-2 border-white/30 px-6 py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/10 sm:px-10 sm:py-5 sm:text-base"
+                      >
+                        {t("common.learnMore")} →
+                      </Link>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            <div className="hidden lg:block" />
+          </div>
+        </div>
+
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-10">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goToSlide(i)}
+              className={cn(
+                "rounded-full transition-all duration-500",
+                i === currentSlide
+                  ? "bg-white w-10 h-2.5"
+                  : "bg-white/40 w-2.5 h-2.5 hover:bg-white/60"
+              )}
+              aria-label={t("home.slideLabel").replace("{number}", String(i + 1))}
+            />
+          ))}
+        </div>
+      </section>
+
       {/* HERO BOTTOM INFO CARDS */}
       <section className="py-16 lg:py-20 bg-white">
         <div className="max-w-container-max mx-auto px-margin-desktop">
