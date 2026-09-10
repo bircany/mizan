@@ -9,7 +9,7 @@ export async function POST(
   context: { params: Promise<{ messageId: string }> },
 ) {
   const user = await getAdminSession();
-  if (!user || !["admin", "field_operator"].includes(user.role)) {
+  if (!user || user.role !== "admin") {
     return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
   }
   try {
@@ -18,11 +18,11 @@ export async function POST(
       (await context.params).messageId,
     );
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Mesaj yenilenemedi.",
+        error: "Mesaj yenilenemedi. Durumunu kontrol edip tekrar deneyin.",
       },
       { status: 400 },
     );

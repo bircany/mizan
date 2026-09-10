@@ -1,220 +1,332 @@
-import { Search, Video } from "lucide-react";
-
+import Link from "next/link";
+import { VideoViewSwitch } from "./video-view-switch";
 import {
   EmptyPanelState,
   PanelCard,
   StatusBadge,
 } from "@/components/admin/panel-ui";
-import { PanelSectionTabs } from "@/components/admin/panel-section-tabs";
 import { DeliveryRowActions } from "@/components/admin/delivery-row-actions";
 import { DeliveryOperationModal } from "@/components/admin/delivery-operation-modal";
 import { DeliveryPanelAutoRefresh } from "@/components/admin/delivery-panel-auto-refresh";
 import type { UnifiedDeliveryRow } from "@/lib/admin/unified-panel-data";
+import {
+  filterVideos,
+  videoTab,
+  videoQuery,
+  videoTabs,
+  type VideoFilters,
+  type VideoTab,
+} from "@/lib/admin/video-filters";
 
-type DeliveryTab =
-  "waiting_video" | "draft" | "sending" | "completed" | "failed";
-
-const completedStatuses = new Set(["sent", "delivered", "read", "completed"]);
-const sendingStatuses = new Set(["queued", "paused", "sending"]);
-const failedStatuses = new Set([
-  "failed",
-  "cancelled",
-  "rejected",
-  "processing_failed",
-  "quarantined",
-]);
-const videoWaitingStatuses = new Set([
-  "waiting",
-  "uploading",
-  "uploaded",
-  "processing",
-  "review_pending",
-]);
-
-function belongsToTab(row: UnifiedDeliveryRow, tab: DeliveryTab) {
-  if (tab === "waiting_video") return videoWaitingStatuses.has(row.videoStatus);
-  if (tab === "draft")
-    return (
-      ["draft", "open", "full", "video_ready"].includes(row.status) &&
-      !videoWaitingStatuses.has(row.videoStatus)
-    );
-  if (tab === "sending") return sendingStatuses.has(row.status);
-  if (tab === "completed") return completedStatuses.has(row.status);
-  return failedStatuses.has(row.status) || failedStatuses.has(row.videoStatus);
+const labels: Record<VideoTab, string> = {
+  all: "Tümü",
+  waiting_video: "Video Bekleyenler",
+  draft: "Taslak Mesajlar",
+  sending: "Gönderiliyor",
+  completed: "Tamamlananlar",
+  failed: "Hatalılar",
+};
+function Actions({
+  row,
+  canManage,
+}: {
+  row: UnifiedDeliveryRow;
+  canManage: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <DeliveryOperationModal groupId={row.groupId} />
+      <DeliveryRowActions
+        groupId={row.groupId}
+        messageId={row.messageId}
+        messageBody={canManage ? row.messageBody : ""}
+        status={row.status}
+        videoStatus={row.videoStatus}
+        canManage={canManage}
+      />
+    </div>
+  );
+}
+function Recipients({ row, floating = false }: { row: UnifiedDeliveryRow; floating?: boolean }) {
+  return (
+    <details className={`mt-3 min-w-0 break-words text-sm ${floating ? "relative open:z-20" : ""}`}>
+      <summary className="cursor-pointer font-semibold">
+        Hissedarlar ({row.recipients.length})
+      </summary>
+      <ul className={floating ? "absolute right-0 top-full z-20 mt-2 max-h-56 w-72 max-w-[calc(100vw-4rem)] overflow-y-auto overscroll-contain rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-3 shadow-xl" : "mt-2 max-h-56 overflow-auto"}>
+        {row.recipients.map((r, i) => (
+          <li className="border-t border-[var(--admin-border)] py-2" key={r.id}>
+            {i + 1}. {r.name}{" "}
+            <span className="block text-xs text-[var(--admin-muted)]">
+              {r.maskedPhone} · <StatusBadge status={r.status} />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+function updated(row: UnifiedDeliveryRow) {
+  return row.updatedAt && Number.isFinite(Date.parse(row.updatedAt))
+    ? new Date(row.updatedAt).toLocaleString("tr-TR", {
+        timeZone: "Europe/Istanbul",
+      })
+    : "Kayıt yok";
 }
 
 export function UnifiedVideoDelivery({
-  query,
   rows,
   tab,
+  filters,
+  canManage = true,
 }: {
-  query: string;
   rows: UnifiedDeliveryRow[];
-  tab: DeliveryTab;
+  tab: VideoTab;
+  filters: VideoFilters;
+  canManage?: boolean;
 }) {
-  const counts = {
-    waiting_video: rows.filter((row) => belongsToTab(row, "waiting_video"))
-      .length,
-    draft: rows.filter((row) => belongsToTab(row, "draft")).length,
-    sending: rows.filter((row) => belongsToTab(row, "sending")).length,
-    completed: rows.filter((row) => belongsToTab(row, "completed")).length,
-    failed: rows.filter((row) => belongsToTab(row, "failed")).length,
-  };
-  const tabs = [
-    {
-      id: "waiting_video",
-      label: "Video Bekleyenler",
-      count: counts.waiting_video,
-    },
-    { id: "draft", label: "Taslak Mesajlar", count: counts.draft },
-    { id: "sending", label: "Gönderiliyor", count: counts.sending },
-    { id: "completed", label: "Tamamlananlar", count: counts.completed },
-    { id: "failed", label: "Hatalılar", count: counts.failed },
-  ] as const;
-  const normalizedQuery = query.trim().toLocaleLowerCase("tr-TR");
-  const visible = rows
-    .filter((row) => belongsToTab(row, tab))
-    .filter((row) => {
-      if (!normalizedQuery) return true;
-      return [
-        row.groupCode,
-        row.campaign,
-        row.recipient,
-        ...row.recipients.map((recipient) => recipient.name),
-      ].some((value) =>
-        value.toLocaleLowerCase("tr-TR").includes(normalizedQuery),
-      );
-    });
-
+  const matching = filterVideos(rows, filters);
+  const visible = matching.filter(
+    (row) => tab === "all" || videoTab(row) === tab,
+  );
+  const pages = Math.max(1, Math.ceil(visible.length / 24));
+  const page = Math.min(filters.page, pages);
+  const slice = visible.slice((page - 1) * 24, page * 24);
+  const campaigns = [
+    ...new Map(rows.map((r) => [r.campaignId || "", r.campaign])).entries(),
+  ].filter(([id]) => id);
+  const categories = [
+    ...new Map(
+      rows.map((r) => [r.categoryId || "", r.category || "Kategorisiz"]),
+    ).entries(),
+  ].filter(([id]) => id);
   return (
     <div className="space-y-5">
       <DeliveryPanelAutoRefresh />
-      <PanelSectionTabs
-        activeTab={tab}
-        basePath="/panel/video-teslimat"
-        tabs={tabs}
-      />
-      <form className="relative w-full max-w-md" method="get">
+      <div className="flex items-center justify-between gap-3"><p className="text-sm font-semibold">{visible.length} teslimat</p><VideoViewSwitch filters={filters} tab={tab} /></div>
+      <form
+        className="grid gap-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] p-4 sm:grid-cols-2 xl:grid-cols-4"
+        method="get"
+      >
         <input name="tab" type="hidden" value={tab} />
-        <Search
-          aria-hidden="true"
-          className="absolute left-3 top-3 size-4 text-[var(--admin-muted)]"
-        />
-        <input
-          aria-label="Video teslimat kayıtlarında ara"
-          className="admin-input pl-10"
-          defaultValue={query}
-          name="q"
-          placeholder="Grup kodu, kampanya veya alıcı ara"
-        />
+        <label>
+          <span className="admin-label">Başlık / hissedar ara</span>
+          <input
+            className="admin-input"
+            name="q"
+            defaultValue={filters.q}
+            placeholder="Kampanya, grup veya isim"
+          />
+        </label>
+        <label>
+          <span className="admin-label">Grup kodu / başlığı</span>
+          <input
+            className="admin-input"
+            name="group"
+            defaultValue={filters.group}
+            placeholder="MD-2026-…"
+          />
+        </label>
+        <label>
+          <span className="admin-label">Kampanya</span>
+          <select
+            className="admin-input"
+            name="campaign"
+            defaultValue={filters.campaign}
+          >
+            <option value="">Tüm kampanyalar</option>
+            {campaigns.map(([id, title]) => (
+              <option key={id} value={id}>
+                {title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span className="admin-label">Kategori</span>
+          <select
+            className="admin-input"
+            name="category"
+            defaultValue={filters.category}
+          >
+            <option value="">Tüm kategoriler</option>
+            {categories.map(([id, title]) => (
+              <option key={id} value={id}>
+                {title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span className="admin-label">Son hareket · başlangıç</span>
+          <input
+            className="admin-input"
+            type="date"
+            name="from"
+            defaultValue={filters.from}
+          />
+        </label>
+        <label>
+          <span className="admin-label">Son hareket · bitiş</span>
+          <input
+            className="admin-input"
+            type="date"
+            name="to"
+            defaultValue={filters.to}
+          />
+        </label>
+        <input name="view" type="hidden" value={filters.view} />
+        <div className="flex items-end gap-3">
+          <button className="admin-action-button" type="submit">
+            Uygula
+          </button>
+          <Link
+            className="admin-button-secondary"
+            href={`/panel/video-teslimat?tab=${tab}&view=${filters.view}`}
+          >
+            Temizle
+          </Link>
+        </div>
       </form>
-
-      {visible.length ? (
-        <PanelCard className="overflow-hidden p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-left text-sm">
-              <thead className="border-b border-[var(--admin-border)] bg-[var(--admin-surface-raised)] text-[11px] uppercase tracking-[0.12em] text-[var(--admin-muted)]">
-                <tr>
-                  <th className="px-5 py-3">Operasyon grubu</th>
-                  <th className="px-5 py-3">Kampanya</th>
-                  <th className="px-5 py-3">Alıcı</th>
-                  <th className="px-5 py-3">Video</th>
-                  <th className="px-5 py-3">Mesaj</th>
-                  <th className="px-5 py-3">Son hareket</th>
-                  <th className="px-5 py-3">İşlem</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--admin-border)]">
-                {visible.map((row) => (
-                  <tr
-                    className="hover:bg-[var(--admin-surface-raised)]"
-                    key={row.id}
-                  >
-                    <td className="px-5 py-4">
-                      <span className="inline-flex items-center gap-2 font-mono text-xs font-semibold">
-                        <Video
-                          aria-hidden="true"
-                          className="size-4 text-[var(--admin-primary)]"
-                        />
-                        {row.groupCode}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 font-semibold">{row.campaign}</td>
-                    <td className="px-5 py-4 text-xs text-[var(--admin-muted)]">
-                      {row.recipients.length ? (
-                        <details className="group min-w-64">
-                          <summary className="cursor-pointer select-none font-semibold text-[var(--admin-primary)] hover:underline">
-                            {row.recipient} · Listeyi göster
-                          </summary>
-                          <div className="mt-3 max-h-72 space-y-2 overflow-y-auto rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] p-3 shadow-sm">
-                            {row.recipients.map((recipient) => (
-                              <div
-                                className="flex items-center justify-between gap-4 rounded-lg bg-[var(--admin-surface)] px-3 py-2"
-                                key={recipient.id}
-                              >
-                                <div>
-                                  <p className="font-semibold text-[var(--admin-text)]">
-                                    {recipient.unitIndex}. hisse ·{" "}
-                                    {recipient.name}
-                                  </p>
-                                  <p className="mt-0.5 font-mono text-[11px]">
-                                    {recipient.maskedPhone}
-                                  </p>
-                                </div>
-                                <StatusBadge status={recipient.status} />
-                              </div>
-                            ))}
-                          </div>
-                        </details>
-                      ) : (
-                        row.recipient
-                      )}
-                    </td>
-                    <td className="px-5 py-4">
+      {filters.from && filters.to && filters.from > filters.to ? (
+        <p role="alert" className="text-sm text-red-700">
+          Başlangıç tarihi bitişten sonra olamaz.
+        </p>
+      ) : null}
+      <nav aria-label="Video aşamaları" className="flex gap-2 overflow-x-auto">
+        {videoTabs.map((t) => (
+          <Link
+            aria-current={tab === t ? "page" : undefined}
+            className={`admin-tab whitespace-nowrap ${tab === t ? "admin-tab-active" : ""}`}
+            href={`/panel/video-teslimat?${videoQuery(filters, t)}`}
+            key={t}
+            scroll={false}
+          >
+            {labels[t]} (
+            {t === "all"
+              ? matching.length
+              : matching.filter((r) => videoTab(r) === t).length}
+            )
+          </Link>
+        ))}
+      </nav>
+      <p className="text-sm text-[var(--admin-muted)]">
+        {visible.length} grup · Sayfa {page}/{pages} · Tarihler Türkiye saatine
+        göre. Gönderim ve test onayları mevcut kurallara tabidir.
+      </p>
+      {slice.length ? (
+        filters.view === "cards" ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {slice.map((row) => (
+              <PanelCard key={row.id} className="min-w-0 p-5">
+                <p className="font-mono text-sm font-semibold">
+                  {row.groupCode}
+                </p>
+                <h2 className="mt-2 text-lg font-semibold">{row.campaign}</h2>
+                <p className="mt-1 text-xs text-[var(--admin-muted)]">
+                  {row.category}
+                </p>
+                <dl className="my-4 grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <dt>Video</dt>
+                    <dd>
                       <StatusBadge status={row.videoStatus} />
-                    </td>
-                    <td className="px-5 py-4">
+                    </dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt>Mesaj</dt>
+                    <dd>
                       <StatusBadge status={row.status} />
-                    </td>
-                    <td className="px-5 py-4 text-xs text-[var(--admin-muted)]">
-                      {row.updatedAt
-                        ? new Date(row.updatedAt).toLocaleString("tr-TR", {
-                            timeZone: "Europe/Istanbul",
-                          })
-                        : "Kayıt yok"}
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex min-w-52 flex-wrap gap-2">
-                        <DeliveryOperationModal groupId={row.groupId} />
-                        <DeliveryRowActions
-                          groupId={row.groupId}
-                          messageBody={row.messageBody}
-                          messageId={row.messageId}
-                          status={row.status}
-                          videoStatus={row.videoStatus}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <Recipients row={row} floating />
+                    </dd>
+                  </div>
+                </dl>
+                <p className="mb-3 text-xs text-[var(--admin-muted)]">
+                  Son hareket: {updated(row)}
+                </p>
+                <Actions row={row} canManage={canManage} />
+              </PanelCard>
+            ))}
           </div>
-        </PanelCard>
+        ) : (
+          <PanelCard className="overflow-hidden p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[820px] text-left text-sm">
+                <thead>
+                  <tr>
+                    {[
+                      "Grup / kampanya",
+                      "Hissedarlar",
+                      "Video",
+                      "Mesaj",
+                      "Son hareket",
+                      "İşlem",
+                    ].map((s) => (
+                      <th className="p-4" key={s}>
+                        {s}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {slice.map((row) => (
+                    <tr
+                      className="border-t border-[var(--admin-border)]"
+                      key={row.id}
+                    >
+                      <td className="p-4">
+                        <strong className="font-mono">{row.groupCode}</strong>
+                        <p>{row.campaign}</p>
+                        <span className="text-xs text-[var(--admin-muted)]">
+                          {row.category}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <Recipients row={row} />
+                      </td>
+                      <td className="p-4">
+                        <StatusBadge status={row.videoStatus} />
+                      </td>
+                      <td className="p-4">
+                        <StatusBadge status={row.status} />
+                      </td>
+                      <td className="p-4 text-xs">{updated(row)}</td>
+                      <td className="p-4">
+                        <Actions row={row} canManage={canManage} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </PanelCard>
+        )
       ) : (
         <EmptyPanelState
-          title={
-            query
-              ? "Aramayla eşleşen kayıt yok"
-              : `${tabs.find((item) => item.id === tab)?.label} boş`
-          }
-          description={
-            query
-              ? "Arama metnini değiştirin veya temizleyin."
-              : "Bu aşamaya gelen operasyon grupları otomatik olarak burada listelenecek."
-          }
+          title="Bu filtrelerle eşleşen grup yok"
+          description="Filtreleri temizleyin veya başka bir aşama seçin."
         />
       )}
+      {pages > 1 ? (
+        <nav aria-label="Sonuç sayfaları" className="flex gap-3">
+          {page > 1 ? (
+            <Link
+              className="admin-button-secondary"
+              href={`/panel/video-teslimat?${videoQuery(filters, tab, page - 1)}`}
+            >
+              Önceki
+            </Link>
+          ) : null}
+          {page < pages ? (
+            <Link
+              className="admin-button-secondary"
+              href={`/panel/video-teslimat?${videoQuery(filters, tab, page + 1)}`}
+            >
+              Sonraki
+            </Link>
+          ) : null}
+        </nav>
+      ) : null}
     </div>
   );
 }

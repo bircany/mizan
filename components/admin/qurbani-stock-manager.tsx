@@ -13,6 +13,7 @@ import {
   Minus,
   PackagePlus,
   Plus,
+  X,
   RefreshCw,
   Trash2,
   Users,
@@ -220,11 +221,13 @@ function QuickStockWizard({ initialOpen = false, snapshot }: { initialOpen?: boo
                 </p>
               </div>
               <button
-                className="admin-secondary-button"
+                aria-label="Pencereyi kapat"
+                className="admin-icon-button"
                 onClick={close}
+                title="Pencereyi kapat"
                 type="button"
               >
-                Kapat
+                <X className="size-5" />
               </button>
             </div>
             <div className="mt-5 grid grid-cols-3 rounded-xl bg-[var(--admin-surface)] p-1">

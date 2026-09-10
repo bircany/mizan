@@ -65,3 +65,5 @@ Desktop.ini
 
 # Production secrets file (no dot prefix) — never commit
 /env
+.env*
+.local/

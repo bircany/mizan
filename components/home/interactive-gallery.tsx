@@ -39,7 +39,25 @@ export default function InteractiveGallery({ tabs }: InteractiveGalleryProps) {
   if (!tabs.length) return null;
 
   return (
-    <section className="relative h-[230px] w-full overflow-hidden bg-[#173525] sm:h-[420px] lg:h-[560px]">
+    <section className="relative h-[230px] w-full overflow-hidden bg-[#526f78] transition-colors duration-700 sm:h-[420px] lg:h-[560px]">
+      {tabs.map((tab) => (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 transition-opacity duration-700 ease-in-out"
+          key={`${tab.id}-ambient`}
+          style={{ opacity: tab.id === activeId ? 1 : 0 }}
+        >
+          <Image
+            src={tab.image}
+            alt=""
+            fill
+            sizes="100vw"
+            className="scale-110 object-cover blur-2xl"
+          />
+          <div className="absolute inset-0 bg-black/25" />
+        </div>
+      ))}
+
       {tabs.map((tab) => (
         <Image
           key={tab.id}
@@ -47,14 +65,14 @@ export default function InteractiveGallery({ tabs }: InteractiveGalleryProps) {
           alt={tab.id === activeId ? tab.label : ""}
           fill
           sizes="100vw"
-          className="object-contain transition-opacity duration-[400ms] ease-in-out"
+          className="z-10 object-contain transition-opacity duration-[400ms] ease-in-out"
           style={{ opacity: tab.id === activeId ? 1 : 0 }}
         />
       ))}
 
-      <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/10" />
+      <div className="absolute inset-0 z-20 bg-gradient-to-b from-black/45 via-transparent to-black/10" />
 
-      <div className="absolute inset-x-0 top-0 grid grid-cols-4 border-b border-white/15 bg-[#173525]/45 backdrop-blur-[2px]">
+      <div className="absolute inset-x-0 top-0 z-30 grid grid-cols-4 border-b border-white/15 bg-black/30 backdrop-blur-[2px]">
         {tabs.map((tab) => (
           <button
             aria-pressed={activeId === tab.id}

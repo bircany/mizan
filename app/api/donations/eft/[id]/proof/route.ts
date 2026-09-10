@@ -1,145 +1,52 @@
-import crypto from "crypto";
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-
 import { verifyEftUploadToken } from "@/lib/donations/eft-authorization";
-import { getPayloadClient } from "@/lib/payload";
+import { validateManualProof } from "@/lib/donations/manual-proof";
+import { ManualDonationError } from "@/lib/donations/manual-validation";
+import { withDatabaseTransaction } from "@/lib/database";
+import { enforceRateLimit, RateLimitError } from "@/lib/rate-limit";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 
-const MAX_BYTES = 10 * 1024 * 1024;
-const EXTENSIONS: Record<string, string> = {
-  "application/pdf": "pdf",
-  "image/jpeg": "jpg",
-  "image/png": "png",
-};
-
-function detectMimeType(bytes: Uint8Array) {
-  if (
-    bytes.length >= 5 &&
-    String.fromCharCode(...bytes.slice(0, 5)) === "%PDF-"
-  ) {
-    return "application/pdf";
-  }
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
-    return "image/jpeg";
-  }
-  if (
-    bytes.length >= 8 &&
-    [137, 80, 78, 71, 13, 10, 26, 10].every(
-      (value, index) => bytes[index] === value,
-    )
-  ) {
-    return "image/png";
-  }
-  return null;
-}
-
-export async function POST(
-  request: Request,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const intentId = Number((await context.params).id);
     const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-    const claims =
-      Number.isInteger(intentId) && token
-        ? verifyEftUploadToken(token, intentId)
-        : null;
-    if (!claims) {
-      return NextResponse.json(
-        { success: false, error: "Dekont yükleme bağlantısı geçersiz veya süresi dolmuş." },
-        { status: 403 },
-      );
+    const claims = Number.isSafeInteger(intentId) && intentId > 0 && token ? verifyEftUploadToken(token, intentId) : null;
+    if (!claims) return NextResponse.json({ success: false, error: "Dekont bağlantısı geçersiz veya süresi dolmuş." }, { status: 403 });
+    await enforceRateLimit({ scope: "eft-proof", identity: String(intentId), maxRequests: 10, windowSeconds: 60 });
+    const reader = request.body?.getReader();
+    if (!reader) throw new ManualDonationError("Dosya gerekli.");
+    const chunks: Uint8Array[] = [];
+    let length = 0;
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      length += chunk.value.length;
+      if (length > 11 * 1024 * 1024) {
+        await reader.cancel();
+        return NextResponse.json({ error: "İstek en fazla 11 MB olabilir." }, { status: 413 });
+      }
+      chunks.push(chunk.value);
     }
-
-    const form = await request.formData();
-    const file = form.get("file");
-    if (
-      !(file instanceof File) ||
-      file.size <= 0 ||
-      file.size > MAX_BYTES ||
-      !EXTENSIONS[file.type]
-    ) {
-      throw new Error("Dekont PDF, JPG veya PNG ve en fazla 10 MB olmalıdır.");
-    }
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const detected = detectMimeType(bytes);
-    if (!detected || detected !== file.type) {
-      throw new Error("Dosyanın gerçek tipi yükleme bilgisiyle eşleşmiyor.");
-    }
-
-    const payload = await getPayloadClient();
-    const session = await payload.findByID({
-      collection: "payment-sessions",
-      id: claims.sessionId,
-      depth: 0,
-      overrideAccess: true,
-    });
-    const linkedIntent =
-      typeof session.donationIntent === "object"
-        ? session.donationIntent.id
-        : session.donationIntent;
-    if (
-      Number(linkedIntent) !== intentId ||
-      session.paymentMethod !== "bank_transfer" ||
-      session.providerStatus !== "EFT_PROOF_PENDING" ||
-      !session.reservationExpiresAt ||
-      new Date(session.reservationExpiresAt).getTime() <= Date.now()
-    ) {
-      throw new Error("Bu EFT rezervasyonu artık dekont kabul etmiyor.");
-    }
-
-    const bucket = "eft-proofs";
-    const storagePath = `${intentId}/${crypto.randomUUID()}.${EXTENSIONS[detected]}`;
+    const form = await new Response(Buffer.concat(chunks), { headers: { "content-type": request.headers.get("content-type") || "" } }).formData();
+    const proof = await validateManualProof(form.get("file"));
     const storage = getSupabaseServiceClient();
-    const { error: uploadError } = await storage.storage
-      .from(bucket)
-      .upload(storagePath, bytes, {
-        contentType: detected,
-        upsert: false,
-      });
-    if (uploadError) {
-      throw new Error(`Dekont güvenli depolamaya yüklenemedi: ${uploadError.message}`);
-    }
-
-    const previous = session.eftProofPath;
-    try {
-      await payload.update({
-        collection: "payment-sessions",
-        id: session.id,
-        overrideAccess: true,
-        data: {
-          eftProofBucket: bucket,
-          eftProofPath: storagePath,
-          eftReviewStatus: "pending",
-          providerStatus: "EFT_REVIEW_PENDING",
-        },
-      });
-      await payload.update({
-        collection: "donation-intents",
-        id: intentId,
-        overrideAccess: true,
-        data: { status: "bank_transfer_submitted" },
-      });
-    } catch (error) {
-      await storage.storage.from(bucket).remove([storagePath]);
-      throw error;
-    }
-    if (previous && previous !== storagePath) {
-      await storage.storage.from(bucket).remove([previous]);
-    }
-
-    return NextResponse.json({
-      success: true,
-      status: "pending_review",
+    const bucket = "eft-proofs";
+    const info = await storage.storage.getBucket(bucket);
+    if (info.error || !info.data || info.data.public) throw new ManualDonationError("Özel dekont depolaması hazır değil.");
+    const path = `${intentId}/${randomUUID()}.${proof.extension}`;
+    // Serialize concurrent/replayed claims and change both references atomically.
+    await withDatabaseTransaction(async client => {
+      const session = (await client.query(`select * from public.payment_sessions where id=$1 for update`, [claims.sessionId])).rows[0];
+      if (!session || Number(session.donation_intent_id) !== intentId || session.payment_method !== "bank_transfer" || session.provider_status !== "EFT_PROOF_PENDING" || !session.reservation_expires_at || new Date(session.reservation_expires_at).getTime() <= Date.now()) throw new ManualDonationError("Bu EFT rezervasyonu artık dekont kabul etmiyor.");
+      const upload = await storage.storage.from(bucket).upload(path, proof.bytes, { contentType: proof.mime, upsert: false });
+      if (upload.error) throw new ManualDonationError("Dekont depolanamadı.");
+      // Keep private objects on uncertain commits: deletion could break a committed reference.
+      await client.query(`update public.payment_sessions set eft_proof_bucket=$1,eft_proof_path=$2,eft_review_status='pending',provider_status='EFT_REVIEW_PENDING',updated_at=now() where id=$3`, [bucket, path, claims.sessionId]);
+      await client.query(`update public.donation_intents set status='bank_transfer_submitted',updated_at=now() where id=$1`, [intentId]);
     });
+    return NextResponse.json({ success: true, status: "pending_review" });
   } catch (error) {
-    return NextResponse.json(
-      {
-        success: false,
-        error:
-          error instanceof Error ? error.message : "Dekont yüklenemedi.",
-      },
-      { status: 400 },
-    );
+    return NextResponse.json({ success: false, error: error instanceof ManualDonationError || error instanceof RateLimitError ? error.message : "Dekont yüklenemedi. Lütfen tekrar deneyin." }, { status: error instanceof RateLimitError ? error.status : 400 });
   }
 }

@@ -28,7 +28,7 @@ export default async function CampaignContentPage() {
           media={mediaOptions}
         />
         {records.length ? (
-          <div className="space-y-4">
+          <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {records.map((record) => (
               <UnifiedCampaignEditor
                 categories={categoryOptions}

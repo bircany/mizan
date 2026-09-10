@@ -3,7 +3,7 @@ import path from "path";
 let loaded = false;
 
 export function ensureLocalEnvLoaded() {
-  if (loaded) return;
+  if (loaded || process.env.MIZAN_LOCAL_ACCEPTANCE === "1") return;
 
   const cwd = process.cwd();
   const candidates = [

@@ -4,20 +4,21 @@ import { UnifiedVideoDelivery } from "@/components/admin/unified-video-delivery"
 import { requireAdminUser } from "@/lib/admin/data";
 import { getUnifiedDeliveryPanelData } from "@/lib/admin/unified-panel-data";
 import { PANEL_ROUTE_ACCESS } from "@/lib/auth/panel-access";
+import { parseVideoFilters,videoTabs,type VideoTab } from "@/lib/admin/video-filters";
 
 export const dynamic = "force-dynamic";
 
-const validTabs = new Set(["waiting_video", "draft", "sending", "completed", "failed"]);
+const validTabs = new Set<string>(videoTabs);
 
 export default async function UnifiedVideoDeliveryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; tab?: string }>;
+  searchParams: Promise<Record<string,string|string[]|undefined>>;
 }) {
   const user = await requireAdminUser(PANEL_ROUTE_ACCESS.videoDelivery);
   const parameters = await searchParams;
-  const tab = validTabs.has(parameters.tab ?? "")
-    ? parameters.tab as "waiting_video" | "draft" | "sending" | "completed" | "failed"
+  const tab = typeof parameters.tab === "string" && validTabs.has(parameters.tab)
+    ? parameters.tab as VideoTab
     : "waiting_video";
   const rows = await getUnifiedDeliveryPanelData();
 
@@ -29,7 +30,7 @@ export default async function UnifiedVideoDeliveryPage({
           eyebrow="Saha ve iletişim"
           title="Video Teslimat"
         />
-        <UnifiedVideoDelivery query={parameters.q ?? ""} rows={rows} tab={tab} />
+        <UnifiedVideoDelivery filters={parseVideoFilters(parameters)} rows={rows} tab={tab} canManage={user.role === "admin"} />
       </div>
     </ManagementShell>
   );

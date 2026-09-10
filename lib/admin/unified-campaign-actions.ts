@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 
 import { requireAdminUser } from "@/lib/admin/data";
 import { PANEL_ROUTE_ACCESS } from "@/lib/auth/panel-access";
+import { CampaignInputError, validateCampaignSaveIntent } from "@/lib/admin/campaign-save-intent";
+import { roundedGroupStock } from "@/lib/donations/group-plan";
 import { buildProtectedDeliveryTemplate } from "@/lib/delivery/template";
 import { plainTextEditorState } from "@/lib/pages";
 import { getPayloadClient } from "@/lib/payload";
@@ -27,7 +29,7 @@ function positiveNumber(
   if (!raw && !required) return undefined;
   const value = Number(raw);
   if (!Number.isFinite(value) || value <= 0) {
-    throw new Error(`${name} alanı sıfırdan büyük olmalıdır.`);
+    throw new CampaignInputError(`${name} alanı sıfırdan büyük olmalıdır.`);
   }
   return value;
 }
@@ -39,7 +41,7 @@ function positiveInteger(
 ) {
   const value = positiveNumber(formData, name, required);
   if (value !== undefined && !Number.isSafeInteger(value)) {
-    throw new Error(`${name} alanı pozitif tam sayı olmalıdır.`);
+    throw new CampaignInputError(`${name} alanı pozitif tam sayı olmalıdır.`);
   }
   return value;
 }
@@ -92,6 +94,7 @@ export async function saveUnifiedCampaign(
   const admin = await requireAdminUser(PANEL_ROUTE_ACCESS.donationManagement);
 
   try {
+    validateCampaignSaveIntent(formData);
     const payload = await getPayloadClient();
     const id = text(formData, "id") || undefined;
     const title = text(formData, "title");
@@ -101,29 +104,29 @@ export async function saveUnifiedCampaign(
     const pricingModel = text(formData, "pricingModel");
     const videoDelivery = text(formData, "videoDelivery");
     const operationType = text(formData, "operationType");
-    const status = text(formData, "status") || "draft";
+    const status = text(formData, "status");
     const closeReason = text(formData, "closeReason");
     const image = text(formData, "image") || undefined;
     if (!title || !category) {
-      throw new Error("Başlık ve kategori zorunludur.");
+      throw new CampaignInputError("Başlık ve kategori zorunludur.");
     }
     if (!["free", "fixed"].includes(pricingModel)) {
-      throw new Error("Tutar modeli seçilmelidir.");
+      throw new CampaignInputError("Tutar modeli seçilmelidir.");
     }
     if (!["none", "video"].includes(videoDelivery)) {
-      throw new Error("Videolu veya videosuz seçimi zorunludur.");
+      throw new CampaignInputError("Videolu veya videosuz seçimi zorunludur.");
     }
     if (
       videoDelivery === "video" &&
       !["standard_video", "slaughter_video"].includes(operationType)
     ) {
-      throw new Error("Videolu kampanyalarda operasyon tipi zorunludur.");
+      throw new CampaignInputError("Videolu kampanyalarda operasyon tipi zorunludur.");
     }
     if (!["draft", "active", "closed", "archived"].includes(status)) {
-      throw new Error("Kampanya durumu geçersiz.");
+      throw new CampaignInputError("Kampanya durumu geçersiz.");
     }
     if (status === "closed" && !closeReason) {
-      throw new Error("Kampanya kapatılırken kapatma nedeni zorunludur.");
+      throw new CampaignInputError("Kampanya kapatılırken kapatma nedeni zorunludur.");
     }
 
     const targetAmount =
@@ -134,7 +137,7 @@ export async function saveUnifiedCampaign(
       pricingModel === "fixed"
         ? positiveNumber(formData, "unitPrice", true)
         : undefined;
-    const totalStock =
+    let totalStock =
       pricingModel === "fixed"
         ? positiveInteger(formData, "totalStock")
         : undefined;
@@ -142,6 +145,11 @@ export async function saveUnifiedCampaign(
       videoDelivery === "video" && pricingModel === "fixed"
         ? positiveInteger(formData, "groupCapacity", true)
         : undefined;
+    const roundedStock = roundedGroupStock(totalStock, groupCapacity);
+    if (roundedStock !== totalStock && text(formData, "roundedStockConfirmed") !== String(roundedStock)) {
+      throw new CampaignInputError(`Toplam stok ${groupCapacity} kişilik gruplar için ${roundedStock} olmalıdır. Önerilen kapasiteyi onaylayın.`);
+    }
+    totalStock = roundedStock;
     const publishStartAt = text(formData, "publishStartAt");
     const publishEndAt = text(formData, "publishEndAt");
     const publishStartAtIso = publishStartAt
@@ -154,14 +162,14 @@ export async function saveUnifiedCampaign(
       (publishStartAt && !Number.isFinite(new Date(publishStartAt).getTime())) ||
       (publishEndAt && !Number.isFinite(new Date(publishEndAt).getTime()))
     ) {
-      throw new Error("Yayın başlangıç veya bitiş tarihi geçersiz.");
+      throw new CampaignInputError("Yayın başlangıç veya bitiş tarihi geçersiz.");
     }
     if (
       publishStartAtIso &&
       publishEndAtIso &&
       new Date(publishEndAtIso) <= new Date(publishStartAtIso)
     ) {
-      throw new Error("Yayın bitişi başlangıçtan sonra olmalıdır.");
+      throw new CampaignInputError("Yayın bitişi başlangıçtan sonra olmalıdır.");
     }
 
     const existing = id
@@ -172,12 +180,19 @@ export async function saveUnifiedCampaign(
           overrideAccess: true,
         })
       : null;
+    if (existing && (Number(existing.reservedUnits) + Number(existing.confirmedUnits) > 0)) {
+      if (existing.pricingModel !== pricingModel || existing.videoDelivery !== videoDelivery ||
+          (existing.operationType || "") !== operationType || Number(existing.groupCapacity || 0) !== Number(groupCapacity || 0) || existing.currency !== currency) {
+        throw new CampaignInputError("İşlem bulunan kampanyanın grup/tutar modeli ve para birimi değiştirilemez. Son iki grup için ayrı düzenleme ekranını kullanın.");
+      }
+      if (totalStock !== undefined && totalStock < Number(existing.reservedUnits) + Number(existing.confirmedUnits)) throw new CampaignInputError("Stok mevcut hisse sayısından az olamaz.");
+    }
     const slaughterScript =
       operationType === "slaughter_video"
         ? text(formData, "slaughterScript")
         : "";
     if (operationType === "slaughter_video" && !slaughterScript) {
-      throw new Error("Kesim videosu kampanyasında okunacak metin zorunludur.");
+      throw new CampaignInputError("Kesim videosu kampanyasında okunacak metin zorunludur.");
     }
     const previousSlaughterScript =
       typeof existing?.slaughterScript === "string"
@@ -279,7 +294,7 @@ export async function saveUnifiedCampaign(
     return {
       success: false,
       message:
-        error instanceof Error ? error.message : "Kampanya kaydedilemedi.",
+        error instanceof CampaignInputError ? error.message : "Kampanya kaydedilemedi. Lütfen tekrar deneyin.",
     };
   }
 }

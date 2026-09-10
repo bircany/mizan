@@ -8,6 +8,7 @@ import { parseUnifiedDonationCheckout } from "@/lib/donations/validation";
 import { getPayloadClient } from "@/lib/payload";
 import { getPaymentPublicUrl } from "@/lib/payments/urls";
 import { enforceRateLimit, RateLimitError } from "@/lib/rate-limit";
+import { CARD_CHECKOUT_ENABLED } from "@/lib/payments/availability";
 
 function requestIp(request: Request) {
   return (
@@ -18,6 +19,7 @@ function requestIp(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!CARD_CHECKOUT_ENABLED) return NextResponse.json({success:false,error:"Kartla ödeme şu anda kapalı. IBAN/Havale için dernek ekibiyle WhatsApp üzerinden iletişime geçin."},{status:409});
   try {
     const body = parseUnifiedDonationCheckout(await request.json());
     const ip = requestIp(request);

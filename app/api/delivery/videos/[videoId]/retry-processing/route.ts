@@ -24,10 +24,7 @@ export async function POST(
     const status = error instanceof DeliveryAccessApiError ? error.status : 500;
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Video yeniden işleme alınamadı.",
+        error: "Video yeniden işleme alınamadı. Durumunu ve servis bağlantısını kontrol edin.",
       },
       { status },
     );

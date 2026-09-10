@@ -31,10 +31,7 @@ export async function POST(
     const status = error instanceof DeliveryAccessApiError ? error.status : 500;
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Teknik kontrol kaydedilemedi.",
+        error: "Teknik kontrol kaydedilemedi. Video durumunu ve servis bağlantısını kontrol edin.",
       },
       { status },
     );

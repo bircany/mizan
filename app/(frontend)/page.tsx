@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/language-context";
 import ChildInteractiveDonate from "@/components/home/ChildInteractiveDonate";
 import InteractiveGallery from "@/components/home/interactive-gallery";
-import VideoCarousel from "@/components/home/video-carousel";
 import IconFeatureCard from "@/components/home/icon-feature-card";
 import ScrollReveal from "@/components/ui/scroll-reveal";
 import CountUp from "@/components/ui/count-up";
@@ -16,26 +15,8 @@ import FloatingActionBar from "@/components/layout/floating-action-bar";
 import QuickDonationCarousel from "@/components/home/quick-donation-carousel";
 import { SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_E164 } from "@/lib/contact";
 
-const slides = [
-  {
-    img: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1920&q=80",
-    title: "Elbistan'ın Kalbinden Dünyaya Uzanan Hayır",
-    desc: "Mizan İnsani Yardım Derneği, ihtiyaç sahiplerine onurlu ve sürdürülebilir destek sunan köklü bir yardım kuruluşudur.",
-  },
-  {
-    img: "https://images.unsplash.com/photo-1594708767771-a7502209ff51?auto=format&fit=crop&w=1920&q=80",
-    title: "Bir Nefeste Umut, Bir Damlada Hayat",
-    desc: "Dünyanın dört bir yanındaki mazlumlara denge ve umut olmak için yola çıktık. Her bağış bir hayata dokunur.",
-  },
-  {
-    img: "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&w=1920&q=80",
-    title: "Mazlumlara Uzanan İyilik Eli",
-    desc: "Şeffaflık ve emanet bilinciyle yönettiğimiz bağışlarınız, en uzak coğrafyalara kadar umut taşır.",
-  },
-];
-
 const donationTabs = [
-  { label: "Kurban", icon: "payments" },
+  { label: "Kurban", icon: "qurbani" },
   { label: "Mescid", icon: "temple_hindu" },
   { label: "Medrese", icon: "school" },
   { label: "Yetim", icon: "child_care" },
@@ -53,26 +34,10 @@ type DonationAreaCard = {
   image: string | null;
 };
 
-const news = [
-  {
-    img: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=600&q=80",
-    date: "12 Mart 2024",
-    title: "Ramazan Kumanya Dağıtımlarımız Başladı",
-    desc: "Elbistan genelinde ihtiyaç sahibi ailelerimize ulaşmaya devam ediyoruz...",
-  },
-  {
-    img: "https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&q=80",
-    date: "05 Mart 2024",
-    title: "Çad'da Yeni Su Kuyumuz Açıldı",
-    desc: "Temiz suya erişimi olmayan kardeşlerimiz için başlattığımız projemiz sonuç verdi.",
-  },
-  {
-    img: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600&q=80",
-    date: "28 Şubat 2024",
-    title: "Medrese Eğitim Dönemi Kayıtları",
-    desc: "Yeni dönem kayıtlarımız kontenjanlar dolmadan başlamıştır.",
-  },
-];
+type HomeNewsPost = {
+  id: string; slug: string; title: string; excerpt: string;
+  coverImageUrl: string; coverImageAlt: string; publishedAt: string;
+};
 
 const stories = [
   {
@@ -102,24 +67,23 @@ export default function HomePage() {
   const { t, dir, locale } = useLanguage();
   const [donationAreas, setDonationAreas] = useState<DonationAreaCard[]>([]);
   const [donationAreasLoading, setDonationAreasLoading] = useState(true);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [activeTab, setActiveTab] = useState(0);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
-  const slides = [
-    { img: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1920&q=80", title: t("home.heroTitle"), desc: t("home.heroDescription1") },
-    { img: "https://images.unsplash.com/photo-1594708767771-a7502209ff51?auto=format&fit=crop&w=1920&q=80", title: t("home.heroTitle2"), desc: t("home.heroDescription2") },
-    { img: "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&w=1920&q=80", title: t("home.heroTitle3"), desc: t("home.heroDescription3") },
-  ];
-  const donationTabs = ["payments", "temple_hindu", "school", "child_care", "water_drop", "emergency", "volunteer_activism"].map((icon, index) => ({
+  const donationTabs = ["qurbani", "temple_hindu", "school", "child_care", "water_drop", "emergency", "volunteer_activism"].map((icon, index) => ({
     icon,
     label: t(`home.quickDonationCategories.${index}`),
   }));
-  const news = [
-    "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=600&q=80",
-    "https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=600&q=80",
-    "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600&q=80",
-  ].map((img, index) => ({ img, date: t(`home.newsItems.${index}.date`), title: t(`home.newsItems.${index}.title`), desc: t(`home.newsItems.${index}.description`) }));
+  const [newsResult, setNewsResult] = useState<{ locale: string; posts: HomeNewsPost[] } | null>(null);
+  const news = newsResult?.locale === locale ? newsResult.posts : [];
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/news/popular?locale=${locale}`, { signal: controller.signal })
+      .then(response => { if (!response.ok) throw new Error("News unavailable"); return response.json(); })
+      .then(data => { if (!controller.signal.aborted) setNewsResult({ locale, posts: data.posts }); })
+      .catch(() => { if (!controller.signal.aborted) setNewsResult({ locale, posts: [] }); });
+    return () => controller.abort();
+  }, [locale]);
   const stories = ["A", "M", "A"].map((initial, index) => ({
     initial,
     rating: 5,
@@ -127,13 +91,6 @@ export default function HomePage() {
     author: t(`home.storiesItems.${index}.author`),
     role: t(`home.storiesItems.${index}.role`),
   }));
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [slides.length]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -183,109 +140,8 @@ export default function HomePage() {
     };
   }, [locale, t]);
 
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index);
-  };
-
   return (
     <div className="overflow-x-hidden" dir={dir}>
-      {/* HERO */}
-      <section className="relative h-[560px] overflow-hidden sm:h-[600px] lg:h-[700px]">
-        <AnimatePresence>
-          <motion.div
-            key={currentSlide}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1, ease: "easeInOut" }}
-            className="absolute inset-0 bg-cover bg-[center_35%]"
-            style={{ backgroundImage: `url(${slides[currentSlide].img})` }}
-          />
-        </AnimatePresence>
-        <div className="absolute inset-0 bg-black/45" />
-
-        <div className="relative z-10 mx-auto flex h-full max-w-[1140px] items-center px-5 sm:px-8 lg:px-2.5">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-6 items-center w-full">
-            <div className="max-w-lg lg:max-w-none">
-              <AnimatePresence mode="wait">
-                <motion.div key={currentSlide}>
-                  <motion.h5
-                    initial={{ opacity: 0, x: -100 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 2, ease: "easeOut" }}
-                    className="text-gold text-base uppercase tracking-[0.2em] font-medium mb-5"
-                  >
-                    {t("home.badge")}
-                  </motion.h5>
-
-                  <motion.h1
-                    initial={{ opacity: 0, x: 60 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 2, ease: "easeOut" }}
-                    className="text-display-lg max-sm:text-display-lg-mobile text-white leading-[1.08] mb-5 max-w-[560px]"
-                  >
-                    {slides[currentSlide].title}
-                  </motion.h1>
-
-                  <motion.p
-                    initial={{ opacity: 0, x: 60 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 2, ease: "easeOut" }}
-                    className="text-base text-white/60 leading-relaxed mb-7 max-w-[480px]"
-                  >
-                    {slides[currentSlide].desc}
-                  </motion.p>
-
-                  <div className="flex flex-wrap gap-3 sm:gap-5">
-                    <motion.div
-                      initial={{ opacity: 0, x: -100 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 2, ease: "easeOut" }}
-                    >
-                      <Link
-                        href="/bagis"
-                        className="inline-flex min-h-12 items-center justify-center gap-2 bg-secondary px-6 py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:px-10 sm:py-5 sm:text-base"
-                      >
-                        {t("common.donate")} →
-                      </Link>
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0, x: 60 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 2, delay: 1, ease: "easeOut" }}
-                    >
-                      <Link
-                        href="/hakkimizda"
-                        className="inline-flex min-h-12 items-center justify-center gap-2 border-2 border-white/30 px-6 py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/10 sm:px-10 sm:py-5 sm:text-base"
-                      >
-                        {t("common.learnMore")} →
-                      </Link>
-                    </motion.div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-            <div className="hidden lg:block" />
-          </div>
-        </div>
-
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-10">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goToSlide(i)}
-              className={cn(
-                "rounded-full transition-all duration-500",
-                i === currentSlide
-                  ? "bg-white w-10 h-2.5"
-                  : "bg-white/40 w-2.5 h-2.5 hover:bg-white/60"
-              )}
-              aria-label={t("home.slideLabel").replace("{number}", String(i + 1))}
-            />
-          ))}
-        </div>
-      </section>
-
       {/* HERO BOTTOM INFO CARDS */}
       <section className="py-16 lg:py-20 bg-white">
         <div className="max-w-container-max mx-auto px-margin-desktop">
@@ -460,7 +316,7 @@ export default function HomePage() {
               <div className="relative">
                 <div className="relative aspect-[3/4] overflow-hidden rounded-3xl shadow-[0_4px_30px_rgba(0,0,0,0.08)]">
                   <Image
-                    src="/images/home/vakif-egitim-kutuphanesi.webp"
+                  src="/images/home/about-quran-student-original.webp"
                     alt={t("home.aboutHeading")}
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"
@@ -516,22 +372,22 @@ export default function HomePage() {
           {
             id: "medrese",
             label: t("home.gallery.0"),
-            image: "/images/home/medrese-egitimi.webp",
+            image: "/images/home/gallery-medrese-1080p.webp",
           },
           {
             id: "talebe",
             label: t("home.gallery.1"),
-            image: "/images/home/talebeye-destek.webp",
+            image: "/images/home/gallery-talebe-1080p.webp",
           },
           {
             id: "asevi",
             label: t("home.gallery.2"),
-            image: "/images/home/surekli-asevi.webp",
+            image: "/images/home/gallery-asevi-1080p.webp",
           },
           {
             id: "yardim",
             label: t("home.gallery.3"),
-            image: "/images/home/sosyal-yardim.webp",
+            image: "/images/home/gallery-sosyal-yardim-1080p.webp",
           },
         ]}
       />
@@ -650,25 +506,25 @@ export default function HomePage() {
       </section>
 
       {/* DONATION PROCESS + CTA BANNER */}
-      <section className="bg-[#f6f8f5] py-14 sm:py-20 lg:py-28">
+      <section className="bg-[#f4f0e9] py-14 sm:py-20 lg:py-28">
         <div className="mx-auto max-w-container-max px-5 sm:px-margin-desktop">
           <ScrollReveal>
             <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
-              <div className="relative min-h-[360px] overflow-hidden rounded-[28px] shadow-[0_18px_50px_rgba(28,55,39,0.16)] sm:min-h-[440px] lg:min-h-[540px]">
+              <div className="relative min-h-[360px] overflow-hidden rounded-[28px] bg-[#8b927d] shadow-[0_18px_50px_rgba(65,55,43,0.2)] sm:min-h-[440px] lg:min-h-[540px]">
                 <Image
-                  src="/images/home/sosyal-yardim.webp"
+                  src="/images/home/donation-process-africa-original-v3-1080p.webp"
                   alt={t("home.donationContactTitle")}
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
+                  className="object-cover object-center"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#173525]/90 via-[#173525]/20 to-transparent" />
-                <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/20 bg-[#173525]/85 p-5 text-white shadow-xl backdrop-blur-md sm:inset-x-6 sm:bottom-6 sm:p-7">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#ead6b2]">Mizan Derneği</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#2d2923]/90 via-[#3f463b]/20 to-transparent" />
+                <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-[#e4d4ba]/30 bg-[#302b25]/85 p-5 text-[#fffaf2] shadow-xl backdrop-blur-md sm:inset-x-6 sm:bottom-6 sm:p-7">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#e3c99f]">Mizan Derneği</p>
                   <h3 className="mt-2 text-2xl font-bold leading-tight sm:text-3xl">{t("home.processCardTitle")}</h3>
                   <Link
                     href="/bagis"
-                    className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-[#173525] transition hover:-translate-y-0.5 hover:shadow-lg sm:w-auto"
+                    className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#f4e9d7] px-6 py-3 text-sm font-bold text-[#332a22] transition hover:-translate-y-0.5 hover:bg-white hover:shadow-lg sm:w-auto"
                   >
                     {t("home.processCardButton")}
                     <span className="text-base">→</span>
@@ -717,15 +573,15 @@ export default function HomePage() {
                   ].map((item, i) => (
                     <div
                       key={i}
-                      className="group flex gap-4 rounded-2xl border border-[#e1e7e1] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                      className="group flex gap-4 rounded-2xl border border-[#ded2c0] bg-[#fffdf9] p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#9b7955]/45 hover:shadow-md"
                     >
                       <div className="shrink-0">
-                        <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 transition-all duration-300 group-hover:scale-105 group-hover:bg-primary group-hover:text-white">
-                          <span className="material-symbols-outlined text-[22px] text-primary group-hover:text-white">{item.icon}</span>
+                        <div className="flex size-11 items-center justify-center rounded-xl bg-[#d9c7aa]/35 transition-all duration-300 group-hover:scale-105 group-hover:bg-[#5f594a] group-hover:text-white">
+                          <span className="material-symbols-outlined text-[22px] text-[#6d563f] group-hover:text-white">{item.icon}</span>
                         </div>
                       </div>
                       <div>
-                        <p className="mb-1 text-xs font-bold tracking-[0.12em] text-primary">{item.step}</p>
+                        <p className="mb-1 text-xs font-bold tracking-[0.12em] text-[#9b6638]">{item.step}</p>
                         <h4 className="text-sm font-bold text-on-surface sm:text-base">{item.title}</h4>
                         <p className="mt-1 text-sm leading-relaxed text-on-surface-variant/65">{item.desc}</p>
                       </div>
@@ -738,42 +594,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* VIDEO CAROUSEL */}
-      <VideoCarousel
-        slides={[
-          {
-            id: "v1",
-            thumbnail:
-              "https://img.youtube.com/vi/qgUldGZABdQ/hqdefault.jpg",
-            title: "Beraat kandili özel | Hamza Algül Hocaefendi",
-            url: "https://www.youtube.com/watch?v=qgUldGZABdQ",
-          },
-          {
-            id: "v2",
-            thumbnail:
-              "https://img.youtube.com/vi/lm_CFUwQX5Q/hqdefault.jpg",
-            title: "Fıkıh sohbeti -1 (Nur'ul İzah)",
-            url: "https://www.youtube.com/watch?v=lm_CFUwQX5Q",
-          },
-          {
-            id: "v3",
-            thumbnail:
-              "https://img.youtube.com/vi/Zg81RYBZk8o/hqdefault.jpg",
-            title: "HAMZA HOCA GÜMÜŞPINAR CAMİİ TAZİYE SOHBETİ",
-            url: "https://www.youtube.com/watch?v=Zg81RYBZk8o",
-          },
-          {
-            id: "v4",
-            thumbnail:
-              "https://img.youtube.com/vi/2GFFYDXU7ck/hqdefault.jpg",
-            title: "Kalblerin Keşfi -95 Haram Mal Toplamak",
-            url: "https://m.youtube.com/watch?v=2GFFYDXU7ck",
-          },
-        ]}
-      />
-
       {/* NEWS */}
-      <section className="py-20 lg:py-28 bg-surface-container-low">
+      {news.length > 0 ? <section className="py-20 lg:py-28 bg-surface-container-low">
         <div className="max-w-container-max mx-auto px-margin-desktop">
           <div className="text-center max-w-xl mx-auto mb-14">
             <span className="inline-flex items-center justify-center gap-3 text-gold text-label-sm uppercase tracking-[0.15em] font-medium mb-4">
@@ -789,26 +611,27 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {news.map((item, i) => (
-              <article
-                key={i}
+            {news.map((item) => (
+              <Link
+                href={`/haberler/${item.slug}`}
+                key={item.id}
                 className="group bg-white rounded-3xl overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-1 cursor-pointer"
               >
                 <div className="relative aspect-video overflow-hidden bg-surface-container-high">
-                                    <Image
+                                    {item.coverImageUrl ? <Image
                     className="object-cover group-hover:scale-105 transition-transform duration-[1200ms] ease-out"
-                    src={item.img}
-                    alt={item.title}
+                    src={item.coverImageUrl}
+                    alt={item.coverImageAlt}
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"
-                  />
+                  /> : <span aria-hidden="true" className="material-symbols-outlined absolute inset-0 flex items-center justify-center text-5xl text-primary/30">newspaper</span>}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
 
                 <div className="p-6 space-y-3">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[16px] text-primary/60">calendar_today</span>
-                    <span className="text-label-sm text-on-surface-variant/60">{item.date}</span>
+                    <span className="text-label-sm text-on-surface-variant/60">{new Date(item.publishedAt).toLocaleDateString(locale === "tr" ? "tr-TR" : locale === "ar" ? "ar" : "en-US", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Istanbul" })}</span>
                   </div>
 
                   <h4 className="text-headline-md text-on-surface group-hover:text-primary transition-colors duration-200 leading-snug line-clamp-2">
@@ -816,7 +639,7 @@ export default function HomePage() {
                   </h4>
 
                   <p className="text-base text-on-surface-variant/55 leading-relaxed line-clamp-2">
-                    {item.desc}
+                    {item.excerpt}
                   </p>
 
                   <div className="flex items-center gap-1.5 text-label-sm font-semibold text-primary pt-1 group-hover:gap-3 transition-all duration-300">
@@ -824,11 +647,11 @@ export default function HomePage() {
                     <span className="text-base">→</span>
                   </div>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         </div>
-      </section>
+      </section> : null}
 
       {/* STORIES */}
       <section className="py-20 lg:py-28 bg-surface-container-low">

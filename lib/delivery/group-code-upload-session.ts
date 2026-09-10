@@ -147,6 +147,9 @@ export function uploadGrantLifetimeSeconds(
 export async function reserveDeliveryUploadSession(
   input: ReserveDeliveryUploadInput,
 ): Promise<DeliveryUploadReservation> {
+  if (!input.user.id || !["admin", "field_operator"].includes(input.user.role)) {
+    return {ok:false,status:403,error:"Video yükleme yetkiniz yok."};
+  }
   return withDatabaseTransaction(async (client) => {
     const groupResult = await client.query<GroupRow>(
       `select
@@ -171,16 +174,8 @@ export async function reserveDeliveryUploadSession(
     const group = groupResult.rows[0];
     if (!group) return { ok: false, status: 404, error: "Operasyon grubu bulunamadı." };
 
-    if (
-      input.user.role === "field_operator" &&
-      group.assignedOperatorId !== input.user.id
-    ) {
-      return {
-        ok: false,
-        status: 403,
-        error: "Yalnızca size atanmış operasyon grubuna video yükleyebilirsiniz.",
-      };
-    }
+    // Assignment schedules work; upload is allowed for either trusted role.
+    // Group-code confirmation and lifecycle gates below remain mandatory.
 
     const gateError = validateGroupGate(group);
     if (gateError) return { ok: false, status: 409, error: gateError };

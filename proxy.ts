@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { hasSameOrigin, requiresSameOrigin } from "@/lib/security/request-origin";
 
 const PANEL_LOGIN_PATH = "/panel/giris";
 const PAYLOAD_AUTH_COOKIE = "payload-token";
@@ -20,6 +21,12 @@ function panelLoginRedirect(request: NextRequest) {
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  if (pathname.startsWith("/api/")) {
+    if (requiresSameOrigin(pathname, request.method) && !hasSameOrigin(request)) {
+      return NextResponse.json({ error: "İstek kaynağı doğrulanamadı." }, { status: 403 });
+    }
+    return NextResponse.next();
+  }
 
   if (pathname.startsWith("/yonetim")) {
     return request.cookies.has(PAYLOAD_AUTH_COOKIE)
@@ -35,5 +42,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/panel/:path*", "/yonetim/:path*"],
+  matcher: ["/panel/:path*", "/yonetim/:path*", "/api/delivery/:path*", "/api/donations/eft-review/:path*", "/api/donations/eft/:path*"],
 };

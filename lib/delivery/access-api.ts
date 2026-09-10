@@ -33,6 +33,7 @@ export class DeliveryAccessApiError extends Error {
 }
 
 function configuration() {
+  if (process.env.MIZAN_LOCAL_ACCEPTANCE === "1") throw new Error("Yerel kabul ortamında dış video servisi kapalı.");
   ensureLocalEnvLoaded();
   const apiUrl = process.env.DELIVERY_VIDEO_API_URL?.trim();
   if (!apiUrl) throw new Error("DELIVERY_VIDEO_API_URL yapılandırılmamış.");

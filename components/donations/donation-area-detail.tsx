@@ -1,4 +1,5 @@
 "use client";
+import { DonationCategoryIcon } from "@/components/icons/donation-category-icon";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -101,7 +102,7 @@ export function DonationAreaDetail({ area, locale }: Props) {
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white lg:p-8">
                 {area.category ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[var(--admin-text)] backdrop-blur">
-                    <span className="material-symbols-outlined text-[14px]">{area.category.icon || "folder"}</span>
+                    <DonationCategoryIcon name={area.category.icon || "folder"} className="text-[14px]" />
                     {area.category.name}
                   </span>
                 ) : null}

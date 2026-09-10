@@ -29,6 +29,9 @@ export type UnifiedDonationRow = {
   email: string;
   phone: string;
   address: string;
+  manual: boolean;
+  paymentSessionId: string;
+  quantity: number;
 };
 
 export type UnifiedEftRow = {
@@ -49,6 +52,9 @@ export type UnifiedDeliveryRow = {
   messageBody: string;
   groupCode: string;
   campaign: string;
+  campaignId?: string;
+  categoryId?: string;
+  category?: string;
   recipient: string;
   status: string;
   videoStatus: string;
@@ -167,7 +173,10 @@ export async function getUnifiedDonationPanelData() {
       currency: text(item.currency, "TRY"),
       receipt: text(item.receiptNumber, "Hazırlanıyor"),
       status: text(item.status, "pending"),
-      createdAt: text(item.createdAt),
+      createdAt: text(item.confirmedAt || item.createdAt),
+      manual: intent.source === "admin_manual",
+      paymentSessionId: text(record(item.paymentSession).id || item.paymentSession),
+      quantity: Number(item.quantity || 1),
       note: text(item.donationNote),
       email: text(item.email ?? intent.email),
       phone: text(item.phone ?? intent.phone),
@@ -201,12 +210,36 @@ export async function getUnifiedDonationPanelData() {
 export async function getUnifiedDeliveryPanelData(): Promise<
   UnifiedDeliveryRow[]
 > {
-  const [groups, messages, videos, members] = await Promise.all([
-    findOptional("operation-groups"),
-    findOptional("delivery-messages"),
-    findOptional("operation-videos"),
-    findOptional("operation-group-members", { limit: 1000, sort: "unitIndex" }),
+  // Traverse every page: independent 100-row limits used to hide older groups/recipients.
+  const payload = await getPayloadClient();
+  async function all(collection:string,depth=1) {
+    const docs:LooseRecord[]=[];
+    const fields:Record<string,string[]>={
+      "operation-groups":["code","campaign","status","updatedAt","createdAt"],
+      "delivery-messages":["group","isTest","body","recipientPhone","status","updatedAt","createdAt"],
+      "operation-videos":["group","status","updatedAt"],
+      "operation-group-members":["group","participant","donationIntent","unitIndex","status"],
+      "categories":["name"],
+    };
+    for(let page=1;;page++) {
+      const result=await (payload.find as unknown as (args:Record<string,unknown>)=>Promise<{docs:unknown[];hasNextPage:boolean}>)({collection,depth,limit:200,page,pagination:true,sort:"-id",locale:"tr",select:Object.fromEntries(fields[collection].map(field=>[field,true])),populate:{campaigns:{title:true,category:true},"operation-groups":{code:true,campaign:true},"donation-participants":{name:true,effectivePhone:true,phone:true},"donation-intents":{donorName:true,phone:true}}});
+      docs.push(...result.docs.map(record));
+      if(!result.hasNextPage)return docs;
+    }
+  }
+  const [groups, messages, videos, members, categories] = await Promise.all([
+    all("operation-groups"),
+    all("delivery-messages"),
+    all("operation-videos"),
+    all("operation-group-members"),
+    all("categories",0),
   ]);
+  const categoryNames=new Map(categories.map(c=>[String(c.id),text(c.name,"Kategorisiz")]));
+  function metadata(group:LooseRecord) {
+    const campaign=record(group.campaign);
+    const categoryId=String(record(campaign.category).id ?? campaign.category ?? "");
+    return {campaignId:String(campaign.id ?? group.campaign ?? ""),categoryId,category:categoryNames.get(categoryId) || "Kategorisiz"};
+  }
 
   function buildRows(
     source: string,
@@ -254,7 +287,8 @@ export async function getUnifiedDeliveryPanelData(): Promise<
       sourceGroups.map((group) => [String(group.id ?? ""), group]),
     );
     const latestMessageByGroup = new Map<string, LooseRecord>();
-    for (const message of sourceMessages) {
+    const newestMessages=[...sourceMessages].sort((a,b)=>(Date.parse(text(b.updatedAt ?? b.createdAt))||0)-(Date.parse(text(a.updatedAt ?? a.createdAt))||0));
+    for (const message of newestMessages) {
       if (message.isTest === true) continue;
       const relation = record(
         message.operationGroup ?? message.group ?? message.pool,
@@ -291,6 +325,7 @@ export async function getUnifiedDeliveryPanelData(): Promise<
         messageBody: text(message.body),
         groupCode: text(group.code ?? group.operationCode, "Grup bekliyor"),
         campaign: relationTitle(group.campaign, "Video operasyonu"),
+        ...metadata(group),
         recipient: maskPhone(message.recipientPhone ?? message.phone),
         status: text(message.status, "draft"),
         videoStatus: text(video.status, "waiting"),
@@ -324,6 +359,7 @@ export async function getUnifiedDeliveryPanelData(): Promise<
           messageId: null,
           messageBody: "",
           groupCode: text(group.code ?? group.operationCode, "Grup bekliyor"),
+          ...metadata(group),
           campaign: relationTitle(
             group.campaign ?? group.product,
             "Video operasyonu",
@@ -335,7 +371,7 @@ export async function getUnifiedDeliveryPanelData(): Promise<
           recipients,
         };
       });
-    return [...messageRows, ...waitingRows];
+    return [...messageRows, ...waitingRows].sort((a,b)=>(Date.parse(b.updatedAt)||0)-(Date.parse(a.updatedAt)||0));
   }
 
   return buildRows("unified", groups, messages, videos, members);

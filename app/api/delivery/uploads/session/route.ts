@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { hasSameOrigin } from "@/lib/security/request-origin";
 
 import { getAdminSession } from "@/lib/auth/session";
+import { deliveryVideoMime } from "@/lib/delivery/upload-metadata";
 import {
   DELIVERY_UPLOAD_ALLOWED_MIME,
-  type DeliveryUploadMime,
   type DeliveryUploadRole,
 } from "@/lib/delivery/upload-auth";
 import { reserveDeliveryUploadSession } from "@/lib/delivery/group-code-upload-session";
@@ -13,16 +14,6 @@ import {
 } from "@/lib/delivery/storage";
 
 export const dynamic = "force-dynamic";
-
-const allowedMime = new Set<string>(DELIVERY_UPLOAD_ALLOWED_MIME);
-
-function inferMime(fileName: string, requestedMime: string) {
-  if (allowedMime.has(requestedMime)) return requestedMime as DeliveryUploadMime;
-  if (/\.mov$/i.test(fileName)) return "video/quicktime" as const;
-  if (/\.mp4$/i.test(fileName)) return "video/mp4" as const;
-  if (/\.webm$/i.test(fileName)) return "video/webm" as const;
-  return null;
-}
 
 function requestIp(request: Request) {
   return (
@@ -51,6 +42,9 @@ export async function POST(request: Request) {
   }
 
   try {
+    if(!hasSameOrigin(request)) {
+      return json({ok:false,error:"İstek kaynağı doğrulanamadı."},403);
+    }
     const body = await request.json() as {
       groupId?: unknown;
       groupCode?: unknown;
@@ -62,10 +56,10 @@ export async function POST(request: Request) {
     const repeatedGroupCode =
       typeof body.groupCode === "string" ? body.groupCode.trim() : "";
     const fileName =
-      typeof body.fileName === "string" ? body.fileName.trim().slice(0, 180) : "";
+      typeof body.fileName === "string" ? body.fileName.trim() : "";
     const requestedMime =
       typeof body.mimeType === "string" ? body.mimeType.trim().toLowerCase() : "";
-    const mimeType = inferMime(fileName, requestedMime);
+    const mimeType = deliveryVideoMime(fileName, requestedMime);
     const sizeBytes = Number(body.sizeBytes);
     const { maxBytes } = getDeliveryVideoLimits();
 
@@ -125,8 +119,8 @@ export async function POST(request: Request) {
         allowedMime: DELIVERY_UPLOAD_ALLOWED_MIME,
       },
     });
-  } catch (error) {
-    console.error("Delivery upload session could not be created.", error);
+  } catch {
+    console.error("Delivery upload session could not be created.");
     return json({
       ok: false,
       error: "Video yükleme oturumu şu anda oluşturulamıyor.",

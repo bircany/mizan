@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { requiredEnv } from "@/lib/env";
 
 export function getSupabaseServiceClient() {
+  if (process.env.MIZAN_LOCAL_ACCEPTANCE === "1") throw new Error("Yerel kabul ortamında dış dosya servisi kapalı.");
   return createClient(
     requiredEnv("NEXT_PUBLIC_SUPABASE_URL"),
     requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),

@@ -331,6 +331,7 @@ export function DeliveryOperationModal({ groupId }: { groupId: string }) {
                                 : "Video doğrulanıyor"}
                             </button>
                           )}
+                          <details className="mt-4"><summary className="cursor-pointer text-sm font-semibold">Dosya ve teknik ayrıntılar</summary>
                           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                             <Meta
                               label="Dosya"
@@ -370,6 +371,7 @@ export function DeliveryOperationModal({ groupId }: { groupId: string }) {
                               value={formatTime(video.updatedAt)}
                             />
                           </dl>
+                          </details>
                           {video.lastError ? (
                             <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">
                               {video.lastErrorCode

@@ -39,6 +39,7 @@ export function PanelMetric({ label, value, detail, tone = "default" }: { label:
 type StatusTone = "success" | "warning" | "danger" | "neutral" | "info";
 
 const statusToneMap: Record<string, StatusTone> = {
+  waiting:"warning", video_pending:"warning", uploading:"info", uploaded:"info", processing:"info", ready:"success", video_ready:"success", countdown:"info", queued:"info", sending:"info", paused:"warning", delivered:"success", read:"success", quarantined:"danger", processing_failed:"danger", action_required:"danger",
   paid: "success", approved: "success", completed: "success", sent: "success", success: "success", confirmed: "success",
   pending_review: "warning", pending: "warning", review_pending: "warning", external_pending: "warning", reserved: "warning",
   draft: "neutral", todo: "neutral", failed: "danger", rejected: "danger", cancelled: "danger", refunded: "danger", needs_revision: "danger", stopped: "danger",
@@ -46,6 +47,7 @@ const statusToneMap: Record<string, StatusTone> = {
 };
 
 const statusLabelMap: Record<string, string> = {
+  waiting:"Video bekleniyor", video_pending:"Video bekleniyor", uploading:"Yükleniyor", uploaded:"Yüklendi", processing:"İşleniyor", ready:"Video hazır", video_ready:"Video hazır", countdown:"Gönderim hazırlanıyor", queued:"Sırada", sending:"Gönderiliyor", paused:"Duraklatıldı", delivered:"Teslim edildi", read:"Okundu", quarantined:"Güvenlik kontrolünde", processing_failed:"İşleme başarısız", action_required:"İşlem gerekli", open:"Alım açık", full:"Grup dolu", collecting:"Hisse toplanıyor", ready_for_slaughter:"Kesime hazır", scheduled:"Kesim planlandı", slaughtered:"Kesim tamamlandı", delivery_started:"Teslimat başladı", notified:"Bildirildi", closed:"Kapalı", superseded:"Önceki sürüm",
   paid: "Tahsil edildi", pending_review: "İnceleme bekliyor", failed: "Başarısız", cancelled: "İptal edildi",
   partially_refunded: "Kısmi iade", refunded: "İade edildi", approved: "Onaylandı", rejected: "Reddedildi",
   draft: "Taslak", todo: "Başlamadı", submitted: "Gönderildi", external_pending: "Dış onay bekliyor", review_pending: "Onay bekliyor",

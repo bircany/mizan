@@ -1,5 +1,8 @@
 "use client";
 
+import { TailGroupEditor } from "@/components/admin/tail-group-editor";
+import { roundedGroupStock } from "@/lib/donations/group-plan";
+
 import Image from "next/image";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import {
@@ -9,12 +12,12 @@ import {
   LoaderCircle,
   Pencil,
   Plus,
-  Trash2,
   Upload,
   X,
 } from "lucide-react";
 
 import { uploadMedia, type MediaActionState } from "@/lib/admin/media-actions";
+import type { CampaignSaveIntent } from "@/lib/admin/campaign-save-intent";
 import {
   deleteUnifiedCampaign,
   saveUnifiedCampaign,
@@ -37,6 +40,8 @@ export type CampaignEditorRecord = {
   unitPrice: number | null;
   unitLabel: string;
   totalStock: number | null;
+  confirmedUnits?: number;
+  reservedUnits?: number;
   videoDelivery: string;
   operationType: string;
   groupCapacity: number | null;
@@ -65,21 +70,33 @@ const steps = [
   { title: "Yayınlama", short: "Yayın" },
 ] as const;
 
-function DeleteForm({ id }: { id: string }) {
-  const [state, action] = useActionState(deleteUnifiedCampaign, initialState);
+function DeleteForm({ id, compact = false }: { id: string; compact?: boolean }) {
+  const [state, action, pending] = useActionState(deleteUnifiedCampaign, initialState);
   return (
-    <form action={action} className="border-t border-[var(--admin-border)] px-5 py-4">
+    <form
+      action={action}
+      className={compact ? "absolute right-5 top-5 z-10" : "border-t border-[var(--admin-border)] px-5 py-4"}
+      onSubmit={(event) => {
+        if (!window.confirm("Bu boş taslak kampanyayı silmek istediğinizden emin misiniz?")) event.preventDefault();
+      }}
+    >
       <input name="id" type="hidden" value={id} />
       <button
-        className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-red-300 px-3 text-xs font-semibold text-red-700"
+        aria-label="Kampanyayı kaldır"
+        disabled={pending}
+        className={compact
+          ? "grid size-8 place-items-center rounded-full border border-red-200 bg-red-50 text-red-600 shadow-sm transition hover:border-red-300 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+          : "inline-flex min-h-10 items-center gap-2 rounded-lg border border-red-300 px-3 text-xs font-semibold text-red-700"}
+        title="Kampanyayı kaldır"
         type="submit"
       >
-        <Trash2 className="size-4" />
-        Boş taslağı sil
+        <X aria-hidden="true" className="size-4" />
+        {!compact ? "Boş taslağı sil" : null}
       </button>
-      {state.message ? (
+      {state.message && !compact ? (
         <p className="mt-2 text-xs text-[var(--admin-muted)]">{state.message}</p>
       ) : null}
+      {state.message && compact ? <p className="absolute right-0 top-10 w-56 rounded-lg bg-white p-2 text-right text-[11px] text-[var(--admin-muted)] shadow-lg">{state.message}</p> : null}
     </form>
   );
 }
@@ -280,11 +297,13 @@ export function UnifiedCampaignEditor({
   const [coverPickerKey, setCoverPickerKey] = useState(0);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const savingRef = useRef(false);
   const id = record?.id;
 
   useEffect(() => {
-    if (state.success) dialogRef.current?.close();
-  }, [state.success]);
+    if (!isPending) savingRef.current = false;
+    if (state.success && !isPending) dialogRef.current?.close();
+  }, [state, isPending]);
 
   function openDialog() {
     formRef.current?.reset();
@@ -316,28 +335,73 @@ export function UnifiedCampaignEditor({
   }
 
   function nextStep() {
+    if (savingRef.current) return;
     if (validateCurrentStep()) {
       setStep((current) => Math.min(current + 1, steps.length - 1));
     }
   }
 
+  function saveCampaign(intent: CampaignSaveIntent) {
+    if (step !== steps.length - 1 || savingRef.current || !formRef.current) return;
+    // Hidden wizard panels also need validation; reveal the invalid panel first.
+    const fields = Array.from(formRef.current.querySelectorAll<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >("input, select, textarea"));
+    const invalid = fields.find((field) => !field.checkValidity());
+    if (invalid) {
+      const panel = invalid.closest<HTMLElement>("[data-step]");
+      if (panel) setStep(Number(panel.dataset.step));
+      requestAnimationFrame(() => {
+        invalid.focus();
+        invalid.reportValidity();
+      });
+      return;
+    }
+    const formData = new FormData(formRef.current);
+    if (pricingModel === "fixed" && videoDelivery === "video") {
+      const stock=String(formData.get("totalStock") || "");
+      try {
+        const rounded=roundedGroupStock(stock ? Number(stock) : undefined,Number(formData.get("groupCapacity")));
+        if (stock && rounded !== Number(stock)) {
+          if (!window.confirm(`${stock} hisse, ${formData.get("groupCapacity")} kişilik gruplar için ${rounded} hisseye tamamlanacak. Onaylıyor musunuz?`)) return;
+          formData.set("roundedStockConfirmed",String(rounded));
+        }
+      } catch(error) {window.alert(error instanceof Error ? error.message : "Grup kapasitesi geçersiz.");return;}
+    }
+    formData.set("saveIntent", intent);
+    if (intent === "draft") formData.set("status", "draft");
+    if (intent === "publish") formData.set("status", "active");
+    savingRef.current = true;
+    startTransition(() => action(formData));
+  }
+
   return (
     <>
       {record ? (
-        <article className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] p-5">
-          <div className="flex items-start justify-between gap-4">
+        <article className="relative flex min-h-[25rem] min-w-0 flex-col rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] p-5">
+          <DeleteForm compact id={record.id} />
+          <div className="mb-4 flex min-h-8 justify-end pr-10">
+            <span className={`inline-flex min-h-8 items-center gap-2 rounded-full border px-3 text-xs font-bold uppercase tracking-wide ${
+              record.status === "active"
+                ? "border-emerald-300 bg-emerald-100 text-emerald-800"
+                : record.status === "closed"
+                  ? "border-yellow-300 bg-yellow-100 text-yellow-900"
+                  : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-muted)]"
+            }`}>
+              <span aria-hidden="true" className="size-2 rounded-full bg-current" />
+              {record.status === "active" ? "Aktif" : record.status === "draft" ? "Taslak" : record.status === "closed" ? "Kapalı" : "Arşiv"}
+            </span>
+          </div>
+          <div className="flex flex-col items-start gap-3">
             <div className="min-w-0">
-              <p className="truncate text-base font-semibold text-[var(--admin-text)]">{record.title}</p>
+              <p className="break-words text-base font-semibold text-[var(--admin-text)]">{record.title}</p>
               <p className="mt-1 text-xs text-[var(--admin-muted)]">
                 {record.pricingModel === "fixed" ? "Sabit tutar" : "Serbest tutar"} ·{" "}
                 {record.videoDelivery === "video" ? "Videolu" : "Videosuz"}
               </p>
             </div>
-            <span className="rounded-full bg-[var(--admin-surface)] px-2.5 py-1 text-[11px] font-semibold uppercase text-[var(--admin-muted)]">
-              {record.status === "active" ? "Aktif" : record.status === "draft" ? "Taslak" : record.status === "closed" ? "Kapalı" : "Arşiv"}
-            </span>
           </div>
-          <dl className="mt-5 grid grid-cols-2 gap-3">
+          <dl className="mt-5 mb-5 grid grid-cols-1 gap-3">
             <div className="rounded-lg bg-[var(--admin-surface)] p-3">
               <dt className="text-[11px] text-[var(--admin-muted)]">
                 {record.pricingModel === "fixed" ? "Birim fiyat" : "Hedef"}
@@ -348,17 +412,28 @@ export function UnifiedCampaignEditor({
                   : `${record.targetAmount?.toLocaleString("tr-TR") || "—"} ${record.currency}`}
               </dd>
             </div>
-            <div className="rounded-lg bg-[var(--admin-surface)] p-3">
-              <dt className="text-[11px] text-[var(--admin-muted)]">
-                {record.pricingModel === "fixed" ? "Toplam stok" : "Teslimat"}
-              </dt>
-              <dd className="mt-1 text-sm font-semibold">
-                {record.pricingModel === "fixed"
-                  ? record.totalStock?.toLocaleString("tr-TR") || "Sınırsız"
-                  : record.videoDelivery === "video" ? "Videolu" : "Videosuz"}
-              </dd>
-            </div>
+            {record.pricingModel !== "fixed" ? <div className="rounded-lg bg-[var(--admin-surface)] p-3">
+              <dt className="text-[11px] text-[var(--admin-muted)]">Teslimat</dt>
+              <dd className="mt-1 text-sm font-semibold">{record.videoDelivery === "video" ? "Videolu" : "Videosuz"}</dd>
+            </div> : null}
           </dl>
+          {record.pricingModel === "fixed" ? (
+            <div className="mb-5 rounded-xl border border-[var(--admin-border)] p-3">
+              <dl className="grid grid-cols-3 gap-2 text-center">
+                {[
+                  ["Alınan hisse", (record.confirmedUnits ?? 0).toLocaleString("tr-TR"), "text-emerald-700"],
+                  ["Kalan hisse", record.totalStock == null ? "Sınırsız" : Math.max(0, record.totalStock - (record.confirmedUnits ?? 0)).toLocaleString("tr-TR"), "text-blue-700"],
+                  ["Toplam hisse", record.totalStock == null ? "Sınırsız" : record.totalStock.toLocaleString("tr-TR"), "text-[var(--admin-text)]"],
+                ].map(([label, value, color]) => <div key={label}><dt className="text-[10px] text-[var(--admin-muted)]">{label}</dt><dd className={`mt-1 text-base font-bold ${color}`}>{value}</dd></div>)}
+              </dl>
+              {record.totalStock != null && record.totalStock > 0 ? <>
+                <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-blue-100" aria-hidden="true">
+                  <div className="bg-emerald-500" style={{ width: `${Math.min(100, (record.confirmedUnits ?? 0) / record.totalStock * 100)}%` }} />
+                </div>
+                <p className="mt-2 text-xs text-[var(--admin-muted)]">{(record.confirmedUnits ?? 0) >= record.totalStock ? "Tüm hisseler alındı" : "Boş hisse var"}</p>
+              </> : null}
+            </div>
+          ) : null}
           {record.status === "closed" && record.closeReason ? (
             <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800">
@@ -369,14 +444,15 @@ export function UnifiedCampaignEditor({
               </p>
             </div>
           ) : null}
-          <button className="admin-action-button mt-5 w-full justify-center" onClick={openDialog} type="button">
+          <button className="admin-action-button mt-auto w-full justify-center" onClick={openDialog} type="button">
             <Pencil className="size-4" />
             Kampanyayı düzenle
           </button>
+          {record.pricingModel === "fixed" && record.videoDelivery === "video" ? <TailGroupEditor campaignId={record.id}/> : null}
         </article>
       ) : (
-        <button className="admin-action-button w-fit" onClick={openDialog} type="button">
-          <Plus className="size-4" />
+        <button className="inline-flex min-h-14 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--admin-primary-strong)] px-6 py-3 text-base font-semibold text-[var(--admin-primary-ink)] shadow-sm transition hover:bg-[#245c42] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] focus-visible:ring-offset-2 sm:w-auto" onClick={openDialog} type="button">
+          <Plus className="size-5" />
           Yeni bağış kampanyası
         </button>
       )}
@@ -424,15 +500,12 @@ export function UnifiedCampaignEditor({
 
         <form
           className="flex max-h-[calc(92vh-10rem)] flex-col"
+          noValidate
           onSubmit={(event) => {
             event.preventDefault();
             if (step < steps.length - 1) {
               nextStep();
-              return;
             }
-            if (!validateCurrentStep() || !formRef.current) return;
-            const formData = new FormData(formRef.current);
-            startTransition(() => action(formData));
           }}
           ref={formRef}
         >
@@ -589,7 +662,8 @@ export function UnifiedCampaignEditor({
                   <div className="grid gap-4 sm:grid-cols-2">
                     {pricingModel === "fixed" ? (
                       <Field label="Video grup kapasitesi *">
-                        <input className="admin-input" defaultValue={record?.groupCapacity ?? ""} min="1" name="groupCapacity" required step="1" type="number" />
+                        <input className="admin-input" defaultValue={record?.groupCapacity ?? ""} min="1" max="500" name="groupCapacity" required step="1" type="number" />
+                        <span className="mt-2 block text-xs">Toplam stok grup katına tamamlanır; kayıtta onayınız sorulur. Örnek: 100 hisse → 6 kişilik gruplarda 102, 7 kişilik gruplarda 105.</span>
                       </Field>
                     ) : null}
                     <Field full label="WhatsApp mesaj şablonu">
@@ -689,8 +763,8 @@ export function UnifiedCampaignEditor({
                   >
                     <option value="draft">Taslak olarak kaydet</option>
                     <option value="active">Aktif — bağışa aç</option>
-                    <option value="closed">Kapalı</option>
-                    <option value="archived">Arşiv</option>
+                    {record ? <option value="closed">Kapalı</option> : null}
+                    {record ? <option value="archived">Arşiv</option> : null}
                   </select>
                 </Field>
                 <div
@@ -729,7 +803,7 @@ export function UnifiedCampaignEditor({
           <div className="mt-auto flex items-center justify-between gap-3 border-t border-[var(--admin-border)] px-5 py-4 sm:px-6">
             <button
               className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[var(--admin-border)] px-4 text-sm font-semibold disabled:opacity-40"
-              disabled={step === 0}
+              disabled={step === 0 || isPending}
               onClick={() => setStep((current) => Math.max(0, current - 1))}
               type="button"
             >
@@ -740,12 +814,18 @@ export function UnifiedCampaignEditor({
               {step + 1} / {steps.length}
             </p>
             {step < steps.length - 1 ? (
-              <button className="admin-action-button" onClick={nextStep} type="button">
+              <button key="next-step" className="admin-action-button" onClick={nextStep} type="button">
                 İleri
                 <ChevronRight className="size-4" />
               </button>
             ) : (
-              <button className="admin-action-button" disabled={isPending} type="submit">
+              <div key="explicit-save-actions" className="flex flex-wrap gap-2">
+              {(!record || status === "draft" || status === "active") ? (
+                <button className="admin-button-secondary" disabled={isPending} onClick={() => saveCampaign("draft")} type="button">
+                  Taslak kaydet
+                </button>
+              ) : null}
+              <button className="admin-action-button" disabled={isPending} onClick={() => saveCampaign(record && (status === "closed" || status === "archived") ? "update" : "publish")} type="button">
                 {isPending ? (
                   <LoaderCircle className="size-4 animate-spin" />
                 ) : record ? (
@@ -753,12 +833,12 @@ export function UnifiedCampaignEditor({
                 ) : (
                   <Plus className="size-4" />
                 )}
-                {isPending ? "Kaydediliyor" : record ? "Değişiklikleri kaydet" : "Kampanyayı oluştur"}
+                {isPending ? "Kaydediliyor" : status === "closed" || status === "archived" ? "Değişiklikleri kaydet" : "Yayınla"}
               </button>
+              </div>
             )}
           </div>
         </form>
-        {record ? <DeleteForm id={record.id} /> : null}
       </dialog>
     </>
   );

@@ -3,13 +3,15 @@ import type { Access, Where } from "payload";
 import { canManageFinance, canReviewFieldWork, hasRole } from "@/lib/auth/roles";
 
 type RequestUser = {
+  isActive?: boolean | null;
   id?: number | string;
   role?: string | null;
 };
 
 function getUser(user: unknown): RequestUser | null {
   if (!user || typeof user !== "object") return null;
-  return user as RequestUser;
+  const candidate = user as RequestUser;
+  return candidate.isActive === false ? null : candidate;
 }
 
 export const anyone: Access = () => true;

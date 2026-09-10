@@ -1,5 +1,6 @@
 "use client";
 
+import { QurbaniIcon } from "@/components/icons/qurbani-icon";
 import { useCallback, useEffect } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 
@@ -74,7 +75,7 @@ export default function QuickDonationCarousel({
                   isActive ? "bg-white/15 text-white" : "bg-primary/5 text-primary"
                 }`}
               >
-                <span className="material-symbols-outlined text-[23px]">{category.icon}</span>
+                {category.icon === "qurbani" ? <QurbaniIcon className="size-6 text-orange-400" /> : <span className="material-symbols-outlined text-[23px]">{category.icon}</span>}
               </span>
               <span className="text-sm font-semibold leading-tight">{category.label}</span>
             </button>
@@ -106,9 +107,9 @@ export default function QuickDonationCarousel({
                     isActive ? "bg-white/20 text-white" : "bg-primary/5 text-primary"
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[28px]">
+                  {cat.icon === "qurbani" ? <QurbaniIcon className="size-7 text-orange-400" /> : <span className="material-symbols-outlined text-[28px]">
                     {cat.icon}
-                  </span>
+                  </span>}
                 </div>
                 <span className="text-label-sm font-semibold whitespace-nowrap">
                   {cat.label}

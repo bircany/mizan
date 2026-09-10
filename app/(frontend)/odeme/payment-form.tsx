@@ -49,7 +49,7 @@ export default function PaymentForm({
     taxReceipt: false,
     kvkk: false,
     terms: false,
-    paymentMethod: "card" as "card" | "eft",
+    paymentMethod: "eft" as "card" | "eft",
     ownIdentity: true,
     powerOfAttorney: false,
     thirdPartyContact: false,
@@ -283,8 +283,8 @@ export default function PaymentForm({
                   Ödeme Yöntemi
                 </p>
                 <p className="mt-1 text-sm text-on-surface-variant">
-                  Kart ödemesi çevrim içi alınır; EFT/Havale işlemini dernek
-                  görevlisi birebir yürütür.
+                  Bağışlar IBAN üzerinden alınır. Ödeme kontrolü ve kayıt için
+                  dernek görevlisiyle WhatsApp üzerinden iletişime geçebilirsiniz.
                 </p>
               </div>
               {form.paymentMethod === "card" ? (
@@ -299,16 +299,6 @@ export default function PaymentForm({
               ) : null}
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-outline-variant bg-white p-4">
-                <input
-                  checked={form.paymentMethod === "card"}
-                  name="paymentMethod"
-                  onChange={updateField}
-                  type="radio"
-                  value="card"
-                />
-                Kart
-              </label>
               <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-outline-variant bg-white p-4">
                 <input
                   checked={form.paymentMethod === "eft"}

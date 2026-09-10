@@ -25,7 +25,7 @@ export async function POST(
   } catch (error) {
     const status = error instanceof DeliveryAccessApiError ? error.status : 500;
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Önizleme açılamadı." },
+      { error: "Önizleme açılamadı. Video durumunu ve servis bağlantısını kontrol edin." },
       { status },
     );
   }

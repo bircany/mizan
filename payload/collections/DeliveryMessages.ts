@@ -1,6 +1,6 @@
 import type { CollectionConfig } from "payload";
 
-import { fieldOperatorOrAdmin } from "@/payload/access";
+import { superAdminsOnly } from "@/payload/access";
 
 export const DeliveryMessages: CollectionConfig = {
   slug: "delivery-messages",
@@ -10,7 +10,8 @@ export const DeliveryMessages: CollectionConfig = {
     defaultColumns: ["group", "recipientPhone", "status", "scheduledAt", "sentAt"],
   },
   access: {
-    read: fieldOperatorOrAdmin,
+    // Field operators use the explicitly redacted group detail endpoint.
+    read: superAdminsOnly,
     create: () => false,
     update: () => false,
     delete: () => false,

@@ -11,6 +11,7 @@ export const Users: CollectionConfig = {
     defaultColumns: ["name", "email", "role", "isActive", "updatedAt"],
   },
   access: {
+    unlock: superAdminsOnly,
     create: superAdminsOnly,
     read: usersReadAccess,
     update: usersUpdateAccess,

@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 
 import { anyone, superAdminsOnly } from "@/payload/access";
+import { normalizeMediaUpload } from "@/lib/security/media-upload";
 
 export const Media: CollectionConfig = {
   slug: "media",
@@ -23,9 +24,9 @@ export const Media: CollectionConfig = {
     ],
   },
   hooks: {
-    beforeOperation: [({ operation, req }) => {
-      if ((operation === "create" || operation === "update") && req.file && req.file.size > 10 * 1024 * 1024) {
-        throw new Error("Görsel en fazla 10 MB olabilir.");
+    beforeOperation: [async ({ operation, req }) => {
+      if ((operation === "create" || operation === "update") && req.file) {
+        req.file = await normalizeMediaUpload(req.file);
       }
     }],
   },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 import {
   type CampaignEditorRecord,
@@ -17,6 +17,8 @@ import type {
 } from "@/lib/admin/unified-panel-data";
 import { formatCurrency } from "@/lib/utils";
 import { ChildDonationSettingsCard } from "@/components/admin/child-donation-settings-card";
+import { ManualDonationForm } from "@/components/admin/manual-donation-form";
+import { ManualDonationProof } from "@/components/admin/manual-donation-proof";
 
 type DonationTab = "campaigns" | "donations" | "eft";
 
@@ -55,7 +57,8 @@ export function UnifiedDonationManagement({
   return (
     <div className="space-y-5">
       <PanelSectionTabs activeTab={tab} basePath="/panel/bagis-yonetimi" tabs={tabs} />
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <ManualDonationForm campaigns={editorData.records}/>
         <form className="relative w-full max-w-md" method="get">
           <input name="tab" type="hidden" value={tab} />
           <Search aria-hidden="true" className="absolute left-3 top-3 size-4 text-[var(--admin-muted)]" />
@@ -100,7 +103,7 @@ function CampaignCards({
   if (!rows.length) return <EmptyPanelState title="Kampanya bulunamadı" description="Arama ölçütünü temizleyin veya ilk bağış kampanyasını oluşturun." />;
   const visibleIds = new Set(rows.map((row) => row.id));
   return (
-    <div className="grid gap-4 xl:grid-cols-2">
+    <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
       <ChildDonationSettingsCard settings={childDonation} />
       {records
         .filter((record) => visibleIds.has(record.id))
@@ -121,7 +124,14 @@ function DonationTable({ rows }: { rows: UnifiedDonationRow[] }) {
   if (!rows.length) return <EmptyPanelState title="Bağış kaydı bulunamadı" description="Başarılı ödeme ve onaylanan EFT kayıtları burada görünür." />;
   return <>
     <PanelCard className="overflow-hidden p-0"><div className="overflow-x-auto"><table className="w-full min-w-[1250px] text-left text-sm"><thead className="border-b border-[var(--admin-border)] bg-[var(--admin-surface-raised)] text-[11px] uppercase tracking-[0.12em] text-[var(--admin-muted)]"><tr><th className="px-4 py-3">Bağışçı</th><th className="px-4 py-3">Yapılan bağış</th><th className="px-4 py-3">Makbuz no</th><th className="px-4 py-3">Durum</th><th className="px-4 py-3 text-right">Tutar</th><th className="px-4 py-3">Not</th><th className="px-4 py-3">İletişim</th><th className="px-4 py-3">Adres</th></tr></thead><tbody className="divide-y divide-[var(--admin-border)]">{rows.map((item) => <tr className="cursor-pointer transition hover:bg-[var(--admin-surface-raised)]" key={item.id} onClick={() => setSelected(item)}><td className="px-4 py-4 font-semibold">{item.donorName}</td><td className="px-4 py-4 text-[var(--admin-muted)]">{item.campaign}</td><td className="px-4 py-4 font-mono text-xs text-[var(--admin-muted)]">{item.receipt}</td><td className="px-4 py-4"><StatusBadge status={item.status} /></td><td className="px-4 py-4 text-right font-mono font-semibold">{formatCurrency(item.amount, item.currency)}</td><td className="max-w-44 truncate px-4 py-4 text-xs text-[var(--admin-muted)]">{item.note || "—"}</td><td className="max-w-52 px-4 py-4 text-xs text-[var(--admin-muted)]"><span className="block truncate">{item.phone || "—"}</span><span className="block truncate">{item.email || "—"}</span></td><td className="max-w-56 truncate px-4 py-4 text-xs text-[var(--admin-muted)]">{item.address || "—"}</td></tr>)}</tbody></table></div></PanelCard>
-    {selected ? <div aria-modal="true" className="fixed inset-0 z-[90] grid place-items-center bg-black/45 p-4" onClick={() => setSelected(null)} role="dialog"><section className="w-full max-w-2xl rounded-2xl bg-[var(--admin-surface)] p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}><div className="flex items-start justify-between gap-4"><div><p className="admin-eyebrow">Bağış kaydı</p><h2 className="mt-1 text-xl font-semibold">{selected.donorName}</h2></div><button aria-label="Kapat" className="admin-button-secondary" onClick={() => setSelected(null)} type="button">Kapat</button></div><dl className="mt-6 grid gap-4 sm:grid-cols-2">{[["Yapılan bağış", selected.campaign], ["Makbuz no", selected.receipt], ["Durum", selected.status], ["Tutar", formatCurrency(selected.amount, selected.currency)], ["E-posta", selected.email || "—"], ["Telefon", selected.phone || "—"], ["Adres", selected.address || "—"], ["Tarih", selected.createdAt ? new Date(selected.createdAt).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }) : "—"]].map(([label, value]) => <div className="rounded-xl bg-[var(--admin-surface-raised)] p-4" key={label}><dt className="text-xs text-[var(--admin-muted)]">{label}</dt><dd className="mt-1 break-words text-sm font-semibold">{value}</dd></div>)}</dl><div className="mt-4 rounded-xl bg-[var(--admin-surface-raised)] p-4"><p className="text-xs text-[var(--admin-muted)]">Bağış notu</p><p className="mt-1 whitespace-pre-wrap text-sm">{selected.note || "Not bırakılmadı."}</p></div></section></div> : null}
+    {selected ? <div aria-modal="true" className="fixed inset-0 z-[90] grid place-items-center bg-black/45 p-4" onClick={() => setSelected(null)} role="dialog">
+      <section className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-2xl bg-[var(--admin-surface)] p-6 shadow-2xl" onClick={event=>event.stopPropagation()}>
+        <div className="flex items-start justify-between gap-4"><div><p className="admin-eyebrow">{selected.manual ? "Manuel IBAN bağışı" : "Bağış kaydı"}</p><h2 className="mt-1 text-xl font-semibold">{selected.donorName}</h2></div><button aria-label="Pencereyi kapat" title="Pencereyi kapat" className="admin-icon-button" onClick={()=>setSelected(null)} type="button"><X className="size-5" /></button></div>
+        <dl className="mt-6 grid gap-4 sm:grid-cols-2">{[["Yapılan bağış",selected.campaign],["Hisse/adet",String(selected.quantity)],["Makbuz no",selected.receipt],["Durum",selected.status],["Alınan ödeme",formatCurrency(selected.amount,selected.currency)],["E-posta",selected.email || "—"],["Telefon",selected.phone || "—"],["Adres",selected.address || "—"],["Ödeme tarihi",selected.createdAt ? new Date(selected.createdAt).toLocaleDateString("tr-TR",{timeZone:"Europe/Istanbul"}) : "—"]].map(([label,value])=><div className="rounded-xl bg-[var(--admin-surface-raised)] p-4" key={label}><dt className="text-xs text-[var(--admin-muted)]">{label}</dt><dd className="mt-1 break-words text-sm font-semibold">{value}</dd></div>)}</dl>
+        <div className="mt-4 rounded-xl bg-[var(--admin-surface-raised)] p-4"><p className="text-xs text-[var(--admin-muted)]">Bağış notu</p><p className="mt-1 whitespace-pre-wrap text-sm">{selected.note || "Not bırakılmadı."}</p></div>
+        {selected.manual ? <ManualDonationProof key={selected.id} donationId={selected.id} sessionId={selected.paymentSessionId}/> : null}
+      </section>
+    </div> : null}
   </>;
 }
 

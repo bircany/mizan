@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "local:migrate": "tsx scripts/local-migrate.ts",
+    "local:seed": "tsx scripts/local-run.ts --seed",
+    "local:dev": "tsx scripts/local-run.ts",
+    "local:build": "tsx scripts/local-run.ts --build",
+    "test:phase5": "tsx scripts/check-phase5-security.ts && tsx scripts/check-eft-proof-security.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -19,7 +24,12 @@
     "test:eft-guidance": "tsx scripts/check-eft-guidance.ts",
     "test:inquiry-pages": "tsx scripts/check-inquiry-pages.ts",
     "test:time": "tsx scripts/check-time.ts",
-    "test:phone": "tsx scripts/check-phone.ts",
+    "test:phone": "tsx scripts/check-phone.ts && tsx scripts/check-admin-phone-input.ts",
+    "test:manual": "tsx scripts/check-manual-donation-validation.ts && tsx scripts/check-manual-donation-security.ts",
+    "test:manual:db": "node --conditions=react-server --import tsx scripts/check-manual-donation-db.ts",
+    "test:groups": "tsx scripts/check-group-plan.ts && tsx scripts/check-tail-group-security.ts",
+    "test:groups:db": "node --conditions=react-server --import tsx scripts/check-tail-groups-db.ts",
+    "test:video-panel": "tsx scripts/check-video-filters.ts && tsx scripts/check-video-panel-data.ts && tsx scripts/check-video-upload-security.ts",
     "test:whatsapp": "node --conditions=react-server --import tsx scripts/check-whatsapp.ts",
     "delivery:worker": "node -e \"console.error('Legacy delivery worker is disabled; use services/video-platform.'); process.exit(1)\"",
     "qurbani:worker": "tsx scripts/qurbani-video-worker.ts",
@@ -41,11 +51,12 @@
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.42.2",
     "graphql": "^16.11.0",
+    "image-size": "2.0.2",
     "iyzipay": "^2.0.69",
     "jspdf": "^4.2.1",
     "libphonenumber-js": "1.13.10",
     "lucide-react": "^0.400.0",
-    "next": "^16.2.10",
+    "next": "^16.3.4",
     "next-auth": "4.24.15",
     "next-intl": "^4.13.1",
     "payload": "^3.85.2",
@@ -55,7 +66,7 @@
     "react-dom": "^19.2.7",
     "resend": "^6.17.2",
     "server-only": "^0.0.1",
-    "sharp": "0.34.5",
+    "sharp": "0.35.4",
     "tailwind-merge": "^2.3.0",
     "tus-js-client": "^4.3.1"
   },
@@ -69,25 +80,26 @@
     "@types/react-dom": "^19.2.2",
     "autoprefixer": "^10.4.0",
     "eslint": "^9.31.0",
-    "eslint-config-next": "^16.2.10",
+    "eslint-config-next": "^16.3.4",
     "postcss": "^8.4.0",
     "supabase": "^2.109.1",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.4.0"
   },
   "overrides": {
-    "brace-expansion": "1.1.16",
+    "undici": "7.29.1",
+    "brace-expansion": "1.1.18",
     "monaco-editor": {
-      "dompurify": "3.4.12"
+      "dompurify": "3.4.15"
     },
     "next": {
-      "postcss": "8.5.19"
+      "postcss": "8.5.28"
     },
     "next-auth": {
       "uuid": "^11.1.1"
     },
     "postman-request": {
-      "qs": "6.15.3",
+      "qs": "6.16.0",
       "uuid": "^11.1.1"
     }
   }

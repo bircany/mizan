@@ -86,3 +86,27 @@ export const getPublishedNewsBySlug = cache(async (slug: string, locale: AppLoca
   const result = await payload.find({ collection: "news", locale, fallbackLocale: false, depth: 2, limit: 1, pagination: false, where: { and: [{ slug: { equals: slug } }, { status: { equals: "published" } }] } });
   return result.docs[0] ? toPost(result.docs[0], locale) : null;
 });
+
+/** Popularity uses lifetime views of posts published within the past year. */
+export const getPopularRecentNews = cache(async (locale: AppLocale): Promise<PublicNewsPost[]> => {
+  try {
+    const now = new Date();
+    const since = new Date(now);
+    since.setUTCFullYear(since.getUTCFullYear() - 1);
+    const payload = await getPayloadClient();
+    const result = await payload.find({
+      collection: "news", locale, fallbackLocale: false, depth: 2,
+      pagination: false, sort: ["-viewCount", "-publishedAt", "id"],
+      where: { and: [
+        { status: { equals: "published" } },
+        { publishedAt: { greater_than_equal: since.toISOString() } },
+        { publishedAt: { less_than_equal: now.toISOString() } },
+      ] },
+    });
+    return result.docs.map(item => toPost(item, locale))
+      .filter((item): item is PublicNewsPost => Boolean(item)).slice(0, 3);
+  } catch (error) {
+    console.warn("Popüler haberler okunamadı.", error);
+    return [];
+  }
+});

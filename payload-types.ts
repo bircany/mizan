@@ -686,6 +686,10 @@ export interface OperationGroup {
   year: number;
   ordinal: number;
   capacity?: number | null;
+  /**
+   * Son grup planlama bedeli; geçmiş tahsilatları değiştirmez.
+   */
+  tailUnitPrice?: number | null;
   reservedCount: number;
   confirmedCount: number;
   status:
@@ -1589,6 +1593,7 @@ export interface OperationGroupsSelect<T extends boolean = true> {
   year?: T;
   ordinal?: T;
   capacity?: T;
+  tailUnitPrice?: T;
   reservedCount?: T;
   confirmedCount?: T;
   status?: T;

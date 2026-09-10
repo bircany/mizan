@@ -19,17 +19,23 @@ export async function GET(
     depth: 0,
     overrideAccess: true,
   });
-  if (!session.eftProofBucket || !session.eftProofPath) {
+  if (session.eftProofBucket !== "eft-proofs" || !session.eftProofPath) {
     return NextResponse.json({ error: "Dekont bulunamadı." }, { status: 404 });
   }
-  const { data, error } = await getSupabaseServiceClient()
+  const storage = getSupabaseServiceClient();
+  const bucket = await storage.storage.getBucket("eft-proofs");
+  if (bucket.error || !bucket.data || bucket.data.public) return NextResponse.json({error:"Özel dekont depolamasına erişilemiyor."},{status:503,headers:{"Cache-Control":"private, no-store"}});
+  const { data, error } = await storage
     .storage.from(session.eftProofBucket)
-    .createSignedUrl(session.eftProofPath, 300);
+    .createSignedUrl(session.eftProofPath, 60, {download:true});
   if (error || !data?.signedUrl) {
     return NextResponse.json(
       { error: "Dekont bağlantısı oluşturulamadı." },
       { status: 500 },
     );
   }
-  return NextResponse.redirect(data.signedUrl);
+  const response = NextResponse.redirect(data.signedUrl);
+  response.headers.set("Cache-Control", "private, no-store");
+  response.headers.set("Referrer-Policy", "no-referrer");
+  return response;
 }

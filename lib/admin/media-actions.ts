@@ -16,7 +16,8 @@ const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxBytes = 10 * 1024 * 1024;
 
 function message(error: unknown, fallback: string) {
-  return error instanceof Error && error.message.trim() ? error.message : fallback;
+  const safe = ["Görsel en fazla 10 MB olabilir ve boş olamaz.", "Geçerli, tek kareli JPG, PNG veya WebP yükleyin (en fazla 40 megapiksel)."];
+  return error instanceof Error && safe.includes(error.message) ? error.message : fallback;
 }
 
 export async function uploadMedia(_: MediaActionState, formData: FormData): Promise<MediaActionState> {

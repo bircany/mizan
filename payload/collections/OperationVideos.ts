@@ -189,7 +189,7 @@ export const OperationVideos: CollectionConfig = {
     },
     { name: "readyAt", type: "date" },
     { name: "attemptCount", type: "number", required: true, min: 0, defaultValue: 0 },
-    { name: "lastError", type: "textarea" },
+    { name: "lastError", type: "textarea", access: { read: ({ req }) => req.user?.role === "admin" } },
     { name: "lastErrorCode", type: "text", admin: { readOnly: true }, access: { update: () => false } },
     {
       name: "ffmpegLog",

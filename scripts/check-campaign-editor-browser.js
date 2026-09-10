@@ -1,0 +1,77 @@
+// Run with agent-browser eval --stdin against scripts/campaign-editor-fixture.tsx.
+(async () => {
+  const assert = (condition, message) => { if (!condition) throw new Error(message); };
+  const settle = () => new Promise(resolve => setTimeout(resolve, 40));
+  const step = () => document.querySelector('[data-step]:not([hidden])')?.dataset.step;
+  const button = (text) => [...document.querySelectorAll('button')].find(node => node.textContent.trim() === text);
+  const click = async (text) => { assert(button(text), `Button missing: ${text}`); button(text).click(); await settle(); };
+  const set = async (name, value) => {
+    const input = document.querySelector(`[name="${name}"]`);
+    assert(input, `Field missing: ${name}`);
+    const prototype = input.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(prototype, 'value').set.call(input, value);
+    input.dispatchEvent(new Event('input', {bubbles:true}));
+    input.dispatchEvent(new Event('change', {bubbles:true}));
+    await settle();
+  };
+  const choose = async (name, value) => {
+    document.querySelector(`[name="${name}"][value="${value}"]`).click();
+    await settle();
+  };
+  const prepare = async () => {
+    await click('Yeni bağış kampanyası');
+    assert(step() === '0', 'Wizard must open at first step');
+    await click('İleri');
+    assert(step() === '0', 'Missing required fields must block next');
+    await set('title','Isolated browser test');
+    await set('category','1');
+    await click('İleri');
+    await choose('pricingModel','fixed');
+    await set('unitPrice','2000');
+    await set('totalStock','102');
+    await click('İleri');
+    assert(step() === '2','Third step must be visible');
+    await choose('videoDelivery','video');
+    await choose('operationType','standard_video');
+    await set('groupCapacity','6');
+    await click('İleri');
+    assert(step() === '3','Third step must advance to review');
+  };
+  assert(Array.isArray(window.fixtureSaves), 'Only run against isolated fixture');
+  window.fixtureSaves.length = 0;
+  await prepare();
+  assert(window.fixtureSaves.length === 0,'Third step must not save');
+  document.querySelector('dialog[open] form').requestSubmit();
+  await settle();
+  assert(window.fixtureSaves.length === 0,'Implicit form submit must not save');
+  await set('title','');
+  await click('Yayınla');
+  assert(step() === '0','Invalid hidden field must reveal its step');
+  assert(window.fixtureSaves.length === 0,'Invalid earlier step must not save');
+  await set('title','Isolated browser test');
+  await click('İleri'); await click('İleri'); await click('İleri');
+  const draft = button('Taslak kaydet'); draft.click(); draft.click();
+  await new Promise(resolve => setTimeout(resolve,350));
+  assert(window.fixtureSaves.length === 1,'Double click must dispatch only once');
+  assert(window.fixtureSaves[0].status === 'draft','Draft save status');
+  assert(!document.querySelector('dialog[open]'),'Successful save must close dialog');
+  await prepare();
+  assert(window.fixtureSaves.length === 1,'Reopened wizard must not save early');
+  await click('Yayınla');
+  await new Promise(resolve => setTimeout(resolve,350));
+  assert(window.fixtureSaves.length === 2,'Publish must dispatch');
+  assert(window.fixtureSaves[1].status === 'active','Publish status must be explicit');
+  assert(!document.querySelector('dialog[open]'),'Repeated successful save must close dialog');
+  await prepare();
+  await set('totalStock','100');
+  const originalConfirm=window.confirm;
+  window.confirm=()=>false;
+  await click('Yayınla');
+  assert(window.fixtureSaves.length===2,'Rounding cancelled must not save');
+  window.confirm=text=>{assert(text.includes('102'),'Rounding preview should show 102');return true;};
+  await click('Yayınla');
+  await new Promise(resolve=>setTimeout(resolve,350));
+  window.confirm=originalConfirm;
+  assert(window.fixtureSaves[2].roundedStockConfirmed==='102','Server receives explicit rounded target');
+  return 'PASS: required fields, 3→4 transition, implicit submit, hidden-field validation, double click, draft, publish and reopen. No real records created.';
+})()

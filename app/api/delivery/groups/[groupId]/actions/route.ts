@@ -14,7 +14,7 @@ export async function POST(
   context: { params: Promise<{ groupId: string }> },
 ) {
   const user = await getAdminSession();
-  if (!user || !["admin", "field_operator"].includes(user.role)) {
+  if (!user || user.role !== "admin") {
     return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
   }
   try {
@@ -96,7 +96,7 @@ export async function POST(
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "İşlem uygulanamadı.",
+        error: error instanceof Error && ["Grup kimliği geçersiz.", "Test edilecek taslak yok.", "VDS üzerinde güvenli test alıcısı tanımlı değil.", "Geçersiz teslimat işlemi."].includes(error.message) ? error.message : "İşlem uygulanamadı. Video servisini ve işlem durumunu kontrol edin.",
       },
       { status: error instanceof DeliveryAccessApiError ? error.status : 400 },
     );

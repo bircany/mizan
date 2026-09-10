@@ -32,6 +32,7 @@ export const OperationGroups: CollectionConfig = {
     { name: "year", type: "number", required: true, min: 2020, index: true },
     { name: "ordinal", type: "number", required: true, min: 1 },
     { name: "capacity", type: "number", min: 1 },
+    { name: "tailUnitPrice", type: "number", min: 1, admin: { readOnly: true, description: "Son grup planlama bedeli; geçmiş tahsilatları değiştirmez." }, access: { read: ({ req }) => req.user?.role === "admin", update: () => false } },
     { name: "reservedCount", type: "number", required: true, min: 0, defaultValue: 0, admin: { readOnly: true } },
     { name: "confirmedCount", type: "number", required: true, min: 0, defaultValue: 0, admin: { readOnly: true } },
     {

@@ -8,7 +8,7 @@ export async function PATCH(
   context: { params: Promise<{ messageId: string }> },
 ) {
   const user = await getAdminSession();
-  if (!user || !["admin", "field_operator"].includes(user.role)) {
+  if (!user || user.role !== "admin") {
     return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
   }
   try {
@@ -36,11 +36,11 @@ export async function PATCH(
       overrideAccess: true,
     });
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Mesaj güncellenemedi.",
+        error: "Mesaj güncellenemedi. Yalnızca taslaklar, 1-4000 karakterle düzenlenebilir.",
       },
       { status: 400 },
     );

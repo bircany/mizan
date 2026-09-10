@@ -3,22 +3,12 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import * as tus from "tus-js-client";
+import { deliveryVideoMime } from "@/lib/delivery/upload-metadata";
 
 const MAX_VIDEO_BYTES = 2_147_483_648;
 const MAX_VIDEO_SECONDS = 10 * 60;
-const VIDEO_MIME_TYPES = new Set([
-  "video/mp4",
-  "video/quicktime",
-  "video/webm",
-]);
-
 function inferredMime(file: File) {
-  const requested = file.type.trim().toLowerCase();
-  if (VIDEO_MIME_TYPES.has(requested)) return requested;
-  if (/\.mov$/i.test(file.name)) return "video/quicktime";
-  if (/\.mp4$/i.test(file.name)) return "video/mp4";
-  if (/\.webm$/i.test(file.name)) return "video/webm";
-  return null;
+  return deliveryVideoMime(file.name,file.type);
 }
 
 function inspectVideoDuration(file: File) {
@@ -54,12 +44,14 @@ export function DeliveryRowActions({
   messageBody,
   status,
   videoStatus,
+  canManage = true,
 }: {
   groupId: string;
   messageId: string | null;
   messageBody: string;
   status: string;
   videoStatus: string;
+  canManage?: boolean;
 }) {
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -240,28 +232,28 @@ export function DeliveryRowActions({
           Video yükle
         </Button>
       ) : null}
-      {videoStatus === "ready" && !messageId ? (
+      {canManage && videoStatus === "ready" && !messageId ? (
         <Button disabled={busy} onClick={() => action("prepare")}>
           Taslak oluştur
         </Button>
       ) : null}
-      {status === "draft" ? (
+      {canManage && status === "draft" ? (
         <>
           <Button disabled={busy} onClick={editMessage}>Düzenle</Button>
           <Button disabled={busy} onClick={() => action("test")}>Test</Button>
           <Button disabled={busy} onClick={() => action("queue")}>Gönder</Button>
         </>
       ) : null}
-      {["queued", "sending"].includes(status) ? (
+      {canManage && ["queued", "sending"].includes(status) ? (
         <Button disabled={busy} onClick={() => action("pause")}>Duraklat</Button>
       ) : null}
-      {status === "paused" ? (
+      {canManage && status === "paused" ? (
         <Button disabled={busy} onClick={() => action("resume")}>Devam</Button>
       ) : null}
-      {["draft", "queued", "paused"].includes(status) ? (
+      {canManage && ["draft", "queued", "paused"].includes(status) ? (
         <Button disabled={busy} onClick={() => action("cancel")}>İptal</Button>
       ) : null}
-      {status === "failed" && messageId ? (
+      {canManage && status === "failed" && messageId ? (
         <Button disabled={busy} onClick={retry}>Tekrar dene</Button>
       ) : null}
       {progress ? <span className="text-xs text-emerald-700">{progress}</span> : null}

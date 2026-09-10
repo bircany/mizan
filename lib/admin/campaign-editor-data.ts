@@ -71,6 +71,8 @@ export async function getCampaignEditorData() {
     unitPrice: campaign.unitPrice ?? null,
     unitLabel: campaign.unitLabel || "",
     totalStock: campaign.totalStock ?? null,
+    confirmedUnits: campaign.confirmedUnits ?? 0,
+    reservedUnits: campaign.reservedUnits ?? 0,
     videoDelivery: campaign.videoDelivery,
     operationType: campaign.operationType || "",
     groupCapacity: campaign.groupCapacity ?? null,

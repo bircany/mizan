@@ -88,12 +88,16 @@ assert.equal(
   calls[5].url,
   "https://evolution.example.test/webhook/set/MizanDernegi",
 );
+// Evolution's webhook schema requires the nested object.
 assert.deepEqual(JSON.parse(calls[5].body || "{}"), {
-  enabled: true,
-  url: "https://www.mizander.com.tr/api/delivery/evolution/webhook",
-  events: ["SEND_MESSAGE", "MESSAGES_UPDATE", "CONNECTION_UPDATE"],
-  headers: { "x-evolution-webhook-secret": "test-webhook-secret" },
-  base64: false,
+  webhook: {
+    enabled: true,
+    url: "https://www.mizander.com.tr/api/delivery/evolution/webhook",
+    events: ["SEND_MESSAGE", "MESSAGES_UPDATE", "CONNECTION_UPDATE"],
+    headers: { "x-evolution-webhook-secret": "test-webhook-secret" },
+    byEvents: false,
+    base64: false,
+  },
 });
 assert.equal(
   calls[6].url,

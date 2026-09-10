@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 
-import { getSupabaseServiceClient } from "@/lib/supabase-server";
+import { databaseQuery } from "@/lib/database";
 
 type RateLimitInput = {
   scope: string;
@@ -26,18 +26,18 @@ export async function enforceRateLimit({
   windowSeconds,
 }: RateLimitInput) {
   const keyHash = createHash("sha256").update(`${scope}:${identity}`).digest("hex");
-  const supabase = getSupabaseServiceClient();
-  const { data, error } = await supabase.rpc("consume_api_rate_limit", {
-    p_key: `${scope}:${keyHash}`,
-    p_window_seconds: windowSeconds,
-    p_max_requests: maxRequests,
-  });
-
-  if (error) {
+  let allowed: boolean;
+  try {
+    const result = await databaseQuery<{ allowed: boolean }>(
+      "select public.consume_api_rate_limit($1,$2,$3) as allowed",
+      [`${scope}:${keyHash}`, windowSeconds, maxRequests],
+    );
+    allowed = result.rows[0]?.allowed === true;
+  } catch {
     throw new RateLimitError("İstek koruma altyapısı şu anda kullanılamıyor.", 503);
   }
 
-  if (!data) {
+  if (!allowed) {
     throw new RateLimitError(
       "Çok fazla istek gönderildi. Lütfen biraz sonra tekrar deneyin.",
       429,

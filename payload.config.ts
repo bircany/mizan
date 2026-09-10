@@ -5,6 +5,7 @@ import { seoPlugin } from "@payloadcms/plugin-seo";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { buildConfig } from "payload";
 import sharp from "sharp";
+import "./lib/security/image-size-policy";
 
 import { AuditLogs } from "./payload/collections/AuditLogs";
 import { Campaigns } from "./payload/collections/Campaigns";
@@ -39,6 +40,9 @@ const dirname = path.dirname(filename);
 ensureLocalEnvLoaded();
 const databaseUrl =
   process.env.PAYLOAD_DATABASE_URI || process.env.DATABASE_URL || "";
+if (process.env.NODE_ENV === "production" && (!process.env.PAYLOAD_SECRET || process.env.PAYLOAD_SECRET.length < 32 || process.env.PAYLOAD_SECRET === "mizan-dev-secret")) {
+  throw new Error("Üretim ortamında güçlü PAYLOAD_SECRET zorunludur.");
+}
 
 export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || "mizan-dev-secret",

@@ -111,7 +111,7 @@ export async function GET(
       readyAt: iso(item.readyAt),
       createdAt: iso(item.createdAt),
       updatedAt: iso(item.updatedAt),
-      lastError: String(item.lastError || ""),
+      lastError: user.role === "admin" ? String(item.lastError || "") : "",
       lastErrorCode: String(item.lastErrorCode || ""),
       isActive: item.isActive === true,
     }));
@@ -124,11 +124,11 @@ export async function GET(
         user.role === "admin"
           ? String(item.recipientPhone || "")
           : maskPhone(item.recipientPhone),
-      body: String(item.bodySnapshot || item.body || ""),
-      providerMessageId: String(item.providerMessageId || ""),
+      body: user.role === "admin" ? String(item.bodySnapshot || item.body || "") : "",
+      providerMessageId: user.role === "admin" ? String(item.providerMessageId || "") : "",
       providerStatus: String(item.providerStatus || ""),
       attemptCount: Number(item.attemptCount || 0),
-      lastError: String(item.lastError || ""),
+      lastError: user.role === "admin" ? String(item.lastError || "") : "",
       lastErrorCode: String(item.lastErrorCode || ""),
       scheduledAt: iso(item.scheduledAt),
       sentAt: iso(item.sentAt),
@@ -252,7 +252,7 @@ export async function GET(
           campaign: campaignName,
           status: String(group.status || ""),
           dispatchState: String(group.dispatchState || "idle"),
-          dispatchPauseReason: String(group.dispatchPauseReason || ""),
+          dispatchPauseReason: user.role === "admin" ? String(group.dispatchPauseReason || "") : "",
           testMessagePassedAt: iso(group.testMessagePassedAt),
         },
         videos,
@@ -263,13 +263,10 @@ export async function GET(
       },
       { headers: { "cache-control": "private, no-store" } },
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Operasyon detayı yüklenemedi.",
+        error: "Operasyon detayı yüklenemedi.",
       },
       { status: 500 },
     );

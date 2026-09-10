@@ -29,6 +29,7 @@ export function verifyEftUploadToken(
   token: string,
   expectedIntentId: number,
 ): EftUploadClaims | null {
+  if (token.length > 2048 || token.split(".").length !== 2) return null;
   const [body, received] = token.split(".");
   if (!body || !received) return null;
   const expected = crypto
@@ -50,6 +51,8 @@ export function verifyEftUploadToken(
     ) as EftUploadClaims;
     if (
       claims.intentId !== expectedIntentId ||
+      !Number.isSafeInteger(claims.sessionId) || claims.sessionId < 1 ||
+      !Number.isFinite(Date.parse(claims.expiresAt)) ||
       new Date(claims.expiresAt).getTime() <= Date.now()
     ) {
       return null;
