@@ -10,7 +10,7 @@ import {
   checkEvolutionHealth,
   EvolutionError,
   lookupEvolutionMessage,
-  sendEvolutionTextWithCopyCode,
+  sendEvolutionText,
 } from "./evolution-client.js";
 import { heartbeat } from "./heartbeat.js";
 import { logger } from "./logger.js";
@@ -141,10 +141,9 @@ while (!abortController.signal.aborted) {
       continue;
     }
     const rendered = renderDeliveryMessageContent(claim.message, claim.group, materials);
-    const provider = await sendEvolutionTextWithCopyCode(
+    const provider = await sendEvolutionText(
       recipientPhone(claim.message),
       rendered.text,
-      rendered.accessCode,
       config,
     );
     const randomDelay = randomInt(config.minDelayMs, config.maxDelayMs + 1);

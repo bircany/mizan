@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { derivePublicLinkToken } from "../src/access-materials.js";
 import { deliveryPolicyConfig } from "../src/config.js";
-import { sendEvolutionTextWithCopyCode } from "../src/evolution-client.js";
+import { sendEvolutionText } from "../src/evolution-client.js";
 import { stableStringify } from "../src/message-fingerprint.js";
 import { renderDeliveryMessage } from "../src/message-renderer.js";
 import { encryptAccessCode } from "../src/security/access-code-crypto.js";
@@ -72,18 +72,19 @@ test("worker renders immutable link, group and decrypted access code", () => {
   assert.doesNotMatch(text, /Kodu kopyala/);
 });
 
-test("worker sends one interactive message with a real access-code copy button", async () => {
+test("worker sends a universally supported plain-text WhatsApp message", async () => {
   const previousFetch = globalThis.fetch;
   let requestBody;
-  globalThis.fetch = async (_url, init) => {
+  let requestPath;
+  globalThis.fetch = async (url, init) => {
+    requestPath = new URL(String(url)).pathname;
     requestBody = JSON.parse(String(init.body));
-    return Response.json({ key: { id: "copy-button-message" } });
+    return Response.json({ key: { id: "plain-text-message" } });
   };
   try {
-    const result = await sendEvolutionTextWithCopyCode(
+    const result = await sendEvolutionText(
       "905551234567",
       "Videonuz hazır.\n\nErişim kodu: *ABCD2345*",
-      "ABCD2345",
       {
         evolutionUrl: "https://evolution.invalid",
         evolutionInstance: "mizan",
@@ -91,42 +92,11 @@ test("worker sends one interactive message with a real access-code copy button",
         requestTimeoutMs: 1_000,
       },
     );
-    assert.equal(result.providerMessageId, "copy-button-message");
-    assert.equal(requestBody.buttons[0].type, "copy");
-    assert.equal(requestBody.buttons[0].displayText, "Erişim kodunu kopyala");
-    assert.equal(requestBody.buttons[0].copyCode, "ABCD2345");
-  } finally {
-    globalThis.fetch = previousFetch;
-  }
-});
-
-test("copy-button capability rejection safely falls back to one plain text send", async () => {
-  const previousFetch = globalThis.fetch;
-  const paths = [];
-  globalThis.fetch = async (url) => {
-    paths.push(new URL(String(url)).pathname);
-    if (paths.length === 1) {
-      return Response.json({ message: "buttons unsupported" }, { status: 404 });
-    }
-    return Response.json({ key: { id: "plain-message" } });
-  };
-  try {
-    const result = await sendEvolutionTextWithCopyCode(
-      "905551234567",
-      "Erişim kodu: *ABCD2345*",
-      "ABCD2345",
-      {
-        evolutionUrl: "https://evolution.invalid",
-        evolutionInstance: "mizan",
-        evolutionApiKey: "test-key",
-        requestTimeoutMs: 1_000,
-      },
-    );
-    assert.equal(result.providerMessageId, "plain-message");
-    assert.deepEqual(paths, [
-      "/message/sendButtons/mizan",
-      "/message/sendText/mizan",
-    ]);
+    assert.equal(result.providerMessageId, "plain-text-message");
+    assert.equal(requestPath, "/message/sendText/mizan");
+    assert.equal(requestBody.number, "905551234567");
+    assert.equal(requestBody.text, "Videonuz hazır.\n\nErişim kodu: *ABCD2345*");
+    assert.equal("buttons" in requestBody, false);
   } finally {
     globalThis.fetch = previousFetch;
   }

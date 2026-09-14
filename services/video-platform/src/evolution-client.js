@@ -99,59 +99,6 @@ export async function sendEvolutionText(phone, text, config) {
   return { providerMessageId, payload };
 }
 
-export async function sendEvolutionTextWithCopyCode(phone, text, accessCode, config) {
-  const normalized = String(phone || "").replace(/\D/g, "");
-  if (!/^\d{10,15}$/.test(normalized)) {
-    throw new EvolutionError("permanent", "Alıcı telefon numarası geçersiz.");
-  }
-  const code = String(accessCode || "").trim();
-  if (!/^[A-Z2-9]{8}$/.test(code)) {
-    throw new EvolutionError("permanent", "Erişim kodu biçimi geçersiz.");
-  }
-  try {
-    const payload = await request(
-      endpoint(config.evolutionUrl, "/message/sendButtons/{instance}", {
-        instance: config.evolutionInstance,
-      }),
-      {
-        method: "POST",
-        body: JSON.stringify({
-          number: normalized,
-          title: "Mizan Derneği",
-          description: text,
-          footer: "Erişim kodunu aşağıdaki düğmeyle kopyalayabilirsiniz.",
-          buttons: [
-            {
-              type: "copy",
-              displayText: "Erişim kodunu kopyala",
-              copyCode: code,
-            },
-          ],
-          delay: 600,
-          linkPreview: true,
-        }),
-      },
-      config,
-    );
-    const providerMessageId = String(payload?.key?.id || payload?.messageId || payload?.id || "");
-    if (!providerMessageId) {
-      throw new EvolutionError("ambiguous", "Evolution yanıtında mesaj kimliği bulunamadı.", { payload });
-    }
-    return { providerMessageId, payload };
-  } catch (error) {
-    // Some Evolution versions do not expose copy buttons. A clear HTTP
-    // capability/validation rejection means no message was accepted, so a
-    // plain text fallback is safe. Network ambiguity must never be retried here.
-    if (
-      error instanceof EvolutionError &&
-      [400, 404, 405, 422].includes(Number(error.status))
-    ) {
-      return sendEvolutionText(normalized, text, config);
-    }
-    throw error;
-  }
-}
-
 export async function lookupEvolutionMessage(providerMessageId, config) {
   if (!config.lookupPath) return { supported: false, found: false };
   const payload = await request(

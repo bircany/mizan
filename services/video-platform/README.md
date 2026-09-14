@@ -165,12 +165,12 @@ Normal dispatch starts with `scheduled_at = now() + 5 seconds`. A claim accepts
 holds a row lock during Evolution HTTP calls. Sending is sequential, waits a
 random 5–9 seconds, and pauses 120 seconds after each 50 messages.
 
-Delivery uses Evolution's single interactive button message with a `copy`
-button for the eight-character access code. The code also remains visible in
-the message body for older WhatsApp clients. If the installed Evolution version
-explicitly rejects the button endpoint before accepting a message, the worker
-safely falls back to the same plain text message; ambiguous network results are
-never retried through the fallback.
+Delivery uses Evolution's universally supported `sendText` endpoint. The
+eight-character access code is prominently included in the message body, so it
+can be selected and copied in every supported WhatsApp client. Interactive copy
+buttons are deliberately not used: some Evolution/WhatsApp client combinations
+report them as sent but render them as an unreadable message. Ambiguous network
+results are never blindly retried.
 
 Transient retry delays are 30 seconds, 2 minutes, and 10 minutes. Permanent
 number errors do not retry. Network/provider ambiguity is marked
