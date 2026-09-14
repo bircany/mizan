@@ -8,7 +8,7 @@ import { PANEL_ROUTE_ACCESS } from "@/lib/auth/panel-access";
 
 export const dynamic = "force-dynamic";
 
-const validTabs = new Set(["campaigns", "donations", "eft"]);
+const validTabs = new Set(["campaigns", "archive", "donations", "eft"]);
 
 export default async function UnifiedDonationManagementPage({
   searchParams,
@@ -17,7 +17,7 @@ export default async function UnifiedDonationManagementPage({
 }) {
   const user = await requireAdminUser(PANEL_ROUTE_ACCESS.donationManagement);
   const parameters = await searchParams;
-  const tab = validTabs.has(parameters.tab ?? "") ? parameters.tab as "campaigns" | "donations" | "eft" : "campaigns";
+  const tab = validTabs.has(parameters.tab ?? "") ? parameters.tab as "campaigns" | "archive" | "donations" | "eft" : "campaigns";
   const [data, editorData] = await Promise.all([
     getUnifiedDonationPanelData(),
     getCampaignEditorData(),

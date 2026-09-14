@@ -386,10 +386,20 @@ export function UnifiedCampaignEditor({
                 ? "border-emerald-300 bg-emerald-100 text-emerald-800"
                 : record.status === "closed"
                   ? "border-yellow-300 bg-yellow-100 text-yellow-900"
+                  : record.status === "archived"
+                    ? "border-slate-300 bg-slate-200 text-slate-700"
                   : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-muted)]"
             }`}>
               <span aria-hidden="true" className="size-2 rounded-full bg-current" />
-              {record.status === "active" ? "Aktif" : record.status === "draft" ? "Taslak" : record.status === "closed" ? "Kapalı" : "Arşiv"}
+              {record.status === "active"
+                ? "Web sitesinde görünüyor"
+                : record.status === "draft"
+                  ? "Web sitesinde görünmüyor"
+                  : record.status === "closed"
+                    ? "Kapalı"
+                    : record.status === "archived"
+                      ? "Arşivde"
+                      : "Web sitesinde görünmüyor"}
             </span>
           </div>
           <div className="flex flex-col items-start gap-3">
@@ -398,6 +408,19 @@ export function UnifiedCampaignEditor({
               <p className="mt-1 text-xs text-[var(--admin-muted)]">
                 {record.pricingModel === "fixed" ? "Sabit tutar" : "Serbest tutar"} ·{" "}
                 {record.videoDelivery === "video" ? "Videolu" : "Videosuz"}
+              </p>
+              <p className={`mt-3 rounded-lg border px-3 py-2 text-xs font-medium leading-5 ${
+                record.status === "active"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                  : "border-slate-200 bg-slate-100 text-slate-700"
+              }`}>
+                {record.status === "active"
+                  ? "Bağışçılar bu alanı web sitesinde görebilir ve bağış yapabilir."
+                  : record.status === "archived"
+                    ? "Bu alan arşivde; web sitesinde gösterilmez."
+                    : record.status === "closed"
+                      ? "Bu alan bağışa kapalıdır ve web sitesinde gösterilmez."
+                      : "Bu alan yalnızca yönetim panelinde görünür; web sitesinde gösterilmez."}
               </p>
             </div>
           </div>
@@ -729,8 +752,8 @@ export function UnifiedCampaignEditor({
 
             <div data-step="3" hidden={step !== 3}>
               <StepHeading
-                description="Kampanyayı taslak olarak saklayabilir veya kontrolleriniz tamamsa doğrudan yayına alabilirsiniz."
-                title="Son kontrol ve yayınlama"
+                description="Bağış alanının yalnızca yönetim panelinde mi kalacağını, yoksa web sitesinde mi gösterileceğini açıkça seçin."
+                title="Web sitesi görünürlüğü"
               />
               <div className="mt-5 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] p-4">
                 <dl className="grid gap-4 text-sm sm:grid-cols-2">
@@ -753,46 +776,74 @@ export function UnifiedCampaignEditor({
                 </dl>
               </div>
               <div className="mt-5">
-                <Field label="Kampanya durumu *">
-                  <select
-                    className="admin-input"
-                    name="status"
-                    onChange={(event) => setStatus(event.target.value)}
-                    required
-                    value={status}
-                  >
-                    <option value="draft">Taslak olarak kaydet</option>
-                    <option value="active">Aktif — bağışa aç</option>
-                    {record ? <option value="closed">Kapalı</option> : null}
-                    {record ? <option value="archived">Arşiv</option> : null}
-                  </select>
-                </Field>
-                <div
-                  className={`mt-4 rounded-xl border p-4 ${
-                    status === "closed"
-                      ? "border-amber-300 bg-amber-50/70"
-                      : "border-[var(--admin-border)] bg-[var(--admin-surface-raised)]"
-                  }`}
-                >
-                  <Field label={`Kapatma nedeni${status === "closed" ? " *" : ""}`}>
-                    <textarea
-                      className="admin-input min-h-24 disabled:cursor-not-allowed disabled:opacity-60"
-                      disabled={status !== "closed"}
-                      name="closeReason"
-                      onChange={(event) => setCloseReason(event.target.value)}
-                      placeholder={
-                        status === "closed"
-                          ? "Kampanyanın neden kapatıldığını yazın."
-                          : "Kapatma nedeni yazmak için kampanya durumunu Kapalı seçin."
-                      }
-                      required={status === "closed"}
-                      value={closeReason}
-                    />
+                {!record ? (
+                  <fieldset>
+                    <legend className="mb-3 text-xs font-semibold text-[var(--admin-muted)]">
+                      Bağış alanı türü *
+                    </legend>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <ChoiceCard
+                        checked={status === "draft"}
+                        description="Yalnızca yönetim panelinde görünür. Hazırlık, manuel bağış veya daha sonra yayınlama için kullanılır."
+                        label="Web sitesinde görünmeyen bağış alanı"
+                        name="status"
+                        onChange={() => setStatus("draft")}
+                        value="draft"
+                      />
+                      <ChoiceCard
+                        checked={status === "active"}
+                        description="Bağışçılar web sitesinde görür ve bağış yapabilir. Belirlediğiniz yayın tarihleri varsa onlar uygulanır."
+                        label="Web sitesinde görünen bağış alanı"
+                        name="status"
+                        onChange={() => setStatus("active")}
+                        value="active"
+                      />
+                    </div>
+                  </fieldset>
+                ) : (
+                  <Field label="Bağış alanı durumu *">
+                    <select
+                      className="admin-input"
+                      name="status"
+                      onChange={(event) => setStatus(event.target.value)}
+                      required
+                      value={status}
+                    >
+                      <option value="draft">Web sitesinde görünmüyor — taslak</option>
+                      <option value="active">Web sitesinde görünüyor — aktif</option>
+                      <option value="closed">Kapalı</option>
+                      <option value="archived">Arşiv</option>
+                    </select>
                   </Field>
-                  <p className="mt-2 text-xs leading-5 text-[var(--admin-muted)]">
-                    Kampanya kapatıldığında bu açıklama tarih ve işlemi yapan yöneticiyle birlikte kaydedilir.
-                  </p>
-                </div>
+                )}
+                {record ? (
+                  <div
+                    className={`mt-4 rounded-xl border p-4 ${
+                      status === "closed"
+                        ? "border-amber-300 bg-amber-50/70"
+                        : "border-[var(--admin-border)] bg-[var(--admin-surface-raised)]"
+                    }`}
+                  >
+                    <Field label={`Kapatma nedeni${status === "closed" ? " *" : ""}`}>
+                      <textarea
+                        className="admin-input min-h-24 disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={status !== "closed"}
+                        name="closeReason"
+                        onChange={(event) => setCloseReason(event.target.value)}
+                        placeholder={
+                          status === "closed"
+                            ? "Kampanyanın neden kapatıldığını yazın."
+                            : "Kapatma nedeni yazmak için kampanya durumunu Kapalı seçin."
+                        }
+                        required={status === "closed"}
+                        value={closeReason}
+                      />
+                    </Field>
+                    <p className="mt-2 text-xs leading-5 text-[var(--admin-muted)]">
+                      Kampanya kapatıldığında bu açıklama tarih ve işlemi yapan yöneticiyle birlikte kaydedilir.
+                    </p>
+                  </div>
+                ) : null}
               </div>
               {state.message && !state.success ? (
                 <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{state.message}</p>
@@ -819,13 +870,21 @@ export function UnifiedCampaignEditor({
                 <ChevronRight className="size-4" />
               </button>
             ) : (
-              <div key="explicit-save-actions" className="flex flex-wrap gap-2">
-              {(!record || status === "draft" || status === "active") ? (
-                <button className="admin-button-secondary" disabled={isPending} onClick={() => saveCampaign("draft")} type="button">
-                  Taslak kaydet
-                </button>
-              ) : null}
-              <button className="admin-action-button" disabled={isPending} onClick={() => saveCampaign(record && (status === "closed" || status === "archived") ? "update" : "publish")} type="button">
+              <button
+                className="admin-action-button"
+                disabled={isPending}
+                key="explicit-save-action"
+                onClick={() =>
+                  saveCampaign(
+                    status === "draft"
+                      ? "draft"
+                      : status === "active"
+                        ? "publish"
+                        : "update",
+                  )
+                }
+                type="button"
+              >
                 {isPending ? (
                   <LoaderCircle className="size-4 animate-spin" />
                 ) : record ? (
@@ -833,9 +892,14 @@ export function UnifiedCampaignEditor({
                 ) : (
                   <Plus className="size-4" />
                 )}
-                {isPending ? "Kaydediliyor" : status === "closed" || status === "archived" ? "Değişiklikleri kaydet" : "Yayınla"}
+                {isPending
+                  ? "Kaydediliyor"
+                  : record
+                    ? "Değişiklikleri kaydet"
+                    : status === "active"
+                      ? "Oluştur ve web sitesinde yayınla"
+                      : "Web sitesinde göstermeden oluştur"}
               </button>
-              </div>
             )}
           </div>
         </form>

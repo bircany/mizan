@@ -20,7 +20,7 @@ import { ChildDonationSettingsCard } from "@/components/admin/child-donation-set
 import { ManualDonationForm } from "@/components/admin/manual-donation-form";
 import { ManualDonationProof } from "@/components/admin/manual-donation-proof";
 
-type DonationTab = "campaigns" | "donations" | "eft";
+type DonationTab = "campaigns" | "archive" | "donations" | "eft";
 
 export function UnifiedDonationManagement({
   campaigns,
@@ -45,11 +45,15 @@ export function UnifiedDonationManagement({
   const normalizedQuery = query.trim().toLocaleLowerCase("tr-TR");
   const includesQuery = (...values: string[]) => !normalizedQuery || values.some((value) => value.toLocaleLowerCase("tr-TR").includes(normalizedQuery));
   const standardCampaigns = campaigns.filter((item) => !item.title.startsWith("Ahmet'e Destek ("));
-  const filteredCampaigns = standardCampaigns.filter((item) => includesQuery(item.title, item.currency, item.status));
+  const currentCampaigns = standardCampaigns.filter((item) => item.status !== "archived");
+  const archivedCampaigns = standardCampaigns.filter((item) => item.status === "archived");
+  const filteredCampaigns = currentCampaigns.filter((item) => includesQuery(item.title, item.currency, item.status));
+  const filteredArchivedCampaigns = archivedCampaigns.filter((item) => includesQuery(item.title, item.currency, item.status));
   const filteredDonations = donations.filter((item) => includesQuery(item.donorName, item.campaign, item.receipt, item.status, item.note));
   const filteredEfts = efts.filter((item) => includesQuery(item.donorName, item.reference, item.status));
   const tabs = [
-    { id: "campaigns", label: "Kampanyalar", count: standardCampaigns.length + 1 },
+    { id: "campaigns", label: "Kampanyalar", count: currentCampaigns.length + 1 },
+    { id: "archive", label: "Arşiv", count: archivedCampaigns.length },
     { id: "donations", label: "Bağış Kayıtları", count: donations.length },
     { id: "eft", label: "EFT Bekleyenler", count: efts.length },
   ] as const;
@@ -79,7 +83,24 @@ export function UnifiedDonationManagement({
           records={editorData.records}
           rows={filteredCampaigns}
           childDonation={editorData.childDonation}
+          showChildDonation
         />
+      ) : null}
+      {tab === "archive" ? (
+        filteredArchivedCampaigns.length ? (
+          <CampaignCards
+            categories={editorData.categoryOptions}
+            media={editorData.mediaOptions}
+            records={editorData.records}
+            rows={filteredArchivedCampaigns}
+            childDonation={editorData.childDonation}
+          />
+        ) : (
+          <EmptyPanelState
+            description={query ? "Arama ölçütlerinize uyan arşivlenmiş bağış alanı yok." : "Arşivlediğiniz bağış alanları burada görünür ve gerektiğinde yeniden düzenlenebilir."}
+            title={query ? "Arşivde sonuç bulunamadı" : "Arşiv boş"}
+          />
+        )
       ) : null}
       {tab === "donations" ? <DonationTable rows={filteredDonations} /> : null}
       {tab === "eft" ? <EftTable rows={filteredEfts} /> : null}
@@ -93,18 +114,20 @@ function CampaignCards({
   records,
   rows,
   childDonation,
+  showChildDonation = false,
 }: {
   categories: Array<{ label: string; value: string }>;
   media: Array<{ label: string; value: string }>;
   records: CampaignEditorRecord[];
   rows: UnifiedCampaignRow[];
   childDonation: { campaign: string; usdCampaign: string; eurCampaign: string; foodPrice: number; stationeryPrice: number; toyPrice: number; clothingPrice: number; foodUsdPrice: number; stationeryUsdPrice: number; toyUsdPrice: number; clothingUsdPrice: number; foodEurPrice: number; stationeryEurPrice: number; toyEurPrice: number; clothingEurPrice: number } | null;
+  showChildDonation?: boolean;
 }) {
   // The managed Ahmet card exists independently of the standard campaign list.
   const visibleIds = new Set(rows.map((row) => row.id));
   return (
     <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-      <ChildDonationSettingsCard settings={childDonation} />
+      {showChildDonation ? <ChildDonationSettingsCard settings={childDonation} /> : null}
       {records
         .filter((record) => visibleIds.has(record.id))
         .map((record) => (
