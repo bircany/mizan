@@ -77,7 +77,7 @@ responses.push(
     status: 200,
     body: {
       enabled: true,
-      url: "https://www.mizander.com.tr/api/delivery/evolution/webhook",
+      url: "https://www.mizander.org/api/delivery/evolution/webhook",
       events: ["SEND_MESSAGE", "MESSAGES_UPDATE", "CONNECTION_UPDATE"],
     },
   },
@@ -92,7 +92,7 @@ assert.equal(
 assert.deepEqual(JSON.parse(calls[5].body || "{}"), {
   webhook: {
     enabled: true,
-    url: "https://www.mizander.com.tr/api/delivery/evolution/webhook",
+    url: "https://www.mizander.org/api/delivery/evolution/webhook",
     events: ["SEND_MESSAGE", "MESSAGES_UPDATE", "CONNECTION_UPDATE"],
     headers: { "x-evolution-webhook-secret": "test-webhook-secret" },
     byEvents: false,

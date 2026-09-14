@@ -19,7 +19,7 @@ export type EvolutionWebhookStatus = {
 };
 
 const deliveryWebhookUrl =
-  "https://www.mizander.com.tr/api/delivery/evolution/webhook";
+  "https://www.mizander.org/api/delivery/evolution/webhook";
 const deliveryWebhookEvents = [
   "SEND_MESSAGE",
   "MESSAGES_UPDATE",

@@ -62,12 +62,12 @@ test("worker renders immutable link, group and decrypted access code", () => {
   }, {
     key,
     publicLinkSecret: "l".repeat(32),
-    landingBaseUrl: "https://www.mizander.com.tr",
+    landingBaseUrl: "https://www.mizander.org",
   });
   assert.match(text, /Ayşe, Mehmet/);
   assert.match(text, /MD-2026-0001/);
   assert.match(text, /ABCD2345/);
-  assert.match(text, /https:\/\/www\.mizander\.com\.tr\/video\/[A-Za-z0-9_-]{43}/);
+  assert.match(text, /https:\/\/www\.mizander\.org\/video\/[A-Za-z0-9_-]{43}/);
 });
 
 test("worker does not duplicate template greeting, campaign or group lines", () => {
@@ -102,11 +102,11 @@ test("worker does not duplicate template greeting, campaign or group lines", () 
   }, {
     key,
     publicLinkSecret: "l".repeat(32),
-    landingBaseUrl: "https://www.mizander.com.tr",
+    landingBaseUrl: "https://www.mizander.org",
   });
 
   assert.equal(text.match(/Sayın Mustafa Emir Kincal/g)?.length, 1);
   assert.equal(text.match(/Kampanya: Test/g)?.length, 1);
   assert.equal(text.match(/Grup kodu: MD-2026-0002/g)?.length, 1);
-  assert.match(text, /Video bağlantısı: https:\/\/www\.mizander\.com\.tr\/video\//);
+  assert.match(text, /Video bağlantısı: https:\/\/www\.mizander\.org\/video\//);
 });

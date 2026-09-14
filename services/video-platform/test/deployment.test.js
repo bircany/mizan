@@ -13,7 +13,7 @@ test("tusd CORS rule survives Coolify Compose deployment", async () => {
 
   assert.match(
     compose,
-    /-cors-allow-origin=https:\/\/\(www\[\.\]\)\?mizander\[\.\]com\[\.\]tr/,
+    /-cors-allow-origin=https:\/\/\(www\[\.\]\)\?mizander\[\.\]\(org\|com\[\.\]tr\)/,
   );
   assert.doesNotMatch(compose, /TUSD_CORS_ALLOW_ORIGIN/);
 });

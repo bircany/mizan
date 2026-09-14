@@ -79,7 +79,7 @@ services:
       - -hooks-enabled-events=pre-create,post-finish
       # Keep this regex free of backslashes: Coolify's literal environment
       # values can double-escape them and make every browser origin fail.
-      - "-cors-allow-origin=https://(www[.])?mizander[.]com[.]tr"
+      - "-cors-allow-origin=https://(www[.])?mizander[.](org|com[.]tr)"
       - -cors-allow-credentials=false
     volumes:
       - video_uploads:/srv/uploads

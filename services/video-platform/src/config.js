@@ -83,7 +83,7 @@ export function uploadConfig() {
 export function apiConfig() {
   const origins = commaList(
     "CORS_ALLOWED_ORIGINS",
-    "https://mizander.com.tr,https://www.mizander.com.tr",
+    "https://mizander.org,https://www.mizander.org,https://mizander.com.tr,https://www.mizander.com.tr",
   );
   if (origins.some((origin) => origin === "*")) {
     throw new Error("Wildcard CORS is forbidden");
@@ -119,7 +119,7 @@ export function accessMaterialsConfig() {
   return Object.freeze({
     ...accessCodeEncryptionConfig(),
     publicLinkSecret: secret("PUBLIC_LINK_TOKEN_SECRET"),
-    landingBaseUrl: env("DELIVERY_WEB_BASE_URL", "https://www.mizander.com.tr").replace(/\/$/, ""),
+    landingBaseUrl: env("DELIVERY_WEB_BASE_URL", "https://www.mizander.org").replace(/\/$/, ""),
   });
 }
 
