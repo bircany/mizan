@@ -12,6 +12,14 @@ import {
 
 const MAX_VIDEO_BYTES = 2_147_483_648;
 const MAX_VIDEO_SECONDS = 10 * 60;
+
+function formatBytes(bytes: number) {
+  if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
+  if (bytes >= 1024 ** 2) return `${(bytes / 1024 ** 2).toFixed(0)} MB`;
+  if (bytes >= 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${bytes} B`;
+}
+
 function inferredMime(file: File) {
   return deliveryVideoMime(file.name,file.type);
 }
@@ -65,6 +73,8 @@ export function DeliveryRowActions({
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState("");
   const [error, setError] = useState("");
+  const [selectedFileSize, setSelectedFileSize] = useState<number | null>(null);
+  const [uploadedBytes, setUploadedBytes] = useState(0);
 
   async function action(name: string) {
     setBusy(true);
@@ -123,6 +133,8 @@ export function DeliveryRowActions({
   async function upload(file: File) {
     setBusy(true);
     setError("");
+    setSelectedFileSize(file.size);
+    setUploadedBytes(0);
     setProgress("Video tarayıcıda kontrol ediliyor");
     try {
       const mimeType = inferredMime(file);
@@ -196,10 +208,12 @@ export function DeliveryRowActions({
           );
         },
         onProgress(uploaded, total) {
+          setUploadedBytes(uploaded);
           setProgress(`Yükleniyor · %${Math.round((uploaded / total) * 100)}`);
         },
         onSuccess() {
           setBusy(false);
+          setUploadedBytes(file.size);
           setProgress("Yüklendi, VDS üzerinde teknik kontrol bekleniyor");
           router.refresh();
         },
@@ -262,7 +276,48 @@ export function DeliveryRowActions({
       {canManage && videoStatus === "ready" && status === "failed" && messageId ? (
         <Button disabled={busy} onClick={retry}>Tekrar dene</Button>
       ) : null}
-      {progress ? <span className="text-xs text-emerald-700">{progress}</span> : null}
+      {canUploadDeliveryVideo(videoStatus) ? (
+        <div className="mt-1 w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] p-2.5">
+          <div className="flex items-center justify-between gap-3 text-[11px]">
+            <span className="font-semibold text-[var(--admin-text)]">
+              Video yükleme hakkı
+            </span>
+            <span className="font-mono text-[var(--admin-muted)]">
+              {selectedFileSize === null
+                ? `Dosya başına ${formatBytes(MAX_VIDEO_BYTES)}`
+                : `${formatBytes(selectedFileSize)} / ${formatBytes(MAX_VIDEO_BYTES)}`}
+            </span>
+          </div>
+          <div
+            aria-label="Video dosyası boyut hakkı kullanımı"
+            aria-valuemax={MAX_VIDEO_BYTES}
+            aria-valuemin={0}
+            aria-valuenow={Math.min(selectedFileSize || 0, MAX_VIDEO_BYTES)}
+            className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--admin-border)]"
+            role="progressbar"
+          >
+            <div
+              className="h-full rounded-full bg-emerald-600 transition-[width] duration-300"
+              style={{
+                width: `${Math.min(100, ((selectedFileSize || 0) / MAX_VIDEO_BYTES) * 100)}%`,
+              }}
+            />
+          </div>
+          <div className="mt-1.5 flex flex-wrap justify-between gap-2 text-[11px] text-[var(--admin-muted)]">
+            <span>
+              {selectedFileSize === null
+                ? "MP4, MOV veya WebM · en fazla 10 dakika"
+                : `Kalan hak: ${formatBytes(Math.max(0, MAX_VIDEO_BYTES - selectedFileSize))}`}
+            </span>
+            {uploadedBytes > 0 && selectedFileSize ? (
+              <span>
+                Aktarılan: {formatBytes(uploadedBytes)} / {formatBytes(selectedFileSize)}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+      {progress ? <span className="w-full text-xs text-emerald-700">{progress}</span> : null}
       {error ? <span className="w-full text-xs text-red-700">{error}</span> : null}
     </div>
   );
