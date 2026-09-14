@@ -27,7 +27,7 @@ function validateSnapshot(message) {
   return { snapshot, system };
 }
 
-export function renderDeliveryMessage(message, group, config) {
+export function renderDeliveryMessageContent(message, group, config) {
   const { snapshot } = validateSnapshot(message);
   const accessCode = decryptAccessCode(group.access_code_ciphertext, config.key);
   const recipientNames = [...new Set(snapshot.recipientNames.map((name) => singleLine(name, 100)).filter(Boolean))]
@@ -49,7 +49,10 @@ export function renderDeliveryMessage(message, group, config) {
     hasGroupCodeLine ? "" : `Grup kodu: ${singleLine(group.code, 40)}`,
     `Video bağlantısı: ${publicVideoUrl(group.id, config)}`,
     `Erişim kodu: *${accessCode}*`,
-    `Kodu kopyala`,
   ].filter(Boolean);
-  return lines.join("\n\n");
+  return { text: lines.join("\n\n"), accessCode };
+}
+
+export function renderDeliveryMessage(message, group, config) {
+  return renderDeliveryMessageContent(message, group, config).text;
 }

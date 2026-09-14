@@ -10,7 +10,7 @@ import {
   checkEvolutionHealth,
   EvolutionError,
   lookupEvolutionMessage,
-  sendEvolutionText,
+  sendEvolutionTextWithCopyCode,
 } from "./evolution-client.js";
 import { heartbeat } from "./heartbeat.js";
 import { logger } from "./logger.js";
@@ -25,7 +25,7 @@ import {
   recordProviderHealth,
   releaseDeliveryClaim,
 } from "./message-repository.js";
-import { renderDeliveryMessage } from "./message-renderer.js";
+import { renderDeliveryMessageContent } from "./message-renderer.js";
 import { installShutdown } from "./shutdown.js";
 
 const config = messageWorkerConfig();
@@ -140,8 +140,13 @@ while (!abortController.signal.aborted) {
       await sleep(config.pollIntervalMs);
       continue;
     }
-    const text = renderDeliveryMessage(claim.message, claim.group, materials);
-    const provider = await sendEvolutionText(recipientPhone(claim.message), text, config);
+    const rendered = renderDeliveryMessageContent(claim.message, claim.group, materials);
+    const provider = await sendEvolutionTextWithCopyCode(
+      recipientPhone(claim.message),
+      rendered.text,
+      rendered.accessCode,
+      config,
+    );
     const randomDelay = randomInt(config.minDelayMs, config.maxDelayMs + 1);
     const pace = await markDeliverySent(claim, provider, {
       delayMs: randomDelay,
