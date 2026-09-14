@@ -9,6 +9,7 @@ const state = {
   code: "MD-2026-0001",
   codeFailures: 0,
   codeLockedUntil: null as string | null,
+  sql: [] as string[],
 };
 (globalThis as unknown as { videoSecurity: typeof state }).videoSecurity =
   state;
@@ -23,6 +24,7 @@ const mocks: Record<string, string> = {
   "@/lib/delivery/upload-auth":
     "export const DELIVERY_UPLOAD_ALLOWED_MIME=['video/mp4','video/quicktime','video/webm'];export function createDeliveryUploadGrant(){return 'fixture-grant'}",
   "@/lib/database": `export async function withDatabaseTransaction(fn){return fn({query:async(sql)=>{const s=globalThis.videoSecurity;s.calls++;
+    s.sql.push(sql);
     if(sql.includes('for update of g'))return {rows:[{groupId:'1',code:s.code,assignedOperatorId:s.assigned,status:s.status,dispatchState:s.dispatchState,operationType:'standard_video',capacity:6,confirmedCount:6,codeFailures:s.codeFailures,codeLockedUntil:s.codeLockedUntil}]};
     if(sql.includes('count(*)'))return {rows:[{count:0}]};
     if(sql.includes('as "expiresAt"'))return {rows:[{expiresAt:new Date(Date.now()+599000)}]};
@@ -90,6 +92,13 @@ for (const role of ["admin", "field_operator"]) {
     assert.equal((await request()).status, 200);
   }
 }
+assert.ok(
+  state.sql.some(
+    (sql) =>
+      sql.includes("update public.delivery_messages") &&
+      sql.includes("status = 'cancelled'"),
+  ),
+);
 state.calls = 0;
 assert.equal((await request({}, "https://evil.invalid")).status, 403);
 assert.equal(state.calls, 0);

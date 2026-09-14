@@ -4,6 +4,11 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import * as tus from "tus-js-client";
 import { deliveryVideoMime } from "@/lib/delivery/upload-metadata";
+import {
+  canUploadDeliveryVideo,
+  deliveryUploadButtonLabel,
+  deliveryUploadConfirmation,
+} from "@/lib/delivery/types";
 
 const MAX_VIDEO_BYTES = 2_147_483_648;
 const MAX_VIDEO_SECONDS = 10 * 60;
@@ -40,6 +45,7 @@ function inspectVideoDuration(file: File) {
 
 export function DeliveryRowActions({
   groupId,
+  groupCode,
   messageId,
   messageBody,
   status,
@@ -47,6 +53,7 @@ export function DeliveryRowActions({
   canManage = true,
 }: {
   groupId: string;
+  groupCode: string;
   messageId: string | null;
   messageBody: string;
   status: string;
@@ -137,10 +144,9 @@ export function DeliveryRowActions({
       ) {
         throw new Error("Yükleme kullanıcı tarafından iptal edildi.");
       }
-      const groupCode = window.prompt(
-        "Yanlış gruba yüklemeyi önlemek için seçili operasyon grup kodunu aynen yazın:",
-      )?.trim();
-      if (!groupCode) throw new Error("Grup kodu doğrulanmadan video yüklenemez.");
+      if (!window.confirm(deliveryUploadConfirmation(groupCode, file.name))) {
+        throw new Error("Yükleme kullanıcı tarafından iptal edildi.");
+      }
 
       setProgress("Güvenli yükleme oturumu hazırlanıyor");
       const response = await fetch("/api/delivery/uploads/session", {
@@ -227,9 +233,9 @@ export function DeliveryRowActions({
         ref={fileInput}
         type="file"
       />
-      {["waiting", "uploading", "failed", "quarantined"].includes(videoStatus) ? (
+      {canUploadDeliveryVideo(videoStatus) ? (
         <Button disabled={busy} onClick={() => fileInput.current?.click()}>
-          Video yükle
+          {deliveryUploadButtonLabel(videoStatus)}
         </Button>
       ) : null}
       {canManage && videoStatus === "ready" && !messageId ? (
@@ -237,7 +243,7 @@ export function DeliveryRowActions({
           Taslak oluştur
         </Button>
       ) : null}
-      {canManage && status === "draft" ? (
+      {canManage && videoStatus === "ready" && status === "draft" ? (
         <>
           <Button disabled={busy} onClick={editMessage}>Düzenle</Button>
           <Button disabled={busy} onClick={() => action("test")}>Test</Button>
@@ -253,7 +259,7 @@ export function DeliveryRowActions({
       {canManage && ["draft", "queued", "paused"].includes(status) ? (
         <Button disabled={busy} onClick={() => action("cancel")}>İptal</Button>
       ) : null}
-      {canManage && status === "failed" && messageId ? (
+      {canManage && videoStatus === "ready" && status === "failed" && messageId ? (
         <Button disabled={busy} onClick={retry}>Tekrar dene</Button>
       ) : null}
       {progress ? <span className="text-xs text-emerald-700">{progress}</span> : null}

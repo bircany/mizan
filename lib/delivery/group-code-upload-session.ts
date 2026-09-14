@@ -342,6 +342,16 @@ export async function reserveDeliveryUploadSession(
     );
     const videoId = inserted.rows[0]?.id;
     if (!videoId) throw new Error("Video upload kaydı oluşturulamadı.");
+    await client.query(
+      `update public.delivery_messages
+       set status = 'cancelled',
+           locked_at = null,
+           locked_by = null,
+           updated_at = now()
+       where group_id = $1
+         and status in ('draft', 'countdown', 'queued', 'paused', 'failed')`,
+      [input.groupId],
+    );
     const slaughterAutoMarked =
       group.operationType === "slaughter_video" && !group.slaughteredAt;
     await client.query(

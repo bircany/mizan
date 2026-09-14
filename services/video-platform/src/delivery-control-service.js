@@ -131,14 +131,19 @@ export async function reviewVideo(videoIdValue, input, materialsConfig) {
       await client.query(
         `update operation_videos
          set status = 'rejected', content_review_status = 'rejected', review_checklist = $2::jsonb,
-             reviewed_at = now(), reviewed_by_id = $3, is_active = false, updated_at = now()
+             reviewed_at = now(), reviewed_by_id = $3, is_active = false,
+             raw_delete_after = least(raw_delete_after, now() + interval '7 days'),
+             processed_delete_after = least(processed_delete_after, now() + interval '7 days'),
+             last_error = $4, last_error_code = 'CONTENT_REJECTED', updated_at = now()
          where id = $1`,
-        [video.id, reviewPayload, actorId],
+        [video.id, reviewPayload, actorId, reason],
       );
       await client.query(
         `update operation_groups
-         set status = 'video_pending', active_video_id = null, test_message_invalidated_at = now(), updated_at = now()
-         where id = $1 and active_video_id = $2`,
+         set status = 'video_pending',
+             active_video_id = case when active_video_id = $2 then null else active_video_id end,
+             test_message_invalidated_at = now(), updated_at = now()
+         where id = $1`,
         [video.group_id, video.id],
       );
       return { decision, groupId: video.group_id, videoId: video.id };
@@ -278,12 +283,25 @@ export async function dispatchGroup(groupIdValue, action) {
   if (action === "prepare") return prepareDeliveryDrafts(groupId);
   return transaction(async (client) => {
     const selected = await client.query(
-      `select * from operation_groups where id = $1 for update`,
+      `select g.*, v.status as active_video_status,
+              v.content_review_status as active_video_review_status
+       from operation_groups g
+       left join operation_videos v on v.id = g.active_video_id
+       where g.id = $1
+       for update of g`,
       [groupId],
     );
     const group = selected.rows[0];
     if (!group) throw new HttpError(404, "group_not_found", "Operasyon grubu bulunamadı.");
     if (action === "queue" || action === "resume") {
+      if (
+        group.status !== "video_ready" ||
+        !group.active_video_id ||
+        group.active_video_status !== "ready" ||
+        group.active_video_review_status !== "approved"
+      ) {
+        throw new HttpError(409, "approved_video_required", "Gönderim için onaylanmış aktif video gereklidir.");
+      }
       if (deliveryPolicy.requireTestBeforeDispatch) {
       const current = await computeGroupMessageFingerprint(client, groupId);
       const testPassed = String(group.test_message_video_id) === String(current.activeVideoId)

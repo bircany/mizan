@@ -44,6 +44,7 @@ type Detail = {
     updatedAt: string | null;
     lastError: string;
     lastErrorCode: string;
+    reviewChecklist: { reason?: string };
     isActive: boolean;
   }>;
   messages: Array<{
@@ -378,6 +379,19 @@ export function DeliveryOperationModal({ groupId }: { groupId: string }) {
                                 ? `${video.lastErrorCode}: `
                                 : ""}
                               {video.lastError}
+                            </p>
+                          ) : null}
+                          {video.status === "rejected" &&
+                          video.reviewChecklist?.reason &&
+                          video.reviewChecklist.reason !== video.lastError ? (
+                            <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">
+                              Red nedeni: {video.reviewChecklist.reason}
+                            </p>
+                          ) : null}
+                          {video.status === "rejected" ? (
+                            <p className="mt-3 text-sm text-[var(--admin-muted)]">
+                              Bu sürüm gönderilemez. Karttaki “Yeni video yükle” ile
+                              doğru dosyayı yükleyebilirsiniz.
                             </p>
                           ) : null}
                           {detail.role === "admin" &&

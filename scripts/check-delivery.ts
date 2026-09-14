@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 
 process.env.PAYLOAD_SECRET ||= "local-delivery-test-secret-with-sufficient-length";
 
-const { interpolateDeliveryTemplate, normalizePhone } = await import("../lib/delivery/types");
+const {
+  canUploadDeliveryVideo,
+  deliveryUploadButtonLabel,
+  deliveryUploadConfirmation,
+  interpolateDeliveryTemplate,
+  normalizePhone,
+} = await import("../lib/delivery/types");
 const {
   buildProtectedDeliveryTemplate,
   extractEditableDeliveryMessage,
@@ -25,6 +31,15 @@ const { uploadGrantLifetimeSeconds, validateGroupGate } =
 assert.equal(normalizePhone("0532 123 45 67"), "905321234567");
 assert.equal(normalizePhone("+90 (532) 123-4567"), "905321234567");
 assert.equal(normalizePhone("123"), null);
+assert.equal(canUploadDeliveryVideo("rejected"), true);
+assert.equal(canUploadDeliveryVideo("processing_failed"), true);
+assert.equal(canUploadDeliveryVideo("ready"), false);
+assert.equal(deliveryUploadButtonLabel("rejected"), "Yeni video yükle");
+assert.equal(deliveryUploadButtonLabel("uploading"), "Yüklemeye devam et");
+assert.match(
+  deliveryUploadConfirmation("MD-2026-0001", "dogru-video.mp4"),
+  /MD-2026-0001.*dogru-video\.mp4/,
+);
 assert.equal(
   interpolateDeliveryTemplate(
     "Sayın {ad}, {grup_kodu}: {video_linki}",

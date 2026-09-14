@@ -209,6 +209,33 @@ export async function deleteQuarantineFiles(storage) {
   return deleted;
 }
 
+export async function deleteRejectedFiles(storage) {
+  const result = await query(
+    `select id, upload_id, raw_storage_key, processed_storage_key
+     from operation_videos
+     where status = 'rejected'
+       and updated_at <= now() - interval '7 days'
+       and physical_deleted_at is null
+     order by updated_at, id
+     limit 20`,
+  );
+  let deleted = 0;
+  for (const video of result.rows) {
+    await removeStoredFile(storage.uploads, video.upload_id);
+    await unlink(resolveStorageKey(storage.uploads, `${video.upload_id}.info`)).catch(() => {});
+    if (video.raw_storage_key) await removeStoredFile(storage.raw, video.raw_storage_key);
+    if (video.processed_storage_key) await removeStoredFile(storage.ready, video.processed_storage_key);
+    await query(
+      `update operation_videos
+       set status = 'deleted', physical_deleted_at = now(), updated_at = now()
+       where id = $1 and status = 'rejected'`,
+      [video.id],
+    );
+    deleted += 1;
+  }
+  return deleted;
+}
+
 export async function deleteStaleTusUploads(storage) {
   const result = await query(
     `select id, upload_id
@@ -278,6 +305,7 @@ export async function runRetentionCycle(storage, thresholds) {
     staleUploads: await deleteStaleTusUploads(storage),
     rawDeleted: await deleteSuccessfulRaw(storage),
     quarantineDeleted: await deleteQuarantineFiles(storage),
+    rejectedDeleted: await deleteRejectedFiles(storage),
     supersededStaged: await stageSupersededFiles(storage),
     supersededDeleted: await deleteSupersededFiles(storage),
     unsentFlagged: await flagUnsentVideosForReview(),

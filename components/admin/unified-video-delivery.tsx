@@ -38,6 +38,7 @@ function Actions({
       <DeliveryOperationModal groupId={row.groupId} />
       <DeliveryRowActions
         groupId={row.groupId}
+        groupCode={row.groupCode}
         messageId={row.messageId}
         messageBody={canManage ? row.messageBody : ""}
         status={row.status}

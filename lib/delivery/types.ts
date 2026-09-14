@@ -13,10 +13,37 @@ export type DeliveryVideoStatus =
   | "uploading"
   | "uploaded"
   | "processing"
+  | "review_pending"
   | "ready"
   | "superseded"
   | "rejected"
-  | "failed";
+  | "failed"
+  | "processing_failed"
+  | "quarantined"
+  | "expired"
+  | "deleted";
+
+const uploadableVideoStatuses = new Set([
+  "waiting",
+  "uploading",
+  "failed",
+  "rejected",
+  "processing_failed",
+  "quarantined",
+]);
+
+export function canUploadDeliveryVideo(status: string) {
+  return uploadableVideoStatuses.has(status);
+}
+
+export function deliveryUploadButtonLabel(status: string) {
+  if (status === "uploading") return "Yüklemeye devam et";
+  return status === "waiting" ? "Video yükle" : "Yeni video yükle";
+}
+
+export function deliveryUploadConfirmation(groupCode: string, fileName: string) {
+  return `${groupCode} grubuna “${fileName}” yüklenecek. Grup ve dosya doğru mu?`;
+}
 
 export type DeliveryActor = {
   id: string;
