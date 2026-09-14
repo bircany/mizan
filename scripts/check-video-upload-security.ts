@@ -10,6 +10,7 @@ const state = {
   codeFailures: 0,
   codeLockedUntil: null as string | null,
   sql: [] as string[],
+  detailQueries: [] as Record<string, unknown>[],
 };
 (globalThis as unknown as { videoSecurity: typeof state }).videoSecurity =
   state;
@@ -143,7 +144,7 @@ for (const action of ["queue", "resume", "cancel"])
   );
 Object.assign(mocks, sendMocks);
 mocks["@/lib/payload"] =
-  `export async function getPayloadClient(){return {findByID:async()=>({id:1,code:'TEST',campaign:{title:'Test'}}),find:async({collection})=>({docs:collection==='delivery-messages'?[{id:1,body:'PRIVATE_ACCESS_CODE',recipientPhone:'+905551234567',providerMessageId:'PRIVATE_PROVIDER'}]:[]})}}`;
+  `export async function getPayloadClient(){return {findByID:async(args)=>{globalThis.videoSecurity.detailQueries.push(args);return {id:1,code:'TEST',campaign:{title:'Test'}}},find:async(args)=>{globalThis.videoSecurity.detailQueries.push(args);return {docs:args.collection==='delivery-messages'?[{id:1,body:'PRIVATE_ACCESS_CODE',recipientPhone:'+905551234567',providerMessageId:'PRIVATE_PROVIDER'}]:[]}}}}`;
 const detail = await bundle(
   "app/api/delivery/groups/[groupId]/detail/route.ts",
 );
@@ -151,6 +152,13 @@ const response = await detail.GET(new Request("https://fixture.invalid/api"), {
   params: Promise.resolve({ groupId: "1" }),
 });
 assert.equal(response.status, 200);
+assert.equal(state.detailQueries.length, 4);
+assert.ok(state.detailQueries.every((query) => query.select));
+assert.ok(
+  state.detailQueries.every(
+    (query) => !(query.select as Record<string, boolean>).tailUnitPrice,
+  ),
+);
 assert.doesNotMatch(
   JSON.stringify(await response.json()),
   /PRIVATE|905551234567/,
