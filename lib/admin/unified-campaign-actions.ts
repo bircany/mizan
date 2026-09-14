@@ -6,6 +6,7 @@ import { requireAdminUser } from "@/lib/admin/data";
 import { PANEL_ROUTE_ACCESS } from "@/lib/auth/panel-access";
 import { CampaignInputError, validateCampaignSaveIntent } from "@/lib/admin/campaign-save-intent";
 import { roundedGroupStock } from "@/lib/donations/group-plan";
+import { campaignDeleteBlockReason } from "@/lib/donations/campaign-delete-policy";
 import { buildProtectedDeliveryTemplate } from "@/lib/delivery/template";
 import { plainTextEditorState } from "@/lib/pages";
 import { getPayloadClient } from "@/lib/payload";
@@ -314,11 +315,6 @@ export async function deleteUnifiedCampaign(
       depth: 0,
       overrideAccess: true,
     });
-    if (campaign.status !== "draft") {
-      throw new Error(
-        "Yalnızca boş taslak kampanya tamamen silinebilir. Bu kampanyayı kapatın veya arşivleyin.",
-      );
-    }
     const [intents, donations] = await Promise.all([
       payload.find({
         collection: "donation-intents",
@@ -335,11 +331,13 @@ export async function deleteUnifiedCampaign(
         overrideAccess: true,
       }),
     ]);
-    if (intents.totalDocs > 0 || donations.totalDocs > 0) {
-      throw new Error(
-        "Bu kampanyada işlem geçmişi var; fiziksel olarak silinemez. Kampanyayı arşivleyin.",
-      );
-    }
+    const blockReason = campaignDeleteBlockReason({
+      confirmedUnits: Number(campaign.confirmedUnits || 0),
+      donationCount: donations.totalDocs,
+      intentCount: intents.totalDocs,
+      reservedUnits: Number(campaign.reservedUnits || 0),
+    });
+    if (blockReason) throw new Error(blockReason);
     await payload.delete({
       collection: "campaigns",
       id,
@@ -349,7 +347,7 @@ export async function deleteUnifiedCampaign(
     revalidatePath("/panel/icerik/bagis-alanlari");
     revalidatePath("/bagis");
     revalidatePath("/kurban");
-    return { success: true, message: "Boş taslak silindi." };
+    return { success: true, message: "Hareket bulunmayan kampanya silindi." };
   } catch (error) {
     return {
       success: false,

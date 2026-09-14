@@ -2,6 +2,7 @@
 
 import { TailGroupEditor } from "@/components/admin/tail-group-editor";
 import { roundedGroupStock } from "@/lib/donations/group-plan";
+import { campaignCountersAllowDelete } from "@/lib/donations/campaign-delete-policy";
 
 import Image from "next/image";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
@@ -77,7 +78,7 @@ function DeleteForm({ id, compact = false }: { id: string; compact?: boolean }) 
       action={action}
       className={compact ? "absolute right-5 top-5 z-10" : "border-t border-[var(--admin-border)] px-5 py-4"}
       onSubmit={(event) => {
-        if (!window.confirm("Bu boş taslak kampanyayı silmek istediğinizden emin misiniz?")) event.preventDefault();
+        if (!window.confirm("Hareket bulunmayan bu kampanyayı kalıcı olarak silmek istediğinizden emin misiniz?")) event.preventDefault();
       }}
     >
       <input name="id" type="hidden" value={id} />
@@ -379,7 +380,7 @@ export function UnifiedCampaignEditor({
     <>
       {record ? (
         <article className="relative flex min-h-[25rem] min-w-0 flex-col rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] p-5">
-          <DeleteForm compact id={record.id} />
+          {campaignCountersAllowDelete(record) ? <DeleteForm compact id={record.id} /> : null}
           <div className="mb-4 flex min-h-8 justify-end pr-10">
             <span className={`inline-flex min-h-8 items-center gap-2 rounded-full border px-3 text-xs font-bold uppercase tracking-wide ${
               record.status === "active"

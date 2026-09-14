@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 
 import { anyone, superAdminsOnly } from "@/payload/access";
+import { campaignDeleteBlockReason } from "@/lib/donations/campaign-delete-policy";
 
 function slugify(value: string) {
   return value
@@ -34,11 +35,6 @@ export const Campaigns: CollectionConfig = {
           depth: 0,
           overrideAccess: true,
         });
-        if (campaign.status !== "draft") {
-          throw new Error(
-            "Yalnızca boş taslak kampanyalar silinebilir. Bu kampanyayı kapatın veya arşivleyin.",
-          );
-        }
         const [intents, donations] = await Promise.all([
           req.payload.count({
             collection: "donation-intents",
@@ -51,11 +47,13 @@ export const Campaigns: CollectionConfig = {
             overrideAccess: true,
           }),
         ]);
-        if (intents.totalDocs > 0 || donations.totalDocs > 0) {
-          throw new Error(
-            "Finansal veya rezervasyon kaydı bulunan kampanya silinemez; yalnızca arşivlenebilir.",
-          );
-        }
+        const blockReason = campaignDeleteBlockReason({
+          confirmedUnits: Number(campaign.confirmedUnits || 0),
+          donationCount: donations.totalDocs,
+          intentCount: intents.totalDocs,
+          reservedUnits: Number(campaign.reservedUnits || 0),
+        });
+        if (blockReason) throw new Error(blockReason);
       },
     ],
   },
