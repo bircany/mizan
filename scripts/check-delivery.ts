@@ -34,7 +34,7 @@ assert.equal(normalizePhone("123"), null);
 assert.equal(canUploadDeliveryVideo("rejected"), true);
 assert.equal(canUploadDeliveryVideo("processing_failed"), true);
 assert.equal(canUploadDeliveryVideo("ready"), false);
-assert.equal(deliveryUploadButtonLabel("rejected"), "Yeni video yükle");
+assert.equal(deliveryUploadButtonLabel("rejected"), "Yeniden yükle");
 assert.equal(deliveryUploadButtonLabel("uploading"), "Yüklemeye devam et");
 assert.match(
   deliveryUploadConfirmation("MD-2026-0001", "dogru-video.mp4"),

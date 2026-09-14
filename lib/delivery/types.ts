@@ -38,7 +38,7 @@ export function canUploadDeliveryVideo(status: string) {
 
 export function deliveryUploadButtonLabel(status: string) {
   if (status === "uploading") return "Yüklemeye devam et";
-  return status === "waiting" ? "Video yükle" : "Yeni video yükle";
+  return status === "waiting" ? "Video yükle" : "Yeniden yükle";
 }
 
 export function deliveryUploadConfirmation(groupCode: string, fileName: string) {

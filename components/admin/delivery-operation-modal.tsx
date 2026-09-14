@@ -390,7 +390,7 @@ export function DeliveryOperationModal({ groupId }: { groupId: string }) {
                           ) : null}
                           {video.status === "rejected" ? (
                             <p className="mt-3 text-sm text-[var(--admin-muted)]">
-                              Bu sürüm gönderilemez. Karttaki “Yeni video yükle” ile
+                              Bu sürüm gönderilemez. Karttaki “Yeniden yükle” ile
                               doğru dosyayı yükleyebilirsiniz.
                             </p>
                           ) : null}
