@@ -9,6 +9,10 @@
     el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));await settle();
   };
   assert(Array.isArray(window.manualCalls),'Only use isolated fixture');
+  await click('Bağış kaydı');
+  assert([...document.querySelectorAll('[name="campaignId"] option')].some(option=>option.value==='3'),'Hidden draft campaign must be selectable');
+  assert(![...document.querySelectorAll('[name="campaignId"] option')].some(option=>option.value==='4'),'Archived campaign must not be selectable');
+  document.querySelector('dialog').close();
   await click('Bağış kaydı');await set('campaignId','1');await set('quantity','3');await set('receivedAmount','5500');
   assert(button('Ödeme alındı — kaydet').disabled,'Underpayment must disable save');
   assert(document.body.innerText.includes('eksik'),'Missing amount must be visible');

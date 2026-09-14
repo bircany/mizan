@@ -26,6 +26,8 @@ export function ManualDonationForm({campaigns}: {campaigns:CampaignEditorRecord[
   const [message,setMessage] = useState("");
   const [busy,setBusy] = useState(false);
   const [saved,setSaved] = useState<{id:number;receipt:string}|null>(null);
+  const websiteCampaigns = campaigns.filter(c=>c.status === "active");
+  const hiddenCampaigns = campaigns.filter(c=>c.status === "draft");
   const campaign = campaigns.find(c=>c.id === campaignId);
   const fixed = campaign?.pricingModel === "fixed";
   let expected = 0, actual = 0;
@@ -86,7 +88,7 @@ export function ManualDonationForm({campaigns}: {campaigns:CampaignEditorRecord[
         <input type="hidden" name="currency" value={campaign?.currency || ""}/>
         <input type="hidden" name="expectedAmount" value={expected>0 ? amountFromCents(expected) : ""}/>
         <fieldset disabled={busy || !!saved} className="space-y-4 disabled:opacity-70">
-          <label className="block text-sm">Kampanya *<select className={fieldClass} name="campaignId" required value={campaignId} onChange={event=>{setCampaignId(event.target.value);setQuantity("1");setReceived("");}}><option value="">Kampanya seçin</option>{campaigns.filter(c=>c.status === "active").map(c=><option value={c.id} key={c.id}>{c.title} · {c.currency}</option>)}</select></label>
+          <label className="block text-sm">Bağış alanı *<select className={fieldClass} name="campaignId" required value={campaignId} onChange={event=>{setCampaignId(event.target.value);setQuantity("1");setReceived("");}}><option value="">Bağış alanı seçin</option>{websiteCampaigns.length ? <optgroup label="Web sitesinde görünen bağış alanları">{websiteCampaigns.map(c=><option value={c.id} key={c.id}>{c.title} · {c.currency}</option>)}</optgroup> : null}{hiddenCampaigns.length ? <optgroup label="Web sitesinde görünmeyen bağış alanları">{hiddenCampaigns.map(c=><option value={c.id} key={c.id}>{c.title} · {c.currency} · Yalnız yönetim panelinde</option>)}</optgroup> : null}</select><span className="mt-2 block text-xs leading-5 text-[var(--admin-muted)]">Web sitesinde görünmeyen taslak alanlara da buradan manuel IBAN bağışı kaydedebilirsiniz.</span></label>
           <div className="grid gap-4 sm:grid-cols-2">
             {fixed ? <label className="text-sm">Hisse / adet *<input className={fieldClass} name="quantity" type="number" required min="1" max="500" step="1" value={quantity} onChange={e=>setQuantity(e.target.value)}/></label> : <><input type="hidden" name="quantity" value="1"/><label className="text-sm">Bağış tutarı *<input className={fieldClass} type="number" required min="1" step="0.01" value={freeAmount} onChange={e=>setFreeAmount(e.target.value)}/></label></>}
             <label className="text-sm">Alınan ödeme ({campaign?.currency || "—"}) *<input className={fieldClass} name="receivedAmount" required type="number" min="1" step="0.01" value={received} onChange={e=>setReceived(e.target.value)}/></label>

@@ -13,10 +13,10 @@ try {
   const confirmation = await readFile("supabase/migrations/20260730124816_reconcile_paid_donation_confirmation.sql","utf8");
   await pool.query(confirmation.slice(0,confirmation.indexOf("create or replace function private.reconcile_paid_donation_confirmations()")) + "commit;");
   const actor = {id:Number((await pool.query("insert into public.users(name,email,role) values ('Test admin',$1,'admin') returning id",[`test-${randomUUID()}@example.invalid`])).rows[0].id),email:"test@example.invalid"};
-  async function campaign(stock=12, model="fixed") {
+  async function campaign(stock=12, model="fixed", status="active") {
     const code = randomUUID();
     return Number((await pool.query(`insert into public.campaigns(code,slug,target_amount,status,pricing_model,unit_price,unit_label,total_stock,video_delivery,operation_type,group_capacity,participant_required,message_template)
-      values ($1,$1,100000,'active',$2,2000,'hisse',$3,'video','standard_video',case when $3::integer < 6 then $3::integer else 6 end,true,'Test {{link}}') returning id`,[code,model,model === "fixed" ? stock : null])).rows[0].id);
+      values ($1,$1,100000,$4::public.enum_campaigns_status,$2,2000,'hisse',$3,'video','standard_video',case when $3::integer < 6 then $3::integer else 6 end,true,'Test {{link}}') returning id`,[code,model,model === "fixed" ? stock : null,status])).rows[0].id);
   }
   function input(campaignId:number, overrides:Record<string,string>={}) {
     const form = new FormData();
@@ -58,5 +58,10 @@ try {
   const free = await campaign(0,"free");
   await save(input(free,{quantity:"1",expectedAmount:"1250",receivedAmount:"1250"}));
   assert.equal(Number((await pool.query("select collected_amount from public.campaigns where id=$1",[free])).rows[0].collected_amount),1250);
-  console.log("PASS: real PostgreSQL atomic records, participant/group assignment, ledger, concurrent idempotency, payload mismatch, stock race, rollback, underpayment, surplus consent, currency/price changes, free donation.");
+  const hidden = await campaign(6,"fixed","draft");
+  await save(input(hidden,{quantity:"1",expectedAmount:"2000",receivedAmount:"2000"}));
+  const hiddenAfter = (await pool.query("select status,confirmed_units from public.campaigns where id=$1",[hidden])).rows[0];
+  assert.equal(hiddenAfter.status,"draft");
+  assert.equal(hiddenAfter.confirmed_units,1);
+  console.log("PASS: real PostgreSQL atomic records, hidden draft manual donation without publishing, participant/group assignment, ledger, concurrent idempotency, payload mismatch, stock race, rollback, underpayment, surplus consent, currency/price changes, free donation.");
 } finally { await pool.end(); }

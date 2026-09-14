@@ -6,7 +6,9 @@ const result = await build({stdin:{contents:`
   window.manualCalls=[];
   createRoot(document.getElementById('root')).render(<ManualDonationForm campaigns={[
     {id:'1',title:'Test Kurban',status:'active',currency:'TRY',pricingModel:'fixed',unitPrice:2000,videoDelivery:'video',operationType:'standard_video'},
-    {id:'2',title:'Test Serbest',status:'active',currency:'TRY',pricingModel:'free',videoDelivery:'none'}
+    {id:'2',title:'Test Serbest',status:'active',currency:'TRY',pricingModel:'free',videoDelivery:'none'},
+    {id:'3',title:'Gizli Kurban',status:'draft',currency:'TRY',pricingModel:'fixed',unitPrice:2000,videoDelivery:'video',operationType:'standard_video'},
+    {id:'4',title:'Arşiv Kurban',status:'archived',currency:'TRY',pricingModel:'fixed',unitPrice:2000,videoDelivery:'video',operationType:'standard_video'}
   ]}/>);
 `,resolveDir:process.cwd(),loader:"tsx"},bundle:true,write:false,jsx:"automatic",platform:"browser",plugins:[{name:"isolated-manual-actions",setup(builder){
   builder.onResolve({filter:/^@\/lib\/admin\/manual-donation-actions$/},()=>({path:"actions",namespace:"fixture"}));

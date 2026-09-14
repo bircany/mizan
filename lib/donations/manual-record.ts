@@ -13,8 +13,8 @@ export async function recordManualDonation(client: PoolClient, input: ManualDona
     if (previous.rows[0].raw_response?.manualFingerprint !== fingerprint) throw new ManualDonationError("Bu kayıt kimliği daha önce farklı bilgilerle kullanıldı. Yeni bağış için formu yeniden açın.");
     return { id: Number(previous.rows[0].id), receipt: String(previous.rows[0].receipt_number), duplicate: true };
   }
-  const campaign = (await client.query(`select id, status, pricing_model, unit_price, currency, video_delivery, operation_type, total_stock, reserved_units, confirmed_units, is_donation_open from public.campaigns where id=$1 for update`, [input.campaignId])).rows[0];
-  if (!campaign || campaign.status !== "active" || campaign.is_donation_open === false) throw new ManualDonationError("Kampanya bağışa açık değil.");
+  const campaign = (await client.query(`select id, status, publish_start_at, publish_end_at, pricing_model, unit_price, currency, video_delivery, operation_type, total_stock, reserved_units, confirmed_units from public.campaigns where id=$1 for update`, [input.campaignId])).rows[0];
+  if (!campaign || !["active", "draft"].includes(campaign.status)) throw new ManualDonationError("Bu kampanya manuel bağış kaydına açık değil.");
   const expected = compareManualPayment(input, campaign);
   if (campaign.total_stock !== null && Number(campaign.reserved_units) + Number(campaign.confirmed_units) + input.quantity > Number(campaign.total_stock)) throw new ManualDonationError("Kampanyada yeterli hisse/adet kalmadı.");
   const expires = new Date(Date.now() + 15 * 60_000).toISOString();
@@ -30,7 +30,12 @@ export async function recordManualDonation(client: PoolClient, input: ManualDona
     select $1, x.ordinality, x.name, x.phone, x.phone, x.name=$4 and x.phone=$5, $6, $7
     from unnest($2::text[], $3::text[]) with ordinality as x(name,phone,ordinality) returning id`,
     [intentId,input.participants.map(p=>p.name),input.participants.map(p=>p.phone),input.donorName,input.whatsapp,input.contactConsent,input.proxyConsent]);
+  // Reuse the database's one reservation allocator for stock/group integrity.
+  // This transaction holds the campaign row lock; visibility is restored before
+  // commit, so a manual record never publishes a hidden campaign to the web.
+  await client.query("update public.campaigns set status='active', publish_start_at=null, publish_end_at=null where id=$1", [input.campaignId]);
   await client.query("select private.reserve_unified_donation($1::jsonb)", [JSON.stringify({intentId,campaignId:input.campaignId,quantity:input.quantity,reservationExpiresAt:expires,participantIds:participants.rows.map(row=>row.id)})]);
+  await client.query("update public.campaigns set status=$2::public.enum_campaigns_status, publish_start_at=$3, publish_end_at=$4 where id=$1", [input.campaignId,campaign.status,campaign.publish_start_at,campaign.publish_end_at]);
   const metadata = {manualFingerprint:fingerprint,actorId:String(actor.id),paymentDate:input.date,expectedAmount:amount,receivedAmount:received,excessAmount:amountFromCents(input.receivedCents-expected),excessConfirmed:input.excessConfirmed,whatsapp:input.whatsapp};
   const sessionId = Number((await client.query(`insert into public.payment_sessions
     (donation_intent_id,conversation_id,payment_method,provider_status,payment_id,eft_review_status,eft_reviewed_at,eft_reviewed_by_id,raw_response)
