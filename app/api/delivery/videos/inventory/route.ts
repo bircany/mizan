@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getAdminSession } from "@/lib/auth/session";
-import { DeliveryAccessApiError, deliveryVideoApiRequest } from "@/lib/delivery/access-api";
+import { DeliveryAccessApiError, DeliveryVideoApiUnavailableError, deliveryVideoApiRequest } from "@/lib/delivery/access-api";
 
 export async function GET(request: NextRequest) {
   const user = await getAdminSession();
@@ -13,6 +13,12 @@ export async function GET(request: NextRequest) {
     const { body } = await deliveryVideoApiRequest(`/v1/internal/videos${suffix}`, { method: "GET" });
     return NextResponse.json(body);
   } catch (error) {
+    if (error instanceof DeliveryVideoApiUnavailableError) {
+      return NextResponse.json({ error: error.message }, { status: 503 });
+    }
+    if (error instanceof DeliveryAccessApiError && error.status === 404) {
+      return NextResponse.json({ error: "Video arşivi VDS sunucusunda henüz yayınlanmamış." }, { status: 503 });
+    }
     return NextResponse.json({ error: "VDS video listesi alınamadı." }, {
       status: error instanceof DeliveryAccessApiError ? error.status : 502,
     });

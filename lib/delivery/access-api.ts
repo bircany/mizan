@@ -32,14 +32,23 @@ export class DeliveryAccessApiError extends Error {
   }
 }
 
+export class DeliveryVideoApiUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DeliveryVideoApiUnavailableError";
+  }
+}
+
 function configuration() {
-  if (process.env.MIZAN_LOCAL_ACCEPTANCE === "1") throw new Error("Yerel kabul ortamında dış video servisi kapalı.");
+  if (process.env.MIZAN_LOCAL_ACCEPTANCE === "1") {
+    throw new DeliveryVideoApiUnavailableError("Yerel kabul ortamında VDS bağlantısı kapalı.");
+  }
   ensureLocalEnvLoaded();
   const apiUrl = process.env.DELIVERY_VIDEO_API_URL?.trim();
-  if (!apiUrl) throw new Error("DELIVERY_VIDEO_API_URL yapılandırılmamış.");
+  if (!apiUrl) throw new DeliveryVideoApiUnavailableError("VDS API adresi bu ortamda yapılandırılmamış.");
   const internalSecret = process.env.DELIVERY_VIDEO_API_INTERNAL_SECRET?.trim();
   if (!internalSecret) {
-    throw new Error("DELIVERY_VIDEO_API_INTERNAL_SECRET yapılandırılmamış.");
+    throw new DeliveryVideoApiUnavailableError("VDS iç bağlantı anahtarı bu ortamda yapılandırılmamış.");
   }
   const apiBase = new URL(apiUrl);
   const publicBase = new URL(
