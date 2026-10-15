@@ -32,7 +32,15 @@ test("post-finish cannot follow a symlink outside the upload volume", async (con
   await mkdir(storageRoot);
   const outside = path.join(temporaryRoot, "outside.txt");
   await writeFile(outside, "private fixture");
-  await symlink(outside, path.join(storageRoot, uploadId));
+  try {
+    await symlink(outside, path.join(storageRoot, uploadId));
+  } catch (error) {
+    if (process.platform === "win32" && error?.code === "EPERM") {
+      context.skip("Windows symlink privilege is unavailable in this environment");
+      return;
+    }
+    throw error;
+  }
   await assert.rejects(resolveFinishedUploadPath(storageRoot, uploadId, `/srv/uploads/${uploadId}`));
 });
 
