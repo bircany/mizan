@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 
-import { initializeAccessMaterials } from "./access-materials.js";
+import { ensureModernAccessCode, initializeAccessMaterials } from "./access-materials.js";
 import { transaction } from "./db.js";
 import { HttpError } from "./errors.js";
 import { computeGroupMessageFingerprint } from "./message-fingerprint.js";
@@ -10,7 +10,7 @@ import {
   resolveExistingFile,
   resolveStorageKey,
 } from "./storage.js";
-import { deliveryPolicyConfig, storageConfig } from "./config.js";
+import { accessMaterialsConfig, deliveryPolicyConfig, storageConfig } from "./config.js";
 
 const ffmpegLockName = "mizan:video-ffmpeg:v1";
 const deliveryPolicy = deliveryPolicyConfig();
@@ -281,6 +281,9 @@ export async function prepareDeliveryDrafts(groupIdValue) {
 export async function dispatchGroup(groupIdValue, action, options = {}) {
   const groupId = numericId(groupIdValue, "group");
   if (action === "prepare") return prepareDeliveryDrafts(groupId);
+  if (action === "queue" || action === "resume") {
+    await ensureModernAccessCode(groupId, accessMaterialsConfig());
+  }
   return transaction(async (client) => {
     const selected = await client.query(
       `select g.*, v.status as active_video_status,

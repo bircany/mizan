@@ -25,7 +25,7 @@ export default async function WhatsAppSettingsPage() {
     >
       <div className="space-y-6">
         <PanelPageHeader
-          description="Video teslimatlarında kullanılacak kurumsal WhatsApp hesabını bağlayın ve Evolution API durumunu izleyin."
+          description="Telefonu bağlayın, QR kodunu okutun ve mesaj gönderim durumunu buradan takip edin."
           eyebrow="Mesaj teslimatı"
           title="WhatsApp Bağlantısı"
         />

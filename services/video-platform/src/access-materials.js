@@ -3,7 +3,7 @@ import { createHmac, randomInt } from "node:crypto";
 import { transaction } from "./db.js";
 import { HttpError } from "./errors.js";
 import { hashAccessCode } from "./security/access-code.js";
-import { encryptAccessCode } from "./security/access-code-crypto.js";
+import { decryptAccessCode, encryptAccessCode } from "./security/access-code-crypto.js";
 import { sha256 } from "./security/hashes.js";
 
 function randomAccessCode() {
@@ -101,5 +101,39 @@ export async function rotateAccessCode(groupId, actorId, config) {
       accessCodeRotationCount: updated.rows[0].access_code_rotation_count,
       draftsRequired: true,
     };
+  });
+}
+
+/** Upgrade unsent legacy eight-character codes before any new WhatsApp send. */
+export async function ensureModernAccessCode(groupId, config, runTransaction = transaction) {
+  if (!/^\d+$/.test(String(groupId))) throw new HttpError(400, "invalid_group_id", "Grup kimliği geçersiz.");
+  return runTransaction(async (client) => {
+    const selected = await client.query(
+      `select id, access_code_ciphertext from operation_groups where id::text = $1 for update`,
+      [String(groupId)],
+    );
+    const group = selected.rows[0];
+    if (!group?.access_code_ciphertext) throw new HttpError(409, "access_code_missing", "Grup erişim kodu hazır değil.");
+    const current = decryptAccessCode(group.access_code_ciphertext, config.key);
+    if (/^\d{4}$/.test(current)) return group.access_code_ciphertext;
+    if (!/^[A-HJ-NP-Z2-9]{8}$/.test(current)) throw new HttpError(409, "invalid_access_code", "Grup erişim kodu geçersiz.");
+    const sent = await client.query(
+      `select 1 from delivery_messages where group_id = $1
+       and status in ('sent', 'delivered', 'read', 'manual_sent') limit 1`,
+      [group.id],
+    );
+    if (sent.rowCount) {
+      throw new HttpError(409, "legacy_code_already_shared", "Eski kod daha önce paylaşılmış. Mevcut video erişimi bozulmadan otomatik değiştirilemez.");
+    }
+    const code = randomAccessCode();
+    const ciphertext = encryptAccessCode(code, config.key);
+    await client.query(
+      `update operation_groups set access_code_hash = $2, access_code_ciphertext = $3,
+         access_code_rotation_count = access_code_rotation_count + 1,
+         access_code_rotated_at = now(), test_message_invalidated_at = now(), updated_at = now()
+       where id = $1`,
+      [group.id, await hashAccessCode(code), ciphertext],
+    );
+    return ciphertext;
   });
 }

@@ -84,7 +84,7 @@ export function WhatsAppConnectionPanel({
   const webhook = actionState.webhook || initialWebhook;
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_24rem]">
+    <div className="space-y-5">
       <section className="admin-card">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -92,7 +92,7 @@ export function WhatsAppConnectionPanel({
               <MessageCircle aria-hidden="true" className="size-7" />
             </span>
             <div>
-              <p className="admin-eyebrow">Evolution API</p>
+              <p className="admin-eyebrow">Video mesajları</p>
               <h3 className="mt-1 text-lg font-semibold">
                 Kurumsal WhatsApp bağlantısı
               </h3>
@@ -106,34 +106,20 @@ export function WhatsAppConnectionPanel({
           </div>
         </div>
 
-        <dl className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
-          <div className="rounded-xl bg-[var(--admin-surface)] p-4">
-            <dt className="text-xs text-[var(--admin-muted)]">Instance</dt>
-            <dd className="mt-1 break-all font-mono">{status.instanceName}</dd>
-          </div>
-          <div className="rounded-xl bg-[var(--admin-surface)] p-4">
-            <dt className="text-xs text-[var(--admin-muted)]">Telefon</dt>
-            <dd className="mt-1 font-mono">{status.phone || "Bağlı değil"}</dd>
-          </div>
-        </dl>
+        <p className="mt-5 text-sm">
+          {connected
+            ? `Bağlı telefon: ${status.phone || "Numara alınamadı"}`
+            : "Bağlamak için QR kodu oluşturun ve telefonunuzdan okutun."}
+        </p>
+        {connected && !webhook.configured ? (
+          <p className="mt-3 text-sm text-amber-700" role="alert">
+            Teslimat bildirimleri henüz bağlı değil. Gelişmiş ayarlardan webhook&apos;u kurun.
+          </p>
+        ) : null}
 
-        <div className="mt-5 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] p-4">
-          <div className="flex gap-3">
-            <ShieldCheck
-              aria-hidden="true"
-              className="mt-0.5 size-5 shrink-0 text-[var(--admin-primary)]"
-            />
-            <div>
-              <p className="text-sm font-semibold">Tek ve güvenli bağlantı</p>
-              <p className="mt-1 text-xs leading-5 text-[var(--admin-muted)]">
-                Bu ekran video teslimat işçisinin kullandığı aynı Evolution
-                instance’ını yönetir. API anahtarı tarayıcıya gönderilmez.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4">
+        <details className="mt-4 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4">
+          <summary className="cursor-pointer text-sm font-semibold">Gelişmiş bağlantı ayarları</summary>
+          <p className="mt-3 text-xs text-[var(--admin-muted)]">Bağlantı kimliği: {status.instanceName}</p>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold">Teslimat webhook&apos;u</p>
@@ -156,7 +142,7 @@ export function WhatsAppConnectionPanel({
               Webhook&apos;u kur ve doğrula
             </SubmitButton>
           </form>
-        </div>
+        </details>
 
         {actionState.message || status.message ? (
           <p
@@ -184,7 +170,13 @@ export function WhatsAppConnectionPanel({
               Durumu yenile
             </SubmitButton>
           </form>
-          {connected ? (
+        </div>
+        {connected ? (
+          <details className="mt-5 text-sm">
+            <summary className="cursor-pointer text-[var(--admin-muted)]">Bağlantıyı kapat</summary>
+            <p className="my-3 text-xs text-[var(--admin-muted)]">
+              Bağlantı kesilirse video mesajları gönderilemez.
+            </p>
             <form action={action}>
               <input name="confirm" type="hidden" value="disconnect" />
               <input name="intent" type="hidden" value="disconnect" />
@@ -193,11 +185,11 @@ export function WhatsAppConnectionPanel({
                 Bağlantıyı kapat
               </SubmitButton>
             </form>
-          ) : null}
-        </div>
+          </details>
+        ) : null}
       </section>
 
-      <section className="admin-card">
+      {!connected ? <section className="admin-card">
         <div className="flex items-center gap-2">
           <QrCode
             aria-hidden="true"
@@ -247,7 +239,7 @@ export function WhatsAppConnectionPanel({
             </div>
           </div>
         )}
-      </section>
+      </section> : null}
     </div>
   );
 }

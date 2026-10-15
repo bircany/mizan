@@ -1,6 +1,7 @@
 import { ManagementShell } from "@/components/admin/management-shell";
 import { PanelPageHeader } from "@/components/admin/panel-ui";
 import { UnifiedVideoDelivery } from "@/components/admin/unified-video-delivery";
+import { VdsVideoInventory } from "@/components/admin/vds-video-inventory";
 import { requireAdminUser } from "@/lib/admin/data";
 import { getUnifiedDeliveryPanelData } from "@/lib/admin/unified-panel-data";
 import { PANEL_ROUTE_ACCESS } from "@/lib/auth/panel-access";
@@ -31,6 +32,7 @@ export default async function UnifiedVideoDeliveryPage({
           title="Video Teslimat"
         />
         <UnifiedVideoDelivery filters={parseVideoFilters(parameters)} rows={rows} tab={tab} canManage={user.role === "admin"} />
+        {user.role === "admin" ? <VdsVideoInventory /> : null}
       </div>
     </ManagementShell>
   );

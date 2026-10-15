@@ -30,6 +30,9 @@ function validateSnapshot(message) {
 export function renderDeliveryMessageContent(message, group, config) {
   const { snapshot } = validateSnapshot(message);
   const accessCode = decryptAccessCode(group.access_code_ciphertext, config.key);
+  if (!/^\d{4}$/.test(accessCode)) {
+    throw new Error("Legacy access code must be upgraded before WhatsApp delivery");
+  }
   const recipientNames = [...new Set(snapshot.recipientNames.map((name) => singleLine(name, 100)).filter(Boolean))]
     .slice(0, 30);
   if (recipientNames.length === 0) throw new Error("Message recipient names are empty");

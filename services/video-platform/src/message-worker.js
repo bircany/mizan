@@ -26,6 +26,7 @@ import {
   releaseDeliveryClaim,
 } from "./message-repository.js";
 import { renderDeliveryMessageContent } from "./message-renderer.js";
+import { ensureModernAccessCode } from "./access-materials.js";
 import { installShutdown } from "./shutdown.js";
 
 const config = messageWorkerConfig();
@@ -140,6 +141,7 @@ while (!abortController.signal.aborted) {
       await sleep(config.pollIntervalMs);
       continue;
     }
+    claim.group.access_code_ciphertext = await ensureModernAccessCode(claim.message.group_id, materials);
     const rendered = renderDeliveryMessageContent(claim.message, claim.group, materials);
     const provider = await sendEvolutionText(
       recipientPhone(claim.message),

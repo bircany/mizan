@@ -130,7 +130,7 @@ test("worker does not duplicate template greeting, campaign or group lines", () 
   }, {
     id: 42,
     code: "MD-2026-0002",
-    access_code_ciphertext: encryptAccessCode("RJ2HLCDK", key),
+    access_code_ciphertext: encryptAccessCode("1234", key),
   }, {
     key,
     publicLinkSecret: "l".repeat(32),
@@ -141,4 +141,17 @@ test("worker does not duplicate template greeting, campaign or group lines", () 
   assert.equal(text.match(/Kampanya: Test/g)?.length, 1);
   assert.equal(text.match(/Grup kodu: MD-2026-0002/g)?.length, 1);
   assert.match(text, /Video bağlantısı: https:\/\/www\.mizander\.org\/video\//);
+});
+
+test("worker refuses to render an old eight-character access code", () => {
+  const key = Buffer.alloc(32, 4);
+  assert.throws(() => renderDeliveryMessage({
+    group_id: 42, video_id: 8, message_type: "normal", body_snapshot: "Videonuz hazır.",
+    message_snapshot: { schemaVersion: 1, recipientNames: ["Ayşe"], campaignName: "Test" },
+    system_payload_snapshot: { schemaVersion: 1, groupId: 42, videoId: 8, messageType: "normal" },
+  }, {
+    id: 42, code: "MD-2026-0002", access_code_ciphertext: encryptAccessCode("RJ2HLCDK", key),
+  }, {
+    key, publicLinkSecret: "l".repeat(32), landingBaseUrl: "https://www.mizander.org",
+  }), /Legacy access code/);
 });

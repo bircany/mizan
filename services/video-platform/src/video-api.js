@@ -27,6 +27,7 @@ import { logger } from "./logger.js";
 import { verifyInternalRequest } from "./security/internal-auth.js";
 import { verifyMediaToken } from "./security/media-token.js";
 import { installShutdown } from "./shutdown.js";
+import { cleanStoredVideo, listStoredVideos } from "./video-inventory.js";
 import {
   contentDisposition,
   ensureStorageDirectories,
@@ -220,6 +221,22 @@ const server = createServer(async (request, response) => {
       verifyInternalRequest(request.headers, raw, api);
       const result = await enqueueSafeTestMessage(parseJsonBody(raw), safeTestRecipients);
       sendJson(response, 202, result);
+      return;
+    }
+
+    if (request.method === "GET" && url.pathname === "/v1/internal/videos") {
+      verifyInternalRequest(request.headers, Buffer.alloc(0), api);
+      sendJson(response, 200, await listStoredVideos(url.searchParams.get("cursor")));
+      return;
+    }
+
+    const cleanVideoMatch = /^\/v1\/internal\/videos\/(\d+)\/clean$/.exec(url.pathname);
+    if (request.method === "POST" && cleanVideoMatch) {
+      const raw = await readBody(request, 16 * 1024);
+      verifyInternalRequest(request.headers, raw, api);
+      const body = parseJsonBody(raw);
+      if (body.confirm !== "clean") throw new HttpError(400, "confirmation_required", "Temizleme onayı eksik.");
+      sendJson(response, 200, await cleanStoredVideo(cleanVideoMatch[1], storage, body.actorId));
       return;
     }
 
