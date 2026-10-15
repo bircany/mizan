@@ -51,6 +51,8 @@ export async function POST(request: Request) {
       fileName?: unknown;
       mimeType?: unknown;
       sizeBytes?: unknown;
+      dispatchAt?: unknown;
+      expectedConfirmedCount?: unknown;
     };
     const groupId = Number(body.groupId);
     const repeatedGroupCode =
@@ -61,6 +63,8 @@ export async function POST(request: Request) {
       typeof body.mimeType === "string" ? body.mimeType.trim().toLowerCase() : "";
     const mimeType = deliveryVideoMime(fileName, requestedMime);
     const sizeBytes = Number(body.sizeBytes);
+    const dispatchAt = body.dispatchAt === null ? null : body.dispatchAt;
+    const expectedConfirmedCount = Number(body.expectedConfirmedCount);
     const { maxBytes } = getDeliveryVideoLimits();
 
     if (
@@ -80,6 +84,19 @@ export async function POST(request: Request) {
           "Grup kodu ile MP4, MOV veya WebM biçiminde en fazla 2 GB video zorunludur.",
       }, 400);
     }
+    if (body.dispatchAt !== undefined) {
+      if (role !== "admin") return json({ ok: false, error: "Gönderimi yalnızca yönetici başlatabilir." }, 403);
+      if (
+        (dispatchAt !== null && (
+          typeof dispatchAt !== "string" ||
+          !Number.isFinite(Date.parse(dispatchAt)) ||
+          Date.parse(dispatchAt) <= Date.now() ||
+          Date.parse(dispatchAt) > Date.now() + 90 * 86_400_000
+        )) ||
+        !Number.isSafeInteger(expectedConfirmedCount) ||
+        expectedConfirmedCount < 1
+      ) return json({ ok: false, error: "Gönderim zamanı veya bağışçı sayısı geçersiz." }, 400);
+    }
 
     const reservation = await reserveDeliveryUploadSession({
       groupId,
@@ -88,6 +105,10 @@ export async function POST(request: Request) {
       mimeType,
       sizeBytes,
       maxBytes,
+      ...(body.dispatchAt !== undefined ? {
+        dispatchAt: dispatchAt as string | null,
+        expectedConfirmedCount,
+      } : {}),
       user: {
         id: String(user.id),
         email: typeof user.email === "string" ? user.email : null,

@@ -58,6 +58,11 @@ export type UnifiedDeliveryRow = {
   recipient: string;
   status: string;
   videoStatus: string;
+  groupStatus: string;
+  dispatchState: string;
+  operationType: string;
+  capacity: number;
+  confirmedCount: number;
   updatedAt: string;
   recipients: UnifiedDeliveryRecipient[];
 };
@@ -215,7 +220,7 @@ export async function getUnifiedDeliveryPanelData(): Promise<
   async function all(collection:string,depth=1) {
     const docs:LooseRecord[]=[];
     const fields:Record<string,string[]>={
-      "operation-groups":["code","campaign","status","updatedAt","createdAt"],
+      "operation-groups":["code","campaign","status","dispatchState","operationType","capacity","confirmedCount","updatedAt","createdAt"],
       "delivery-messages":["group","isTest","body","recipientPhone","status","updatedAt","createdAt"],
       "operation-videos":["group","status","updatedAt"],
       "operation-group-members":["group","participant","donationIntent","unitIndex","status"],
@@ -329,6 +334,11 @@ export async function getUnifiedDeliveryPanelData(): Promise<
         recipient: maskPhone(message.recipientPhone ?? message.phone),
         status: text(message.status, "draft"),
         videoStatus: text(video.status, "waiting"),
+        groupStatus: text(group.status),
+        dispatchState: text(group.dispatchState, "idle"),
+        operationType: text(group.operationType ?? record(group.campaign).operationType),
+        capacity: Number(group.capacity || 0),
+        confirmedCount: Number(group.confirmedCount || 0),
         updatedAt: text(message.updatedAt ?? message.createdAt),
         recipients: recipientsByGroup.get(groupId) ?? [],
       };
@@ -367,6 +377,11 @@ export async function getUnifiedDeliveryPanelData(): Promise<
           recipient: recipientSummary,
           status: text(group.status, "draft"),
           videoStatus: text(video.status, "waiting"),
+          groupStatus: text(group.status),
+          dispatchState: text(group.dispatchState, "idle"),
+          operationType: text(group.operationType ?? record(group.campaign).operationType),
+          capacity: Number(group.capacity || 0),
+          confirmedCount: Number(group.confirmedCount || 0),
           updatedAt: text(group.updatedAt ?? group.createdAt),
           recipients,
         };

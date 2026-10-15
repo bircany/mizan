@@ -37,7 +37,7 @@ test("video failure metadata casts variadic JSON parameters explicitly", async (
 test("message worker enforces test delivery only when policy requires it", async () => {
   const repository = await readFile(messageRepositoryUrl, "utf8");
 
-  assert.match(repository, /if \(!message\.is_test && requireTestBeforeDispatch\)/);
+  assert.match(repository, /if \(!message\.is_test && requireTestBeforeDispatch && message\.system_payload_snapshot\?\.autoDispatch !== true\)/);
 });
 
 test("delivery access falls back to the active video expiry for legacy groups", async () => {

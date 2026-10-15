@@ -54,6 +54,8 @@ type ReserveDeliveryUploadInput = {
   mimeType: DeliveryUploadMime;
   sizeBytes: number;
   maxBytes: number;
+  dispatchAt?: string | null;
+  expectedConfirmedCount?: number;
   user: {
     id: string;
     email?: string | null;
@@ -179,6 +181,11 @@ export async function reserveDeliveryUploadSession(
 
     const gateError = validateGroupGate(group);
     if (gateError) return { ok: false, status: 409, error: gateError };
+    if (input.dispatchAt !== undefined && (
+      input.user.role !== "admin" ||
+      input.expectedConfirmedCount !== Number(group.confirmedCount) ||
+      Number(group.confirmedCount) < 1
+    )) return { ok: false, status: 409, error: "Bağışçı listesi değişti veya gönderim yetkiniz yok. Listeyi yeniden kontrol edin." };
 
     const lockedUntil = group.codeLockedUntil
       ? new Date(group.codeLockedUntil)
@@ -311,12 +318,17 @@ export async function reserveDeliveryUploadSession(
          upload_nonce_hash,
          upload_token_expires_at,
          upload_max_bytes,
-         version_kind
+         version_kind,
+         field_checklist,
+         field_checked_at,
+         field_checked_by_id
        ) values (
          $1, $2, $3, $4, $5, $6, $7, 'uploading', $8, $9, 0,
          now() + interval '24 hours',
          now() + interval '90 days',
-         $10, $11, $12, $13, $14
+         $10, $11, $12, $13, $14, $15::jsonb,
+         case when $16::boolean then now() else null end,
+         case when $16::boolean then $2::integer else null end
        )
        returning id::text as id`,
       [
@@ -338,6 +350,15 @@ export async function reserveDeliveryUploadSession(
           : previousVideo.deliveryStarted
             ? "correction"
             : "replacement",
+        JSON.stringify(input.dispatchAt === undefined ? {} : {
+          dispatch: {
+            requested: true,
+            scheduledAt: input.dispatchAt,
+            confirmedCount: input.expectedConfirmedCount,
+            groupCode: group.code,
+          },
+        }),
+        input.dispatchAt !== undefined,
       ],
     );
     const videoId = inserted.rows[0]?.id;
@@ -357,6 +378,7 @@ export async function reserveDeliveryUploadSession(
     await client.query(
       `update public.operation_groups
        set status = 'video_pending',
+           dispatch_state = case when $5::boolean then 'idle'::public.enum_operation_groups_dispatch_state else dispatch_state end,
            slaughtered_at = case
              when $2::boolean then coalesce(slaughtered_at, now())
              else slaughtered_at
@@ -377,6 +399,7 @@ export async function reserveDeliveryUploadSession(
         slaughterAutoMarked,
         input.user.id,
         group.slaughterScript || "",
+        input.dispatchAt !== undefined,
       ],
     );
     if (slaughterAutoMarked) {

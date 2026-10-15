@@ -59,6 +59,7 @@ export function DeliveryRowActions({
   status,
   videoStatus,
   canManage = true,
+  simpleFlow = false,
 }: {
   groupId: string;
   groupCode: string;
@@ -67,6 +68,7 @@ export function DeliveryRowActions({
   status: string;
   videoStatus: string;
   canManage?: boolean;
+  simpleFlow?: boolean;
 }) {
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -247,17 +249,17 @@ export function DeliveryRowActions({
         ref={fileInput}
         type="file"
       />
-      {canUploadDeliveryVideo(videoStatus) ? (
+      {(!simpleFlow || videoStatus === "uploading") && canUploadDeliveryVideo(videoStatus) ? (
         <Button disabled={busy} onClick={() => fileInput.current?.click()}>
           {deliveryUploadButtonLabel(videoStatus)}
         </Button>
       ) : null}
-      {canManage && videoStatus === "ready" && !messageId ? (
+      {!simpleFlow && canManage && videoStatus === "ready" && !messageId ? (
         <Button disabled={busy} onClick={() => action("prepare")}>
           Taslak oluştur
         </Button>
       ) : null}
-      {canManage && videoStatus === "ready" && status === "draft" ? (
+      {!simpleFlow && canManage && videoStatus === "ready" && status === "draft" ? (
         <>
           <Button disabled={busy} onClick={editMessage}>Düzenle</Button>
           <Button disabled={busy} onClick={() => action("test")}>Test</Button>
@@ -270,13 +272,13 @@ export function DeliveryRowActions({
       {canManage && status === "paused" ? (
         <Button disabled={busy} onClick={() => action("resume")}>Devam</Button>
       ) : null}
-      {canManage && ["draft", "queued", "paused"].includes(status) ? (
+      {!simpleFlow && canManage && ["draft", "queued", "paused"].includes(status) ? (
         <Button disabled={busy} onClick={() => action("cancel")}>İptal</Button>
       ) : null}
       {canManage && videoStatus === "ready" && status === "failed" && messageId ? (
         <Button disabled={busy} onClick={retry}>Tekrar dene</Button>
       ) : null}
-      {canUploadDeliveryVideo(videoStatus) ? (
+      {(!simpleFlow || videoStatus === "uploading") && canUploadDeliveryVideo(videoStatus) ? (
         <div className="mt-1 w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] p-2.5">
           <div className="flex items-center justify-between gap-3 text-[11px]">
             <span className="font-semibold text-[var(--admin-text)]">

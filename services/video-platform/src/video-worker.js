@@ -2,6 +2,7 @@ import { access, copyFile, mkdir, open, rename, stat, unlink } from "node:fs/pro
 import path from "node:path";
 
 import { retentionConfig, storageConfig, videoWorkerConfig } from "./config.js";
+import { completeAutomaticDelivery, delayAutomaticDelivery, findPendingAutomaticDelivery } from "./automatic-delivery.js";
 import { diskStatus, hasProcessingCapacity } from "./disk.js";
 import { HttpError } from "./errors.js";
 import { hashFile } from "./file-hash.js";
@@ -291,6 +292,19 @@ while (!abortController.signal.aborted) {
   let claim;
   try {
     await heartbeat(heartbeatPath);
+    const pendingDeliveryId = await findPendingAutomaticDelivery();
+    if (pendingDeliveryId) {
+      try {
+        await completeAutomaticDelivery(pendingDeliveryId);
+      } catch (error) {
+        await delayAutomaticDelivery(pendingDeliveryId, error);
+        logger.error("Automatic delivery preparation failed", {
+          videoId: pendingDeliveryId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+      continue;
+    }
     claim = await claimVideo(settings.workerId);
     if (!claim) {
       await sleep(settings.pollIntervalMs);

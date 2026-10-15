@@ -24,6 +24,11 @@ const row: UnifiedDeliveryRow = {
   messageBody: "",
   status: "video_pending",
   videoStatus: "waiting",
+  groupStatus: "video_pending",
+  dispatchState: "idle",
+  operationType: "standard_video",
+  capacity: 1,
+  confirmedCount: 1,
   updatedAt: "2026-09-09T22:00:00Z",
 };
 assert.equal(

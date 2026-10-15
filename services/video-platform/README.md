@@ -159,12 +159,17 @@ The test fingerprint covers active video ID/version/checksum, access-code
 rotation, and every non-test draft's immutable snapshots in ID order. A
 successful test atomically writes the fingerprint to the group. Normal claim
 recomputes it and pauses dispatch if it differs only when
-`REQUIRE_DELIVERY_TEST=true`. The default `false` keeps test delivery optional.
+`REQUIRE_DELIVERY_TEST=true`. Uploads confirmed through the new Video Ekle flow
+carry an operator confirmation snapshot and bypass this legacy test step after
+technical processing; the default `false` keeps test delivery optional.
 
-Normal dispatch starts with `scheduled_at = now() + 5 seconds`. A claim accepts
+Normal dispatch starts after technical processing, either immediately or at the
+operator's selected time. A claim accepts
 `countdown`, changes it to `sending` in the same short transaction, and never
 holds a row lock during Evolution HTTP calls. Sending is sequential, waits a
-random 5–9 seconds, and pauses 120 seconds after each 50 messages.
+random 1–60 seconds between messages across groups, and pauses 120 seconds
+after each 50 messages. The next allowed send time is kept on the sent message
+so a worker restart does not skip the delay.
 
 Delivery uses Evolution's universally supported `sendText` endpoint. The
 eight-character access code is prominently included in the message body, so it

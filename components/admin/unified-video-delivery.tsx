@@ -8,6 +8,7 @@ import {
 import { DeliveryRowActions } from "@/components/admin/delivery-row-actions";
 import { DeliveryOperationModal } from "@/components/admin/delivery-operation-modal";
 import { DeliveryPanelAutoRefresh } from "@/components/admin/delivery-panel-auto-refresh";
+import { DeliveryVideoFlow } from "@/components/admin/delivery-video-flow";
 import type { UnifiedDeliveryRow } from "@/lib/admin/unified-panel-data";
 import {
   filterVideos,
@@ -35,7 +36,7 @@ function Actions({
 }) {
   return (
     <div className="flex flex-wrap gap-2">
-      <DeliveryOperationModal groupId={row.groupId} />
+      {!canManage || (row.videoStatus === "ready" && row.status === "draft") ? <DeliveryOperationModal groupId={row.groupId} /> : null}
       <DeliveryRowActions
         groupId={row.groupId}
         groupCode={row.groupCode}
@@ -44,6 +45,7 @@ function Actions({
         status={row.status}
         videoStatus={row.videoStatus}
         canManage={canManage}
+        simpleFlow={canManage}
       />
     </div>
   );
@@ -104,7 +106,7 @@ export function UnifiedVideoDelivery({
   return (
     <div className="space-y-5">
       <DeliveryPanelAutoRefresh />
-      <div className="flex items-center justify-between gap-3"><p className="text-sm font-semibold">{visible.length} teslimat</p><VideoViewSwitch filters={filters} tab={tab} /></div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex flex-wrap items-center gap-3">{canManage ? <DeliveryVideoFlow rows={rows} /> : null}<p className="text-sm font-semibold">{visible.length} teslimat</p></div><VideoViewSwitch filters={filters} tab={tab} /></div>
       <form
         className="grid gap-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] p-4 sm:grid-cols-2 xl:grid-cols-4"
         method="get"
@@ -212,8 +214,7 @@ export function UnifiedVideoDelivery({
         ))}
       </nav>
       <p className="text-sm text-[var(--admin-muted)]">
-        {visible.length} grup · Sayfa {page}/{pages} · Tarihler Türkiye saatine
-        göre. Gönderim ve test onayları mevcut kurallara tabidir.
+        {visible.length} grup · Sayfa {page}/{pages} · Tarihler Türkiye saatine göre.
       </p>
       {slice.length ? (
         filters.view === "cards" ? (

@@ -278,7 +278,7 @@ export async function prepareDeliveryDrafts(groupIdValue) {
   });
 }
 
-export async function dispatchGroup(groupIdValue, action) {
+export async function dispatchGroup(groupIdValue, action, options = {}) {
   const groupId = numericId(groupIdValue, "group");
   if (action === "prepare") return prepareDeliveryDrafts(groupId);
   return transaction(async (client) => {
@@ -302,7 +302,7 @@ export async function dispatchGroup(groupIdValue, action) {
       ) {
         throw new HttpError(409, "approved_video_required", "Gönderim için onaylanmış aktif video gereklidir.");
       }
-      if (deliveryPolicy.requireTestBeforeDispatch) {
+      if (deliveryPolicy.requireTestBeforeDispatch && !options.automatic) {
       const current = await computeGroupMessageFingerprint(client, groupId);
       const testPassed = String(group.test_message_video_id) === String(current.activeVideoId)
         && group.test_message_fingerprint === current.fingerprint
@@ -311,6 +311,11 @@ export async function dispatchGroup(groupIdValue, action) {
       if (!testPassed) throw new HttpError(409, "test_message_required", "Gerçek gönderimden önce güncel taslakla güvenli test mesajı gönderin.");
       }
       const batchId = randomUUID();
+      const requestedAt = options.scheduledAt ? Date.parse(options.scheduledAt) : NaN;
+      if (options.scheduledAt && !Number.isFinite(requestedAt)) {
+        throw new HttpError(400, "invalid_dispatch_schedule", "Gönderim zamanı geçersiz.");
+      }
+      const startAt = new Date(Math.max(Date.now() + 5_000, Number.isFinite(requestedAt) ? requestedAt : 0));
       const queued = await client.query(
         `with candidates as (
            select id, row_number() over (order by id) - 1 as offset_index
@@ -320,11 +325,16 @@ export async function dispatchGroup(groupIdValue, action) {
          )
          update delivery_messages m
          set status = 'queued', dispatch_batch_id = $2,
-             scheduled_at = now() + interval '5 seconds' + (c.offset_index * interval '5 seconds'),
+             scheduled_at = $3::timestamptz +
+               case when $4::boolean then interval '0 seconds'
+                    else c.offset_index * interval '5 seconds' end,
+             system_payload_snapshot = case when $4::boolean
+               then coalesce(m.system_payload_snapshot, '{}'::jsonb) || '{"autoDispatch":true}'::jsonb
+               else m.system_payload_snapshot end,
              locked_at = null, locked_by = null, last_error = null, last_error_code = null,
              retry_class = 'none', updated_at = now()
          from candidates c where m.id = c.id returning m.id`,
-        [groupId, batchId],
+        [groupId, batchId, startAt, options.automatic === true],
       );
       if (!queued.rowCount) throw new HttpError(409, "no_dispatch_drafts", "Gönderilecek taslak bulunamadı.");
       await client.query(

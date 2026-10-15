@@ -27,6 +27,11 @@ export async function claimDeliveryMessage(workerId, leaseMinutes, requireTestBe
        from delivery_messages m
        join operation_groups g on g.id = m.group_id
        where m.status = 'queued'
+         and not exists (
+           select 1 from delivery_messages paced
+           where paced.status in ('sent', 'delivered', 'read')
+             and paced.is_test = false and paced.locked_at > now()
+         )
          and m.provider_message_id is null
          and m.retry_class <> 'ambiguous'
          and coalesce(m.next_retry_at, m.scheduled_at, now()) <= now()
@@ -55,7 +60,7 @@ export async function claimDeliveryMessage(workerId, leaseMinutes, requireTestBe
       return null;
     }
 
-    if (!message.is_test && requireTestBeforeDispatch) {
+    if (!message.is_test && requireTestBeforeDispatch && message.system_payload_snapshot?.autoDispatch !== true) {
       const current = await computeGroupMessageFingerprint(client, message.group_id);
       const validTest =
         String(message.group_active_video_id) === String(message.video_id) &&
@@ -213,6 +218,12 @@ export async function markDeliverySent(claim, provider, pace) {
         );
       }
     } else {
+      await client.query(
+        `update delivery_messages
+         set locked_at = now() + ($2::int * interval '1 millisecond')
+         where id = $1`,
+        [claim.message.id, effectiveDelayMs],
+      );
       await client.query(
         `update operation_groups
          set dispatch_state = 'sending',

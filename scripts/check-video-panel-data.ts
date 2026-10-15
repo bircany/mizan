@@ -5,7 +5,11 @@ const source: Record<string, unknown[]> = {
     id: i + 1,
     code: `GROUP-${i + 1}`,
     campaign: { id: 1, title: "Test kampanya", category: 3 },
-    status: "open",
+    status: "video_pending",
+    dispatchState: "idle",
+    operationType: "standard_video",
+    capacity: 1001,
+    confirmedCount: i === 200 ? 1001 : 0,
     updatedAt: "2026-09-10T10:00:00Z",
   })),
   "operation-videos": [],
@@ -29,7 +33,7 @@ const fixture = {
 };
 (globalThis as unknown as { videoData: typeof fixture }).videoData = fixture;
 const result = await build({
-  entryPoints: ["lib/admin/unified-panel-data.ts"],
+  entryPoints: ["./lib/admin/unified-panel-data.ts"],
   bundle: true,
   write: false,
   platform: "node",
@@ -64,6 +68,12 @@ assert.equal(
 );
 assert.equal(rows[0].category, "Test kategori");
 assert.equal(rows[0].categoryId, "3");
+const selectable = rows.find((r: { groupId: string }) => r.groupId === "201");
+assert.equal(selectable.groupStatus, "video_pending");
+assert.equal(selectable.dispatchState, "idle");
+assert.equal(selectable.operationType, "standard_video");
+assert.equal(selectable.capacity, 1001);
+assert.equal(selectable.confirmedCount, 1001);
 assert.doesNotMatch(JSON.stringify(rows), /905551234567/);
 assert.ok(
   fixture.calls.some(
@@ -78,6 +88,8 @@ assert.ok(
 assert.ok(
   fixture.calls.every((c) => c.select && !c.select.accessCodeCiphertext),
 );
+assert.ok(fixture.calls.some((c) => c.collection === "operation-groups" &&
+  ["dispatchState", "operationType", "capacity", "confirmedCount"].every((field) => c.select[field])));
 console.log(
   "PASS: paginated 201 groups/1001 recipients, category relations, masked phones, minimal selected fields.",
 );
