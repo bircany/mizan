@@ -4,6 +4,7 @@ import type { CampaignEditorRecord } from "@/components/admin/unified-campaign-e
 import { lexicalParagraphs } from "@/lib/pages";
 import { getPayloadClient } from "@/lib/payload";
 import { toIstanbulDateTimeLocal } from "@/lib/time";
+import { sortVideoShareAreas } from "@/lib/donations/video-share-order";
 
 function relationId(value: unknown) {
   if (typeof value === "number" || typeof value === "string") return String(value);
@@ -60,8 +61,9 @@ export async function getCampaignEditorData() {
     label: item.alt || item.filename || `Görsel ${item.id}`,
     value: String(item.id),
   }));
-  const records: CampaignEditorRecord[] = campaigns.docs.map((campaign) => ({
+  const records: CampaignEditorRecord[] = sortVideoShareAreas(campaigns.docs.map((campaign) => ({
     id: String(campaign.id),
+    slug: String(campaign.slug || ""),
     title: campaign.title,
     description: lexicalParagraphs(campaign.description).join("\n\n"),
     category: relationId(campaign.category),
@@ -85,7 +87,7 @@ export async function getCampaignEditorData() {
     status: campaign.status,
     closeReason: campaign.closeReason || "",
     image: relationId(campaign.image),
-  }));
+  })));
 
   const saved = childDonationSettings.docs[0];
   const childDonation = saved ? {

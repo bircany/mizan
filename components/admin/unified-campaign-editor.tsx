@@ -32,6 +32,7 @@ import {
 
 export type CampaignEditorRecord = {
   id: string;
+  slug: string;
   title: string;
   description: string;
   category: string;

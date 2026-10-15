@@ -1,4 +1,4 @@
--- Supabase SQL Editor: önce aşağıdaki 7 hisse fiyatını ve kesim metnini doldurun.
+-- Supabase SQL Editor: yedi grubun bir hisse fiyatı 5.000 TL'dir.
 -- Fotoğrafı panelden Medya'ya yükleyip ID'sini öğrenirseniz v_image_id'ye yazın.
 -- NULL bırakırsanız fotoğrafı bağış alanı düzenleme ekranından sonra seçebilirsiniz.
 -- Kayıtlar TASLAK oluşturulur: web sitesinde ödeme/bağışa açılmaz,
@@ -9,16 +9,17 @@ begin;
 do $seed$
 declare
   v_prices numeric[] := array[
-    null, -- 1 kişilik grubun BİR HİSSE fiyatı (TL)
-    null, -- 2 kişilik grubun BİR HİSSE fiyatı (TL)
-    null, -- 3 kişilik grubun BİR HİSSE fiyatı (TL)
-    null, -- 4 kişilik grubun BİR HİSSE fiyatı (TL)
-    null, -- 5 kişilik grubun BİR HİSSE fiyatı (TL)
-    null, -- 6 kişilik grubun BİR HİSSE fiyatı (TL)
-    null  -- 7 kişilik grubun BİR HİSSE fiyatı (TL)
+    5000, -- 1 kişilik grubun BİR HİSSE fiyatı (TL)
+    5000, -- 2 kişilik grubun BİR HİSSE fiyatı (TL)
+    5000, -- 3 kişilik grubun BİR HİSSE fiyatı (TL)
+    5000, -- 4 kişilik grubun BİR HİSSE fiyatı (TL)
+    5000, -- 5 kişilik grubun BİR HİSSE fiyatı (TL)
+    5000, -- 6 kişilik grubun BİR HİSSE fiyatı (TL)
+    5000  -- 7 kişilik grubun BİR HİSSE fiyatı (TL)
   ]::numeric[];
   v_image_id integer := null; -- Aynı kapak fotoğrafı yedi alanda kullanılabilir.
-  v_slaughter_script text := null; -- Onaylı, kesim sırasında gerçekten okunacak metin.
+  v_slaughter_script text := 'Kesimde okunacak metindir.';
+  -- Bu ifade geçiciyse gerçek kesim operasyonundan önce panelde onaylı metinle değiştirin.
   v_category_id integer;
   v_capacity integer;
   v_campaign_id integer;
@@ -71,8 +72,8 @@ begin
       'draft', false, 'pool', true
     ) returning id into v_campaign_id;
 
-    insert into public.campaigns_locales (_parent_id, _locale, title, cover_image_alt)
-    values (v_campaign_id, 'tr', v_title, v_title);
+    insert into public.campaigns_locales (_parent_id, _locale, title)
+    values (v_campaign_id, 'tr', v_title);
   end loop;
 end
 $seed$;

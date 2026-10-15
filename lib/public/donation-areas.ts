@@ -3,6 +3,7 @@ import { cache } from "react";
 import { getPayloadClient } from "@/lib/payload";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 import type { AppLocale } from "@/lib/i18n";
+import { sortVideoShareAreas } from "@/lib/donations/video-share-order";
 
 export type DonationAreaCategory = {
   id: string;
@@ -261,7 +262,7 @@ export const getOpenDonationAreas = cache(async (locale: AppLocale = "tr"): Prom
       where: { status: { equals: "active" } },
     });
 
-    return result.docs
+    return sortVideoShareAreas(result.docs
       .filter((campaign) => !String((campaign as { code?: unknown }).code || "").startsWith("ahmet-destek-"))
       .map((campaign) =>
         toDonationArea(
@@ -269,7 +270,7 @@ export const getOpenDonationAreas = cache(async (locale: AppLocale = "tr"): Prom
           locale,
         ),
       )
-      .filter((item): item is DonationArea => Boolean(item?.isDonationOpen));
+      .filter((item): item is DonationArea => Boolean(item?.isDonationOpen)));
   } catch (error) {
     console.warn("Bagis alanlari okunamadi.", error);
     return [];
