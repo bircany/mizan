@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { canCleanVideo, canForceCleanVideo, requestStoredVideoCleanup } from "../src/video-inventory.js";
+import {
+  canCleanVideo,
+  canForceCleanVideo,
+  requestAllStoredVideosCleanup,
+  requestStoredVideoCleanup,
+} from "../src/video-inventory.js";
 
 const candidate = {
   id: 4,
@@ -25,9 +30,38 @@ test("only unused, terminal VDS videos can be cleaned", () => {
 
 test("protected videos can only be force-cleaned while no message is sending", () => {
   assert.equal(canForceCleanVideo({ ...candidate, status: "ready", is_active: true }), true);
+  assert.equal(canForceCleanVideo({ ...candidate, status: "processing" }), false);
   assert.equal(canForceCleanVideo({ ...candidate, sending_messages: 1 }), false);
   assert.equal(canForceCleanVideo({ ...candidate, physical_deleted_at: new Date() }), false);
   assert.equal(canForceCleanVideo({ ...candidate, cleanup_requested_at: new Date() }), false);
+});
+
+test("bulk cleanup cancels mutable messages and queues every idle video", async () => {
+  const calls = [];
+  const runTransaction = async (callback) => callback({
+    async query(sql, parameters) {
+      calls.push({ sql, parameters });
+      if (sql.includes("select v.id, v.group_id")) return { rows: [{ id: 4, group_id: 2 }, { id: 5, group_id: 3 }] };
+      if (sql.includes("select count(*)::int")) return { rows: [{ count: 1 }] };
+      if (sql.includes("update delivery_messages")) return { rowCount: 2 };
+      if (sql.includes("update operation_groups")) return { rowCount: 2 };
+      if (sql.includes("update operation_videos")) return { rowCount: 2, rows: [{ id: 4 }, { id: 5 }] };
+      throw new Error("Unexpected query");
+    },
+  });
+  const result = await requestAllStoredVideosCleanup(9, "TÜM VİDEOLARI SİL", runTransaction);
+  assert.deepEqual(result, { cleanupQueued: 2, cancelledMessages: 2, skippedBusy: 1 });
+  assert.equal(calls.length, 5);
+  assert.match(calls[2].sql, /status = 'cancelled'/);
+  assert.match(calls[3].sql, /active_video_id = null/);
+  assert.match(calls[4].sql, /bulk_admin_cleanup/);
+});
+
+test("bulk cleanup requires the exact destructive confirmation phrase", async () => {
+  await assert.rejects(
+    requestAllStoredVideosCleanup(9, "sil", async () => assert.fail("transaction must not start")),
+    /Toplu temizlik onayı eşleşmedi/,
+  );
 });
 
 test("cleanup request queues metadata without touching VDS files", async () => {

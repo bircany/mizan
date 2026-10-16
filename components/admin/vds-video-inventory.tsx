@@ -22,10 +22,12 @@ export function VdsVideoInventory() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ id: string; url: string } | null>(null);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   const load = useCallback(async (cursor?: string) => {
     setLoading(true);
     setError("");
+    setNotice("");
     try {
       const response = await fetch(`/api/delivery/videos/inventory${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, { cache: "no-store" });
       const result = await response.json();
@@ -69,6 +71,35 @@ export function VdsVideoInventory() {
     }
   }
 
+  async function cleanAll() {
+    const confirmation = window.prompt(
+      "VDS arşivindeki tüm uygun videolar kalıcı olarak silinecek ve bekleyen mesajlar iptal edilecek.\n\nOnaylamak için TÜM VİDEOLARI SİL yazın:",
+    )?.trim();
+    if (confirmation !== "TÜM VİDEOLARI SİL") {
+      if (confirmation !== undefined) setError("Onay cümlesi eşleşmedi; hiçbir video temizlenmedi.");
+      return;
+    }
+    setBusyId("all");
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch("/api/delivery/videos/clean-all", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ confirm: "clean-all", confirmation }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Videolar toplu olarak temizlenemedi.");
+      setPreview(null);
+      await load();
+      setNotice(`${result.cleanupQueued} video temizlik sırasına alındı, ${result.cancelledMessages} bekleyen mesaj iptal edildi.${result.skippedBusy ? ` ${result.skippedBusy} çalışan video güvenlik için atlandı.` : ""}`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Videolar toplu olarak temizlenemedi.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function openPreview(video: StoredVideo) {
     setError("");
     try {
@@ -86,8 +117,12 @@ export function VdsVideoInventory() {
   }}>
     <summary className="cursor-pointer text-lg font-semibold">VDS video arşivi ve temizlik</summary>
     <p className="mt-2 text-sm text-[var(--admin-muted)]">Yüklenen videoları burada görebilirsiniz. Kullanım dışı dosyalar doğrudan temizlenebilir. Test veya yanlış yüklenen korumalı videolar, grup koduyla ayrıca onaylanarak temizlenebilir.</p>
-    <button className="admin-button-secondary mt-4" type="button" onClick={() => void load()} disabled={loading}>Listeyi yenile</button>
+    <div className="mt-4 flex flex-wrap gap-2">
+      <button className="admin-button-secondary" type="button" onClick={() => void load()} disabled={loading || busyId !== null}>Listeyi yenile</button>
+      <button className="admin-danger-button" type="button" onClick={() => void cleanAll()} disabled={loading || busyId !== null}>{busyId === "all" ? "Tümü sıraya alınıyor…" : "Tüm videoları temizle"}</button>
+    </div>
     {error ? <p className="mt-3 text-sm text-red-700" role="alert">{error}</p> : null}
+    {notice ? <p className="mt-3 text-sm text-emerald-700" role="status">{notice}</p> : null}
     <div className="mt-4 space-y-2">
       {videos.map((video) => <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--admin-border)] p-3 text-sm" key={video.id}>
         <div>

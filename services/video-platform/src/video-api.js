@@ -27,7 +27,7 @@ import { logger } from "./logger.js";
 import { verifyInternalRequest } from "./security/internal-auth.js";
 import { verifyMediaToken } from "./security/media-token.js";
 import { installShutdown } from "./shutdown.js";
-import { listStoredVideos, requestStoredVideoCleanup } from "./video-inventory.js";
+import { listStoredVideos, requestAllStoredVideosCleanup, requestStoredVideoCleanup } from "./video-inventory.js";
 import {
   contentDisposition,
   ensureStorageDirectories,
@@ -227,6 +227,15 @@ const server = createServer(async (request, response) => {
     if (request.method === "GET" && url.pathname === "/v1/internal/videos") {
       verifyInternalRequest(request.headers, Buffer.alloc(0), api);
       sendJson(response, 200, await listStoredVideos(url.searchParams.get("cursor")));
+      return;
+    }
+
+    if (request.method === "POST" && url.pathname === "/v1/internal/videos/clean-all") {
+      const raw = await readBody(request, 16 * 1024);
+      verifyInternalRequest(request.headers, raw, api);
+      const body = parseJsonBody(raw);
+      if (body.confirm !== "clean-all") throw new HttpError(400, "confirmation_required", "Toplu temizlik onayı eksik.");
+      sendJson(response, 202, await requestAllStoredVideosCleanup(body.actorId, body.confirmation));
       return;
     }
 

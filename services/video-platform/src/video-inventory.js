@@ -2,6 +2,7 @@ import { query, transaction } from "./db.js";
 import { HttpError } from "./errors.js";
 
 const cleanableStatuses = new Set(["superseded", "rejected", "expired", "failed", "processing_failed", "quarantined"]);
+const busyVideoStatuses = new Set(["uploading", "uploaded", "processing"]);
 
 export function canCleanVideo(video) {
   return cleanableStatuses.has(video.status) && !video.is_active &&
@@ -12,6 +13,7 @@ export function canCleanVideo(video) {
 
 export function canForceCleanVideo(video) {
   return !video.physical_deleted_at && !video.cleanup_requested_at &&
+    !busyVideoStatuses.has(video.status) &&
     Number(video.sending_messages || 0) === 0;
 }
 
@@ -35,6 +37,7 @@ export async function listStoredVideos(cursor = null) {
      join operation_groups g on g.id = v.group_id
      where ($1::bigint is null or v.id < $1)
        and v.physical_deleted_at is null
+       and nullif(v.technical_metadata->>'adminCleanupRequestedAt', '') is null
      order by v.id desc limit 51`,
     [before],
   );
@@ -51,6 +54,77 @@ export async function listStoredVideos(cursor = null) {
     canForceClean: canForceCleanVideo(video),
   }));
   return { videos, nextCursor: more ? videos.at(-1).id : null };
+}
+
+export async function requestAllStoredVideosCleanup(actorId, confirmation, runTransaction = transaction) {
+  if (!/^\d+$/.test(String(actorId))) throw new HttpError(400, "invalid_actor_id", "Yönetici kimliği geçersiz.");
+  if (confirmation !== "TÜM VİDEOLARI SİL") {
+    throw new HttpError(400, "confirmation_required", "Toplu temizlik onayı eşleşmedi.");
+  }
+  return runTransaction(async (client) => {
+    const selected = await client.query(
+      `select v.id, v.group_id
+       from operation_videos v
+       where v.physical_deleted_at is null
+         and nullif(v.technical_metadata->>'adminCleanupRequestedAt', '') is null
+         and v.status not in ('uploading', 'uploaded', 'processing')
+         and not exists (
+           select 1 from delivery_messages m where m.video_id = v.id and m.status = 'sending'
+         )
+       order by v.id
+       for update`,
+    );
+    const videoIds = selected.rows.map((video) => Number(video.id));
+    const busy = await client.query(
+      `select count(*)::int as count
+       from operation_videos v
+       where v.physical_deleted_at is null
+         and nullif(v.technical_metadata->>'adminCleanupRequestedAt', '') is null
+         and (v.status in ('uploading', 'uploaded', 'processing') or exists (
+           select 1 from delivery_messages m where m.video_id = v.id and m.status = 'sending'
+         ))`,
+    );
+    if (videoIds.length === 0) {
+      return { cleanupQueued: 0, cancelledMessages: 0, skippedBusy: Number(busy.rows[0]?.count || 0) };
+    }
+    const cancelled = await client.query(
+      `update delivery_messages
+       set status = 'cancelled', locked_at = null, locked_by = null,
+           last_error = 'Yönetici tüm VDS videolarını temizledi.', updated_at = now()
+       where video_id = any($1::int[])
+         and status in ('draft', 'countdown', 'queued', 'paused', 'failed')`,
+      [videoIds],
+    );
+    await client.query(
+      `update operation_groups g
+       set active_video_id = null,
+           status = case when status in ('video_ready', 'notified')
+                         then 'video_pending'::public.enum_operation_groups_status else status end,
+           dispatch_state = case when exists (
+             select 1 from delivery_messages m
+             where m.group_id = g.id and m.video_id = any($1::int[]) and m.status = 'cancelled'
+           ) then 'cancelled'::public.enum_operation_groups_dispatch_state else dispatch_state end,
+           dispatch_locked_at = null, dispatch_locked_by = null, updated_at = now()
+       where active_video_id = any($1::int[])`,
+      [videoIds],
+    );
+    const queued = await client.query(
+      `update operation_videos
+       set status = 'superseded', is_active = false, updated_at = now(),
+           technical_metadata = coalesce(technical_metadata, '{}'::jsonb) || jsonb_build_object(
+             'adminCleanupRequestedAt', now(), 'adminCleanupRequestedBy', $2::text,
+             'adminCleanupForced', true, 'adminCleanupReason', 'bulk_admin_cleanup'
+           )
+       where id = any($1::int[])
+       returning id`,
+      [videoIds, String(actorId)],
+    );
+    return {
+      cleanupQueued: queued.rowCount || 0,
+      cancelledMessages: cancelled.rowCount || 0,
+      skippedBusy: Number(busy.rows[0]?.count || 0),
+    };
+  });
 }
 
 export async function requestStoredVideoCleanup(videoId, actorId, options = {}, runTransaction = transaction) {
