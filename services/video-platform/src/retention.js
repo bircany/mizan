@@ -16,6 +16,57 @@ async function removeStoredFile(root, key) {
   }
 }
 
+export async function deleteAdminRequestedFiles(storage) {
+  const result = await query(
+    `select v.id, v.upload_id, v.raw_storage_key, v.processed_storage_key
+     from operation_videos v
+     join operation_groups g on g.id = v.group_id
+     where nullif(v.technical_metadata->>'adminCleanupRequestedAt', '') is not null
+       and v.status in ('superseded', 'rejected', 'expired', 'failed', 'processing_failed', 'quarantined')
+       and v.is_active = false
+       and g.active_video_id is distinct from v.id
+       and v.physical_deleted_at is null
+       and not exists (
+         select 1 from delivery_messages m where m.video_id = v.id
+           and m.status in ('draft', 'countdown', 'queued', 'sending', 'paused', 'failed')
+       )
+     order by v.id
+     limit 20`,
+  );
+  let deleted = 0;
+  for (const video of result.rows) {
+    await removeStoredFile(storage.uploads, video.upload_id);
+    if (video.upload_id) {
+      await unlink(resolveStorageKey(storage.uploads, `${video.upload_id}.info`)).catch((error) => {
+        if (error?.code !== "ENOENT") throw error;
+      });
+    }
+    if (video.raw_storage_key) {
+      await removeStoredFile(storage.raw, video.raw_storage_key);
+      await removeStoredFile(storage.quarantine, video.raw_storage_key);
+    }
+    if (video.processed_storage_key) {
+      await removeStoredFile(storage.ready, video.processed_storage_key);
+      await removeStoredFile(storage.replaced, video.processed_storage_key);
+    }
+    const updated = await query(
+      `update operation_videos v
+       set status = 'deleted', is_active = false, physical_deleted_at = now(), updated_at = now(),
+           technical_metadata = coalesce(v.technical_metadata, '{}'::jsonb)
+             || jsonb_build_object('adminCleanedAt', now())
+       where v.id = $1 and v.is_active = false and v.physical_deleted_at is null
+         and exists (select 1 from operation_groups g where g.id = v.group_id and g.active_video_id is distinct from v.id)
+         and not exists (
+           select 1 from delivery_messages m where m.video_id = v.id
+             and m.status in ('draft', 'countdown', 'queued', 'sending', 'paused', 'failed')
+         )`,
+      [video.id],
+    );
+    deleted += updated.rowCount || 0;
+  }
+  return deleted;
+}
+
 export async function expireActiveVideos() {
   const result = await query(
     `update operation_videos v
@@ -302,6 +353,7 @@ export async function runRetentionCycle(storage, thresholds) {
   }
   const results = {
     disk,
+    adminRequestedDeleted: await deleteAdminRequestedFiles(storage),
     staleUploads: await deleteStaleTusUploads(storage),
     rawDeleted: await deleteSuccessfulRaw(storage),
     quarantineDeleted: await deleteQuarantineFiles(storage),

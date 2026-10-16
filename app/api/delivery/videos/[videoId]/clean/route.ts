@@ -14,7 +14,7 @@ export async function POST(request: Request, context: { params: Promise<{ videoI
     const result = await deliveryVideoApiRequest(`/v1/internal/videos/${videoId}/clean`, {
       method: "POST", body: JSON.stringify({ confirm: "clean", actorId: user.id }),
     });
-    return NextResponse.json(result.body);
+    return NextResponse.json(result.body, { status: 202 });
   } catch (error) {
     return NextResponse.json({ error: error instanceof DeliveryAccessApiError ? error.message : "Video temizlenemedi." }, {
       status: error instanceof DeliveryAccessApiError ? error.status : 502,

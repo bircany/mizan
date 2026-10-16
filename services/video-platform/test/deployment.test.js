@@ -60,3 +60,18 @@ test("rejected videos are recoverable and cannot be dispatched", async () => {
   assert.match(retention, /status = 'rejected'[\s\S]*interval '7 days'/);
   assert.match(retention, /rejectedDeleted: await deleteRejectedFiles/);
 });
+
+test("admin cleanup is executed by the writable retention worker", async () => {
+  const compose = await readFile(composeUrl, "utf8");
+  const inventory = await readFile(new URL("../src/video-inventory.js", import.meta.url), "utf8");
+  const retention = await readFile(retentionUrl, "utf8");
+  const api = compose.match(/  video-api:\r?\n([\s\S]*?)\r?\n  tusd:/)?.[1];
+  const retentionWorker = compose.match(/  retention-worker:\r?\n([\s\S]*?)\r?\nvolumes:/)?.[1];
+
+  assert.match(api, /video_ready:\/var\/lib\/mizan\/ready:ro/);
+  assert.match(retentionWorker, /video_ready:\/var\/lib\/mizan\/ready/);
+  assert.doesNotMatch(inventory, /unlink|removeStoredFile/);
+  assert.match(inventory, /adminCleanupRequestedAt/);
+  assert.match(retention, /export async function deleteAdminRequestedFiles/);
+  assert.match(retention, /adminRequestedDeleted: await deleteAdminRequestedFiles/);
+});

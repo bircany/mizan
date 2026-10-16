@@ -40,7 +40,7 @@ export function VdsVideoInventory() {
   }, []);
 
   async function clean(video: StoredVideo) {
-    if (!window.confirm(`${video.groupCode} grubundaki #${video.id} videosunun VDS dosyaları kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`)) return;
+    if (!window.confirm(`${video.groupCode} grubundaki #${video.id} videosunun VDS dosyaları kalıcı temizlik sırasına alınsın mı? İşlem tamamlandıktan sonra geri alınamaz.`)) return;
     setBusyId(video.id);
     setError("");
     try {
@@ -84,7 +84,7 @@ export function VdsVideoInventory() {
         </div>
         <div className="flex gap-2">
           {video.hasProcessed && ["ready", "review_pending"].includes(video.status) ? <button className="admin-button-secondary" type="button" onClick={() => void openPreview(video)}>İzle</button> : null}
-          {video.canClean ? <button className="admin-danger-button" type="button" disabled={busyId !== null} onClick={() => void clean(video)}>{busyId === video.id ? "Temizleniyor…" : "Dosyaları temizle"}</button> : <span className="text-xs text-[var(--admin-muted)]">Korumalı</span>}
+          {video.canClean ? <button className="admin-danger-button" type="button" disabled={busyId !== null} onClick={() => void clean(video)}>{busyId === video.id ? "Sıraya alınıyor…" : "Dosyaları temizle"}</button> : <span className="text-xs text-[var(--admin-muted)]">Korumalı</span>}
         </div>
       </div>)}
       {loaded && !loading && videos.length === 0 ? <p className="text-sm text-[var(--admin-muted)]">VDS üzerinde kayıtlı video bulunamadı.</p> : null}

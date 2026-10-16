@@ -1,15 +1,13 @@
-import { unlink } from "node:fs/promises";
-
 import { query, transaction } from "./db.js";
 import { HttpError } from "./errors.js";
-import { resolveExistingFile, resolveStorageKey } from "./storage.js";
 
 const cleanableStatuses = new Set(["superseded", "rejected", "expired", "failed", "processing_failed", "quarantined"]);
 
 export function canCleanVideo(video) {
   return cleanableStatuses.has(video.status) && !video.is_active &&
     String(video.active_video_id ?? "") !== String(video.id) &&
-    !video.physical_deleted_at && Number(video.pending_messages || 0) === 0;
+    !video.physical_deleted_at && !video.cleanup_requested_at &&
+    Number(video.pending_messages || 0) === 0;
 }
 
 export async function listStoredVideos(cursor = null) {
@@ -22,6 +20,7 @@ export async function listStoredVideos(cursor = null) {
             v.created_at, v.updated_at, v.physical_deleted_at,
             v.raw_storage_key is not null as has_raw,
             v.processed_storage_key is not null as has_processed,
+            nullif(v.technical_metadata->>'adminCleanupRequestedAt', '') as cleanup_requested_at,
             g.active_video_id,
             (select count(*) from delivery_messages m where m.video_id = v.id
               and m.status in ('draft', 'countdown', 'queued', 'sending', 'paused', 'failed')) as pending_messages
@@ -46,23 +45,14 @@ export async function listStoredVideos(cursor = null) {
   return { videos, nextCursor: more ? videos.at(-1).id : null };
 }
 
-async function removeIfPresent(root, key) {
-  if (!key) return;
-  try {
-    const file = await resolveExistingFile(root, key);
-    await unlink(file.path);
-  } catch (error) {
-    if (error?.code !== "ENOENT" && error?.statusCode !== 404) throw error;
-  }
-}
-
-export async function cleanStoredVideo(videoId, storage, actorId) {
+export async function requestStoredVideoCleanup(videoId, actorId, runTransaction = transaction) {
   if (!/^\d+$/.test(String(videoId))) throw new HttpError(400, "invalid_video_id", "Video kimliği geçersiz.");
   if (!/^\d+$/.test(String(actorId))) throw new HttpError(400, "invalid_actor_id", "Yönetici kimliği geçersiz.");
-  return transaction(async (client) => {
+  return runTransaction(async (client) => {
     const selected = await client.query(
       `select v.id, v.group_id, v.status, v.is_active, v.physical_deleted_at,
               v.upload_id, v.raw_storage_key, v.processed_storage_key,
+              nullif(v.technical_metadata->>'adminCleanupRequestedAt', '') as cleanup_requested_at,
               g.active_video_id,
               (select count(*) from delivery_messages m where m.video_id = v.id
                 and m.status in ('draft', 'countdown', 'queued', 'sending', 'paused', 'failed')) as pending_messages
@@ -75,24 +65,14 @@ export async function cleanStoredVideo(videoId, storage, actorId) {
     if (!canCleanVideo(video)) {
       throw new HttpError(409, "video_in_use", "Aktif veya gönderim bekleyen video temizlenemez.");
     }
-    await removeIfPresent(storage.uploads, video.upload_id);
-    if (video.upload_id) {
-      await unlink(resolveStorageKey(storage.uploads, `${video.upload_id}.info`)).catch((error) => {
-        if (error?.code !== "ENOENT") throw error;
-      });
-    }
-    await removeIfPresent(storage.raw, video.raw_storage_key);
-    await removeIfPresent(storage.quarantine, video.raw_storage_key);
-    await removeIfPresent(storage.ready, video.processed_storage_key);
-    await removeIfPresent(storage.replaced, video.processed_storage_key);
     await client.query(
-      `update operation_videos set status = 'deleted', is_active = false,
-         physical_deleted_at = now(), updated_at = now(),
-         technical_metadata = coalesce(technical_metadata, '{}'::jsonb)
-           || jsonb_build_object('adminCleanedAt', now(), 'adminCleanedBy', $2::text)
+      `update operation_videos set updated_at = now(),
+         technical_metadata = coalesce(technical_metadata, '{}'::jsonb) || jsonb_build_object(
+           'adminCleanupRequestedAt', now(), 'adminCleanupRequestedBy', $2::text
+         )
        where id = $1`,
       [video.id, String(actorId)],
     );
-    return { videoId: String(video.id), groupId: String(video.group_id), cleaned: true };
+    return { videoId: String(video.id), groupId: String(video.group_id), cleanupQueued: true };
   });
 }
