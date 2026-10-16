@@ -11,6 +11,7 @@ type StoredVideo = {
   hasRaw: boolean;
   hasProcessed: boolean;
   canClean: boolean;
+  canForceClean: boolean;
 };
 
 export function VdsVideoInventory() {
@@ -39,13 +40,24 @@ export function VdsVideoInventory() {
     }
   }, []);
 
-  async function clean(video: StoredVideo) {
-    if (!window.confirm(`${video.groupCode} grubundaki #${video.id} videosunun VDS dosyaları kalıcı temizlik sırasına alınsın mı? İşlem tamamlandıktan sonra geri alınamaz.`)) return;
+  async function clean(video: StoredVideo, force = false) {
+    let groupCode: string | undefined;
+    if (force) {
+      groupCode = window.prompt(
+        `${video.groupCode} grubunun bekleyen mesajları iptal edilecek ve video kalıcı olarak silinecek.\n\nOnaylamak için grup kodunu aynen yazın:`,
+      )?.trim();
+      if (groupCode !== video.groupCode) {
+        if (groupCode !== undefined) setError("Grup kodu eşleşmedi; temizlik yapılmadı.");
+        return;
+      }
+    } else if (!window.confirm(`${video.groupCode} grubundaki #${video.id} videosunun VDS dosyaları kalıcı temizlik sırasına alınsın mı? İşlem tamamlandıktan sonra geri alınamaz.`)) return;
     setBusyId(video.id);
     setError("");
     try {
       const response = await fetch(`/api/delivery/videos/${video.id}/clean`, {
-        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ confirm: "clean" }),
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ confirm: force ? "force-clean" : "clean", groupCode }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Video temizlenemedi.");
@@ -73,7 +85,7 @@ export function VdsVideoInventory() {
     if (event.currentTarget.open && !loaded && !loading) void load();
   }}>
     <summary className="cursor-pointer text-lg font-semibold">VDS video arşivi ve temizlik</summary>
-    <p className="mt-2 text-sm text-[var(--admin-muted)]">Yüklenen videoları burada görebilirsiniz. Aktif veya gönderim bekleyen videolar korunur; yalnızca kullanım dışı dosyalar temizlenebilir.</p>
+    <p className="mt-2 text-sm text-[var(--admin-muted)]">Yüklenen videoları burada görebilirsiniz. Kullanım dışı dosyalar doğrudan temizlenebilir. Test veya yanlış yüklenen korumalı videolar, grup koduyla ayrıca onaylanarak temizlenebilir.</p>
     <button className="admin-button-secondary mt-4" type="button" onClick={() => void load()} disabled={loading}>Listeyi yenile</button>
     {error ? <p className="mt-3 text-sm text-red-700" role="alert">{error}</p> : null}
     <div className="mt-4 space-y-2">
@@ -84,7 +96,7 @@ export function VdsVideoInventory() {
         </div>
         <div className="flex gap-2">
           {video.hasProcessed && ["ready", "review_pending"].includes(video.status) ? <button className="admin-button-secondary" type="button" onClick={() => void openPreview(video)}>İzle</button> : null}
-          {video.canClean ? <button className="admin-danger-button" type="button" disabled={busyId !== null} onClick={() => void clean(video)}>{busyId === video.id ? "Sıraya alınıyor…" : "Dosyaları temizle"}</button> : <span className="text-xs text-[var(--admin-muted)]">Korumalı</span>}
+          {video.canClean ? <button className="admin-danger-button" type="button" disabled={busyId !== null} onClick={() => void clean(video)}>{busyId === video.id ? "Sıraya alınıyor…" : "Dosyaları temizle"}</button> : video.canForceClean ? <button className="admin-danger-button" type="button" disabled={busyId !== null} onClick={() => void clean(video, true)}>{busyId === video.id ? "Sıraya alınıyor…" : "Test videosunu temizle"}</button> : <span className="text-xs text-[var(--admin-muted)]">Gönderiliyor</span>}
         </div>
       </div>)}
       {loaded && !loading && videos.length === 0 ? <p className="text-sm text-[var(--admin-muted)]">VDS üzerinde kayıtlı video bulunamadı.</p> : null}

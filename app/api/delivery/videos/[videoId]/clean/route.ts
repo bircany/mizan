@@ -9,10 +9,17 @@ export async function POST(request: Request, context: { params: Promise<{ videoI
   const { videoId } = await context.params;
   if (!/^\d+$/.test(videoId)) return NextResponse.json({ error: "Geçersiz video." }, { status: 400 });
   const body = await request.json().catch(() => null);
-  if (body?.confirm !== "clean") return NextResponse.json({ error: "Temizleme onayı eksik." }, { status: 400 });
+  if (body?.confirm !== "clean" && body?.confirm !== "force-clean") {
+    return NextResponse.json({ error: "Temizleme onayı eksik." }, { status: 400 });
+  }
   try {
     const result = await deliveryVideoApiRequest(`/v1/internal/videos/${videoId}/clean`, {
-      method: "POST", body: JSON.stringify({ confirm: "clean", actorId: user.id }),
+      method: "POST",
+      body: JSON.stringify({
+        confirm: body.confirm,
+        actorId: user.id,
+        groupCode: body.confirm === "force-clean" ? body.groupCode : undefined,
+      }),
     });
     return NextResponse.json(result.body, { status: 202 });
   } catch (error) {

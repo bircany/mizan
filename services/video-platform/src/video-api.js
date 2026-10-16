@@ -235,8 +235,13 @@ const server = createServer(async (request, response) => {
       const raw = await readBody(request, 16 * 1024);
       verifyInternalRequest(request.headers, raw, api);
       const body = parseJsonBody(raw);
-      if (body.confirm !== "clean") throw new HttpError(400, "confirmation_required", "Temizleme onayı eksik.");
-      sendJson(response, 202, await requestStoredVideoCleanup(cleanVideoMatch[1], body.actorId));
+      if (body.confirm !== "clean" && body.confirm !== "force-clean") {
+        throw new HttpError(400, "confirmation_required", "Temizleme onayı eksik.");
+      }
+      sendJson(response, 202, await requestStoredVideoCleanup(cleanVideoMatch[1], body.actorId, {
+        force: body.confirm === "force-clean",
+        groupCode: body.groupCode,
+      }));
       return;
     }
 
